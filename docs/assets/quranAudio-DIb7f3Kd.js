@@ -1,0 +1,1 @@
+function e(e,t){return`https://everyayah.com/data/Alafasy_128kbps/${String(e).padStart(3,`0`)}${String(t).padStart(3,`0`)}.mp3`}export{e as t};

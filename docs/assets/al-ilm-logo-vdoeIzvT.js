@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/al-ilm-logo-B1MzByV5.png`;export{e as t};

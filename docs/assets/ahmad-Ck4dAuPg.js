@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/ahmad-BzLL2leW.png`;export{e as t};

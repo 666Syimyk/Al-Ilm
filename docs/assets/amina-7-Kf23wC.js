@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/amina-BAq619ms.png`;export{e as t};
