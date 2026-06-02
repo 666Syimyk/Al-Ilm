@@ -200,7 +200,8 @@ function getNotifEnabled() { return readLocalString("notificationsEnabled") === 
 
 async function showPrayerNotification(title, body) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const options = { body, icon: "/al-ilm-logo.png", badge: "/al-ilm-logo.png", tag: "al-ilm-prayer" };
+  const appIcon = `${import.meta.env.BASE_URL}al-ilm-logo.png`;
+  const options = { body, icon: appIcon, badge: appIcon, tag: "al-ilm-prayer" };
 
   if ("serviceWorker" in navigator) {
     try {

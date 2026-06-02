@@ -1,5 +1,7 @@
-﻿const CACHE_NAME = "al-ilm-v7";
-const STATIC_ASSETS = ["/", "/index.html"];
+const CACHE_NAME = "al-ilm-v8";
+const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+const withBase = (path) => `${BASE_PATH}${path}`;
+const STATIC_ASSETS = [withBase("/"), withBase("/index.html")];
 
 function cacheResponse(request, response) {
   if (response && response.status === 200) {
@@ -37,7 +39,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => cacheResponse(request, response))
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("/index.html")))
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(withBase("/index.html"))))
     );
     return;
   }
@@ -56,7 +58,7 @@ self.addEventListener("notificationclick", (event) => {
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((client) => client.url.includes("/namaz"));
       if (existing) return existing.focus();
-      return self.clients.openWindow("/namaz");
+      return self.clients.openWindow(withBase("/namaz"));
     })
   );
 });
@@ -67,8 +69,8 @@ self.addEventListener("message", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "/al-ilm-logo.png",
-      badge: "/al-ilm-logo.png",
+      icon: withBase("/al-ilm-logo.png"),
+      badge: withBase("/al-ilm-logo.png"),
       tag: "al-ilm"
     })
   );
