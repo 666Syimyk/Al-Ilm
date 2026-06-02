@@ -1,0 +1,52 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="desertSky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe3ab"/>
+      <stop offset=".44" stop-color="#e9925c"/>
+      <stop offset=".72" stop-color="#f5d08d"/>
+      <stop offset="1" stop-color="#b8793a"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".36" cy=".18" r=".36">
+      <stop offset="0" stop-color="#fffad2" stop-opacity=".95"/>
+      <stop offset=".45" stop-color="#ffc66c" stop-opacity=".36"/>
+      <stop offset="1" stop-color="#ffc66c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff0bc"/>
+      <stop offset=".5" stop-color="#d99d55"/>
+      <stop offset="1" stop-color="#9d6233"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#desertSky)"/>
+  <rect width="1600" height="1000" fill="url(#sun)"/>
+  <g opacity=".2" fill="#fff7d7">
+    <ellipse cx="430" cy="245" rx="310" ry="64"/>
+    <ellipse cx="1080" cy="205" rx="340" ry="72"/>
+  </g>
+  <g fill="#b36e38" opacity=".26">
+    <path d="M0 642c138-70 280-72 425-8 120 54 225 54 348 1 170-73 324-68 520 18 104 45 201 44 307 1v346H0z"/>
+  </g>
+  <g transform="translate(116 272)">
+    <g fill="url(#stone)" stroke="#f0c46b" stroke-width="3">
+      <path d="M188 626h1098V418c0-58-47-105-105-105H293c-58 0-105 47-105 105z"/>
+      <path d="M452 626V334c0-137 111-248 248-248s248 111 248 248v292z"/>
+      <path d="M508 334c0-106 86-192 192-192s192 86 192 192z" fill="#ffe6a5"/>
+      <path d="M582 626V452c0-65 53-118 118-118s118 53 118 118v174z" fill="#a76636"/>
+      <rect x="108" y="626" width="1252" height="80" rx="8"/>
+      <rect x="62" y="706" width="1345" height="76" rx="8"/>
+    </g>
+    <g fill="#fff2b3">
+      <rect x="78" y="190" width="25" height="436" rx="12"/>
+      <rect x="1352" y="190" width="25" height="436" rx="12"/>
+      <path d="M91 118c-38 55-38 99 0 133 38-34 38-78 0-133z"/>
+      <path d="M1364 118c-38 55-38 99 0 133 38-34 38-78 0-133z"/>
+      <circle cx="700" cy="82" r="12"/>
+      <path d="M700 22c43 0 80 25 99 62-28-16-62-25-99-25s-71 9-99 25c19-37 56-62 99-62z"/>
+    </g>
+  </g>
+  <g>
+    <path d="M0 780c230-70 448-78 690-23 345 79 593 63 910-46v289H0z" fill="#d79a50"/>
+    <path d="M0 860c258-62 524-63 800-8 254 51 528 39 800-40v188H0z" fill="#f0c775"/>
+    <path d="M0 936c292-48 538-35 790 4 256 40 521 29 810-35v95H0z" fill="#b87838"/>
+  </g>
+</svg>

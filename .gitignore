@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+*.log
+.claude
+backups
+tmp-*.png
+namaz-premium-*.png

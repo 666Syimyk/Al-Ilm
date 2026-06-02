@@ -1,0 +1,21 @@
+﻿{
+  "name": "Аль-Ильм — Арабский для детей",
+  "short_name": "Аль-Ильм",
+  "description": "Учи арабский язык и Коран вместе с Ахмадом и Аминой",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#006F3D",
+  "background_color": "#f4f9f0",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/al-ilm-logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "kids"]
+}
+

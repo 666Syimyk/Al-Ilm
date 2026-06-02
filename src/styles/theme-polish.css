@@ -1,0 +1,1542 @@
+﻿:root {
+  --color-emerald-dark: #006F3D;
+  --color-emerald: #006F3D;
+  --color-emerald-soft: #123f32;
+  --color-gold: #d7aa4b;
+  --color-beige: #ecd4a6;
+  --color-cream: #F5EAD4;
+  --color-warm-bg: #082f27;
+  --color-card-light: rgba(10, 63, 50, 0.88);
+  --color-card-dark: rgba(5, 45, 36, 0.94);
+  --color-text-dark: #f9edcf;
+  --color-text-light: #fff6dc;
+  --color-text-muted: rgba(255, 239, 202, 0.72);
+  --shadow-soft: 0 18px 44px rgba(0, 111, 61, 0.28);
+  --shadow-glow: 0 0 32px rgba(215, 170, 75, 0.2);
+  --radius-card: 26px;
+}
+
+@supports selector(:has(*)) {
+  .page-frame:has(.premium-home),
+  .page-frame:has(.premium-lessons),
+  .page-frame:has(.premium-quran),
+  .page-frame:has(.premium-profile),
+  .page-frame:has(.namaz-feature-grid),
+  .page-frame:has(.adult-soon-screen) {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(215, 170, 75, 0.2), transparent 34%),
+      radial-gradient(circle at 14% 78%, rgba(15, 120, 82, 0.24), transparent 35%),
+      linear-gradient(180deg, #082f27 0%, #041f1a 100%) !important;
+    color: var(--color-text-light);
+    overflow-x: clip;
+  }
+
+  .page-frame:has(.bottom-nav) .content-stack {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .page-frame:has(.namaz-feature-grid) .content-stack {
+    padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+.premium-home,
+.premium-lessons,
+.premium-quran,
+.premium-profile,
+.adult-soon-screen {
+  color: var(--color-text-light);
+}
+
+.premium-home__bg,
+.premium-lessons__bg,
+.premium-quran__bg,
+.premium-profile__bg {
+  opacity: 0.52 !important;
+  filter: blur(2px) saturate(1.08) brightness(0.72) !important;
+}
+
+.premium-home__light,
+.premium-lessons__light,
+.premium-quran__light,
+.premium-profile__light {
+  opacity: 0.46 !important;
+  background:
+    radial-gradient(circle at 52% 18%, rgba(240, 188, 81, 0.26), transparent 38%),
+    radial-gradient(circle at 12% 80%, rgba(15, 120, 82, 0.2), transparent 35%) !important;
+}
+
+.premium-home :is(.premium-home-card, .premium-home-stat),
+.premium-lessons :is(.premium-lessons-card, .premium-lessons-side, .premium-lessons-map, .premium-lessons-category-panel),
+.premium-quran :is(.premium-quran-card),
+.premium-profile :is(.premium-profile-card, .premium-profile-stat),
+.adult-hero-card,
+.adult-quick-card,
+.adult-coming-card,
+.quran-search-panel,
+.surah-list-card,
+.surah-info-card,
+.ayah-detail-card {
+  background:
+    radial-gradient(circle at 86% 0%, rgba(215, 170, 75, 0.12), transparent 34%),
+    linear-gradient(145deg, rgba(0, 111, 61, 0.92), rgba(0, 111, 61, 0.94)) !important;
+  border: 1px solid rgba(215, 170, 75, 0.28) !important;
+  color: var(--color-text-light) !important;
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(245, 234, 212, 0.08) !important;
+}
+
+@supports selector(:has(*)) {
+  .page-frame:has(.namaz-feature-grid) :is(.page-header, .namaz-next-card, .namaz-city-search-card, .namaz-settings-card, .namaz-feature-panel, .geo-prompt-card, .namaz-day-header, .namaz-prayer-card, .namaz-feature-card) {
+    background:
+      radial-gradient(circle at 84% 0%, rgba(215, 170, 75, 0.12), transparent 34%),
+      linear-gradient(145deg, rgba(0, 111, 61, 0.92), rgba(0, 111, 61, 0.94)) !important;
+    border: 1px solid rgba(215, 170, 75, 0.28) !important;
+    color: var(--color-text-light) !important;
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(245, 234, 212, 0.08) !important;
+  }
+}
+
+.premium-home :is(.premium-home-quick-card, .premium-home-module, .premium-home-mini-progress, .premium-home-motivation, .premium-home-reward, .premium-home-done),
+.premium-lessons :is(.premium-lesson-node__card, .premium-lessons-chapter__head, .premium-lessons-category-card, .premium-lessons-route-card, .premium-lessons-chapter-card),
+.premium-quran :is(.premium-quran-path-step, .premium-quran-section-link, .premium-quran-reward, .premium-quran-fav-list button, .premium-quran-stat-grid span, .quran-goal-pill),
+.premium-profile :is(.profile-achievement, .profile-setting-row, .profile-history-row, .premium-profile-preview-list span, .profile-parent-list span) {
+  background:
+    linear-gradient(145deg, rgba(0, 111, 61, 0.9), rgba(6, 48, 38, 0.94)) !important;
+  border-color: rgba(215, 170, 75, 0.24) !important;
+  color: var(--color-text-light) !important;
+  box-shadow: 0 12px 28px rgba(0, 111, 61, 0.22), inset 0 1px 0 rgba(245, 234, 212, 0.07) !important;
+}
+
+.premium-home :is(h1, h2, h3, p, span, strong, small),
+.premium-lessons :is(h1, h2, h3, p, span, strong, small),
+.premium-quran :is(h1, h2, h3, p, span, strong, small),
+.premium-profile :is(h1, h2, h3, p, span, strong, small),
+.adult-soon-screen :is(h1, h2, h3, p, span, strong, small),
+.surah-list-card :is(h2, p, span, strong, small),
+.surah-info-card :is(h2, p, span, strong, small),
+.ayah-detail-card :is(h2, p, span, strong, small) {
+  color: var(--color-text-light) !important;
+}
+
+.premium-home :is(p, small),
+.premium-lessons :is(p, small),
+.premium-quran :is(p, small),
+.premium-profile :is(p, small),
+.adult-soon-screen :is(p, small),
+.surah-list-card :is(p, small),
+.ayah-detail-card :is(.ayah-translit, .ayah-translation-line) {
+  color: var(--color-text-muted) !important;
+}
+
+.premium-home :is(.premium-home-primary, .premium-home-continue__action button),
+.premium-lessons .premium-lessons-primary,
+.premium-quran .premium-quran-primary,
+.premium-profile .premium-profile-primary,
+.adult-soon-screen .button--primary {
+  background: linear-gradient(135deg, #007243, #007243 62%, #007243) !important;
+  color: #006F3D !important;
+  border: 1px solid rgba(255, 232, 147, 0.56) !important;
+  box-shadow: 0 12px 28px rgba(0, 114, 67, 0.34), 0 0 24px rgba(0, 114, 67, 0.24) !important;
+}
+
+.premium-home :is(.premium-home-secondary, .premium-home-link),
+.premium-lessons .premium-lessons-secondary,
+.premium-quran .premium-quran-secondary,
+.premium-profile .premium-profile-secondary,
+.button--soft {
+  background: rgba(0, 111, 61, 0.84) !important;
+  border: 1px solid rgba(215, 170, 75, 0.3) !important;
+  color: var(--color-text-light) !important;
+}
+
+.premium-lessons-chapters {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr)) !important;
+  gap: 10px !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  scrollbar-width: none;
+}
+
+.premium-lessons-chapters a,
+.surah-filter-tab {
+  width: 100% !important;
+  min-width: 0 !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, rgba(12, 70, 56, 0.92), rgba(0, 111, 61, 0.94)) !important;
+  border: 1px solid rgba(215, 170, 75, 0.26) !important;
+  color: var(--color-text-light) !important;
+  box-shadow: 0 10px 24px rgba(0, 111, 61, 0.2) !important;
+}
+
+.premium-lessons-chapters a.is-current,
+.surah-filter-tab.is-active {
+  background: linear-gradient(145deg, rgba(0, 114, 67, 0.96), rgba(8, 80, 60, 0.98)) !important;
+  border-color: rgba(215, 170, 75, 0.48) !important;
+  box-shadow: 0 12px 28px rgba(12, 109, 70, 0.24), var(--shadow-glow) !important;
+}
+
+.premium-lesson-node--locked .premium-lesson-node__card,
+.premium-quran-path-step.is-locked,
+.surah-list-card--soon {
+  background: linear-gradient(145deg, rgba(8, 52, 43, 0.72), rgba(4, 34, 29, 0.86)) !important;
+  border-color: rgba(215, 170, 75, 0.16) !important;
+  opacity: 0.78 !important;
+}
+
+.premium-lesson-node--current .premium-lesson-node__card,
+.premium-quran-path-step.is-current,
+.premium-quran-path-step.is-done,
+.profile-achievement.is-unlocked {
+  border-color: rgba(0, 114, 67, 0.52) !important;
+  box-shadow: 0 14px 32px rgba(13, 122, 84, 0.24), 0 0 24px rgba(215, 170, 75, 0.14) !important;
+}
+
+.surah-filter-tabs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  overflow: visible !important;
+}
+
+.surah-filter-tab {
+  flex: 0 1 auto !important;
+  min-height: 44px !important;
+  border-radius: 999px !important;
+}
+
+.surah-detail-topbar {
+  background:
+    radial-gradient(circle at 86% 0%, rgba(215, 170, 75, 0.15), transparent 34%),
+    linear-gradient(145deg, rgba(0, 111, 61, 0.94), rgba(4, 38, 31, 0.96)) !important;
+  border: 1px solid rgba(215, 170, 75, 0.34) !important;
+  color: var(--color-text-light) !important;
+  box-shadow: 0 18px 42px rgba(0, 111, 61, 0.28) !important;
+}
+
+.quran-search-panel input,
+.surah-jump-form select {
+  background: rgba(5, 39, 32, 0.86) !important;
+  color: var(--color-text-light) !important;
+  border-color: rgba(215, 170, 75, 0.25) !important;
+}
+
+.quran-search-panel input::placeholder,
+.city-search-form input::placeholder {
+  color: rgba(255, 239, 202, 0.58) !important;
+}
+
+.ayah-detail-card .arabic-line,
+.surah-list-card__arabic {
+  color: #fff5dc !important;
+}
+
+@supports selector(:has(*)) {
+  .page-frame:has(.namaz-feature-grid) .namaz-city-search-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(240px, 1.15fr) !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 18px !important;
+  }
+
+  .page-frame:has(.namaz-feature-grid) .namaz-city-search-card h2,
+  .page-frame:has(.namaz-feature-grid) .namaz-settings-card h2 {
+    margin: 2px 0 0 !important;
+    font-size: clamp(1.08rem, 3.5vw, 1.38rem) !important;
+    line-height: 1.12 !important;
+    max-width: 100% !important;
+    overflow-wrap: anywhere;
+  }
+
+  .page-frame:has(.namaz-feature-grid) .namaz-settings-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 0.9fr) minmax(130px, 0.8fr) !important;
+    align-items: end !important;
+    gap: 14px !important;
+    padding: 18px !important;
+  }
+
+  .page-frame:has(.namaz-feature-grid) .namaz-settings-card > div,
+  .page-frame:has(.namaz-feature-grid) .namaz-settings-card label {
+    min-width: 0 !important;
+  }
+
+  .page-frame:has(.namaz-feature-grid) :is(.city-search-form, .namaz-settings-card select) {
+    background: rgba(5, 39, 32, 0.86) !important;
+    border: 1px solid rgba(215, 170, 75, 0.25) !important;
+    color: var(--color-text-light) !important;
+    box-shadow: inset 0 1px 0 rgba(245, 234, 212, 0.08) !important;
+  }
+
+  .page-frame:has(.namaz-feature-grid) .city-search-form input {
+    min-width: 0 !important;
+    color: var(--color-text-light) !important;
+  }
+}
+
+.premium-profile-drawer__panel {
+  background:
+    radial-gradient(circle at 86% 0%, rgba(215, 170, 75, 0.14), transparent 34%),
+    linear-gradient(145deg, rgba(9, 60, 48, 0.97), rgba(4, 37, 31, 0.98)) !important;
+  border: 1px solid rgba(215, 170, 75, 0.28) !important;
+  color: var(--color-text-light) !important;
+  box-shadow: 0 24px 70px rgba(0, 20, 15, 0.36) !important;
+}
+
+.adult-soon-screen {
+  max-width: min(1180px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
+@supports selector(:has(*)) {
+  .page-frame:has(.reward-lesson-shell) {
+    background:
+      radial-gradient(circle at 50% 8%, rgba(230, 178, 64, 0.24), transparent 34%),
+      radial-gradient(circle at 16% 86%, rgba(0, 114, 67, 0.18), transparent 34%),
+      linear-gradient(180deg, #07352c 0%, #041d18 100%) !important;
+    overflow-x: clip;
+  }
+}
+
+.reward-lesson-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.reward-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reward-ambient span {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 219, 128, 0.88);
+  box-shadow: 0 0 18px rgba(255, 219, 128, 0.58);
+  animation: rewardParticle 8s ease-in-out infinite;
+}
+
+.reward-ambient span:nth-child(1) { left: 12%; top: 20%; animation-delay: -1s; }
+.reward-ambient span:nth-child(2) { left: 24%; top: 76%; animation-delay: -4s; }
+.reward-ambient span:nth-child(3) { left: 42%; top: 13%; animation-delay: -2s; }
+.reward-ambient span:nth-child(4) { left: 68%; top: 78%; animation-delay: -5s; }
+.reward-ambient span:nth-child(5) { left: 84%; top: 24%; animation-delay: -3s; }
+.reward-ambient span:nth-child(6) { left: 92%; top: 58%; animation-delay: -6s; }
+
+.reward-lesson-shell .duo-lesson-top,
+.reward-lesson-shell .duo-lesson-main,
+.reward-lesson-shell .duo-lesson-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.reward-lesson-main {
+  align-content: center;
+  justify-items: center;
+  padding-block: clamp(18px, 4vh, 42px);
+}
+
+.reward-lesson-card {
+  position: relative;
+  width: min(760px, 100%) !important;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: clamp(24px, 4vw, 42px) !important;
+  border-radius: 30px !important;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255, 210, 105, 0.2), transparent 35%),
+    linear-gradient(145deg, rgba(0, 111, 61, 0.96), rgba(4, 36, 30, 0.98)) !important;
+  border: 1px solid rgba(224, 178, 78, 0.46) !important;
+  color: var(--color-text-light) !important;
+  box-shadow:
+    0 28px 72px rgba(0, 22, 16, 0.42),
+    0 0 46px rgba(216, 171, 75, 0.18),
+    inset 0 1px 0 rgba(245, 234, 212, 0.12) !important;
+}
+
+.reward-card-aura {
+  position: absolute;
+  inset: auto 10% 12% 10%;
+  height: 44%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 114, 67, 0.22), transparent 68%);
+  filter: blur(18px);
+  opacity: 0.84;
+  pointer-events: none;
+}
+
+.reward-lesson-card > *:not(.reward-card-aura) {
+  position: relative;
+  z-index: 1;
+}
+
+.reward-lesson-card .character-helper {
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 2px;
+}
+
+.reward-lesson-card .character-helper__image-wrap {
+  animation: rewardFloat 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 16px 20px rgba(0, 20, 15, 0.28));
+}
+
+.reward-lesson-card .character-helper img {
+  width: clamp(74px, 14vw, 104px) !important;
+  height: auto !important;
+}
+
+.reward-lesson-card .character-helper__bubble {
+  max-width: 360px;
+  color: #17352b !important;
+  background: linear-gradient(145deg, rgba(245, 234, 212, 0.98), rgba(245, 234, 212, 0.94)) !important;
+  border: 1px solid rgba(224, 178, 78, 0.52) !important;
+  box-shadow: 0 14px 28px rgba(0, 22, 16, 0.22) !important;
+}
+
+.reward-lesson-card .character-helper__bubble :is(strong, p) {
+  color: #17352b !important;
+}
+
+.reward-trophy-stage {
+  position: relative;
+  width: clamp(132px, 22vw, 168px);
+  height: clamp(132px, 22vw, 168px);
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+}
+
+.reward-lesson-card .trophy-mark {
+  width: clamp(112px, 19vw, 142px);
+  height: clamp(112px, 19vw, 142px);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffd978 !important;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(245, 234, 212, 0.34), transparent 24%),
+    conic-gradient(from 220deg, #8b5b12, #ffd978, #e4a92e, #8b5b12);
+  border: 1px solid rgba(255, 232, 156, 0.72) !important;
+  box-shadow:
+    0 20px 44px rgba(0, 20, 15, 0.32),
+    0 0 42px rgba(255, 210, 94, 0.3),
+    inset 0 0 0 12px rgba(0, 111, 61, 0.7);
+  animation: rewardTrophyGlow 2.6s ease-in-out infinite;
+}
+
+.reward-orbit {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: #F5EAD4;
+  background: rgba(8, 54, 43, 0.72);
+  border: 1px solid rgba(255, 224, 139, 0.38);
+  box-shadow: 0 0 24px rgba(255, 211, 97, 0.24);
+  animation: rewardOrbit 4.8s ease-in-out infinite;
+}
+
+.reward-orbit--one { left: 2%; top: 18%; animation-delay: -1s; }
+.reward-orbit--two { right: 0; top: 42%; animation-delay: -2.4s; }
+.reward-orbit--three { left: 18%; bottom: 2%; animation-delay: -3.2s; }
+
+.reward-kicker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: #F5EAD4 !important;
+  background: rgba(215, 170, 75, 0.14);
+  border: 1px solid rgba(215, 170, 75, 0.36);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.reward-lesson-card h1 {
+  margin: 0;
+  font-size: clamp(2.15rem, 6vw, 4rem);
+  line-height: 0.98;
+  color: #fff6dc !important;
+  text-shadow: 0 10px 28px rgba(0, 20, 15, 0.34);
+}
+
+.reward-lesson-card > p {
+  max-width: 560px;
+  margin: 0;
+  color: rgba(255, 244, 218, 0.82) !important;
+  font-size: clamp(1rem, 2.4vw, 1.18rem);
+  line-height: 1.55;
+}
+
+.reward-letter-medal {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  background: rgba(255, 244, 218, 0.1);
+  border: 1px solid rgba(255, 224, 139, 0.28);
+}
+
+.reward-letter-medal span {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #007243, #007243);
+  color: #006F3D !important;
+  font-size: 2rem;
+  font-weight: 1000;
+  box-shadow: 0 10px 22px rgba(0, 114, 67, 0.26);
+}
+
+.reward-letter-medal small {
+  color: #F5EAD4 !important;
+  font-weight: 900;
+}
+
+.reward-points {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.reward-points span {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  color: #17352b !important;
+  background: linear-gradient(145deg, rgba(245, 234, 212, 0.98), rgba(245, 234, 212, 0.94)) !important;
+  border: 1px solid rgba(224, 178, 78, 0.48);
+  box-shadow: 0 12px 24px rgba(0, 22, 16, 0.18);
+  font-weight: 1000;
+}
+
+.reward-lesson-shell .duo-lesson-footer--success {
+  background: rgba(5, 45, 36, 0.88) !important;
+  border: 1px solid rgba(215, 170, 75, 0.32) !important;
+  box-shadow: 0 -18px 42px rgba(0, 20, 15, 0.24), inset 0 1px 0 rgba(245, 234, 212, 0.08) !important;
+  backdrop-filter: blur(18px);
+}
+
+.reward-lesson-shell .duo-feedback__icon {
+  color: #007243;
+  background: rgba(0, 114, 67, 0.12);
+  border: 1px solid rgba(0, 114, 67, 0.24);
+  box-shadow: 0 0 24px rgba(0, 114, 67, 0.16);
+}
+
+.reward-lesson-shell .duo-feedback :is(h2, p) {
+  color: var(--color-text-light) !important;
+}
+
+.reward-lesson-shell .duo-main-button {
+  min-width: min(320px, 100%);
+  min-height: 60px !important;
+  border-radius: 18px !important;
+}
+
+@keyframes rewardParticle {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.72); opacity: 0.3; }
+  50% { transform: translate3d(18px, -34px, 0) scale(1); opacity: 0.9; }
+}
+
+@keyframes rewardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes rewardTrophyGlow {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.035); filter: brightness(1.08); }
+}
+
+@keyframes rewardOrbit {
+  0%, 100% { transform: translateY(0) rotate(-8deg); }
+  50% { transform: translateY(-8px) rotate(8deg); }
+}
+
+/* Unified Al-Ilm background: keep every route on the same cinematic scene. */
+:root {
+  --alilm-unified-bg:
+    radial-gradient(circle at 50% 4%, rgba(229, 179, 74, 0.22), transparent 34%),
+    radial-gradient(circle at 12% 82%, rgba(0, 114, 67, 0.18), transparent 34%),
+    linear-gradient(90deg, rgba(3, 28, 23, 0.58), rgba(5, 52, 42, 0.28) 45%, rgba(3, 28, 23, 0.58)),
+    linear-gradient(180deg, rgba(4, 37, 30, 0.74), rgba(3, 24, 20, 0.9)),
+    var(--mosque-bg);
+}
+
+html,
+body,
+#root,
+.app-background {
+  background-color: #041d18 !important;
+}
+
+.app-background {
+  background-image: var(--alilm-unified-bg) !important;
+  background-size: cover, cover, cover, cover, cover !important;
+  background-position: center, center, center, center, var(--background-position, center) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+.page-frame,
+.page-frame:has(.premium-welcome),
+.page-frame:has(.premium-register),
+.page-frame:has(.premium-login),
+.page-frame:has(.premium-home),
+.page-frame:has(.premium-lessons),
+.page-frame:has(.premium-quran),
+.page-frame:has(.premium-profile),
+.page-frame:has(.namaz-feature-grid),
+.page-frame:has(.adult-soon-screen),
+.page-frame:has(.duo-lesson-shell),
+.page-frame:has(.reward-lesson-shell),
+.page-frame:has(.surah-detail-topbar) {
+  background: transparent !important;
+}
+
+.premium-welcome,
+.premium-register,
+.premium-login,
+.premium-home,
+.premium-lessons,
+.premium-quran,
+.premium-profile,
+.adult-soon-screen,
+.duo-lesson-shell,
+.reward-lesson-shell {
+  background: transparent !important;
+}
+
+.premium-home__bg,
+.premium-lessons__bg,
+.premium-quran__bg,
+.premium-profile__bg {
+  background-image: var(--alilm-unified-bg) !important;
+  background-size: cover, cover, cover, cover, cover !important;
+  background-position: center, center, center, center, var(--background-position, center) !important;
+  background-repeat: no-repeat !important;
+  filter: saturate(1.05) contrast(1.02) brightness(0.76) !important;
+  opacity: 1 !important;
+}
+
+.premium-welcome__bg,
+.premium-register__bg,
+.premium-login__bg {
+  filter: saturate(1.05) contrast(1.02) brightness(0.76) !important;
+  opacity: 1 !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.premium-home__light,
+.premium-lessons__light,
+.premium-quran__light,
+.premium-profile__light,
+.premium-welcome__light,
+.premium-register__light,
+.premium-login__light {
+  background:
+    radial-gradient(circle at 52% 16%, rgba(229, 179, 74, 0.24), transparent 34%),
+    radial-gradient(circle at 16% 82%, rgba(0, 114, 67, 0.16), transparent 34%) !important;
+  opacity: 0.48 !important;
+}
+
+@media (max-width: 720px) {
+  .premium-lessons-chapters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .reward-lesson-card .character-helper {
+    flex-direction: column;
+  }
+
+  .reward-lesson-card .character-helper__bubble {
+    max-width: 100%;
+  }
+
+  .reward-lesson-shell .duo-lesson-footer--success {
+    gap: 14px;
+  }
+
+  @supports selector(:has(*)) {
+    .page-frame:has(.namaz-feature-grid) .namaz-city-search-card,
+    .page-frame:has(.namaz-feature-grid) .namaz-settings-card {
+      grid-template-columns: 1fr !important;
+      padding: 16px !important;
+    }
+  }
+}
+
+@media (max-width: 430px) {
+  .premium-lessons-chapters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .surah-filter-tab {
+    flex: 1 1 calc(50% - 8px) !important;
+    padding-inline: 12px !important;
+    font-size: 0.84rem !important;
+  }
+}
+
+/* Islamic learning additions */
+.page-frame:has(.islamic-learning-screen),
+.page-frame:has(.quran-reading-screen),
+.page-frame:has(.tajweed-detail-screen),
+.page-frame:has(.surah-memorization-screen) {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 1180px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 239, 196, 0.82), transparent 34%),
+    radial-gradient(circle at 12% 88%, rgba(0, 111, 61, 0.14), transparent 32%),
+    linear-gradient(180deg, #F5EAD4 0%, #f1d9af 58%, #F5EAD4 100%) !important;
+}
+
+.islamic-learning-screen,
+.quran-reading-screen,
+.tajweed-detail-screen,
+.surah-memorization-screen {
+  --color-text-dark: #17352b;
+  --color-text-muted: #715f46;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  color: var(--color-text-dark);
+}
+
+.islamic-learning-screen .page-header,
+.quran-reading-screen .page-header,
+.tajweed-detail-screen .page-header,
+.surah-memorization-screen .page-header {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.islamic-learning-screen .page-header__copy,
+.quran-reading-screen .page-header__copy,
+.tajweed-detail-screen .page-header__copy,
+.surah-memorization-screen .page-header__copy {
+  min-width: 0;
+}
+
+.islamic-learning-screen .page-header h1,
+.quran-reading-screen .page-header h1,
+.tajweed-detail-screen .page-header h1,
+.surah-memorization-screen .page-header h1 {
+  max-width: 100%;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  line-height: 1.08;
+}
+
+.islamic-screen-actions,
+.tajweed-detail-actions,
+.tajweed-rule-card__actions,
+.arabic-text-block__actions,
+.ayah-memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.islamic-hero-card,
+.islamic-overview-card,
+.quran-reading-hero,
+.tajweed-detail-hero,
+.surah-memory-progress,
+.tajweed-learning-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.islamic-hero-card,
+.islamic-overview-card,
+.islamic-rulings-preview,
+.knowledge-section-panel,
+.quran-reading-hero,
+.harakat-review-card,
+.tajweed-games-card,
+.tajweed-detail-hero,
+.tajweed-practice-card,
+.memorize-surah-picker,
+.surah-memory-progress,
+.surah-memory-actions,
+.arabic-text-block,
+.tajweed-learning-summary,
+.islamic-note-card {
+  border-color: rgba(0, 111, 61, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(245, 234, 212, 0.66), rgba(245, 234, 212, 0.2) 40%),
+    linear-gradient(180deg, rgba(245, 234, 212, 0.96), rgba(245, 234, 212, 0.9)) !important;
+  color: var(--color-text-dark) !important;
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(245, 234, 212, 0.76) !important;
+}
+
+.islamic-hero-card h2,
+.islamic-overview-card h2,
+.knowledge-section-panel h2,
+.quran-reading-hero h2,
+.tajweed-detail-hero h2,
+.surah-memory-progress h2,
+.arabic-text-block h3,
+.tajweed-rule-card h3,
+.islamic-rule-card h3 {
+  color: var(--color-text-dark);
+}
+
+.islamic-hero-card p,
+.islamic-overview-card p,
+.knowledge-section-panel p,
+.quran-reading-hero p,
+.tajweed-detail-hero p,
+.arabic-text-block p,
+.tajweed-rule-card p,
+.islamic-rule-card p {
+  color: var(--color-text-muted);
+}
+
+.islamic-hero-stats,
+.islamic-ruling-chain,
+.knowledge-section-tabs,
+.harakat-mini-grid,
+.tajweed-game-list,
+.surah-memory-tabs,
+.namaz-surah-dua-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.islamic-hero-stats span,
+.islamic-ruling-chain span,
+.islamic-ruling-chain button,
+.knowledge-section-tabs button,
+.harakat-mini-grid button,
+.tajweed-game-list span,
+.surah-memory-tabs button,
+.namaz-surah-dua-list span {
+  min-height: 38px;
+  border: 1px solid rgba(0, 111, 61, 0.18);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: rgba(245, 234, 212, 0.78);
+  color: var(--color-text-dark) !important;
+  font-weight: 850;
+}
+
+.islamic-ruling-chain span,
+.islamic-ruling-chain button {
+  border-color: color-mix(in srgb, var(--rule-color) 42%, rgba(0, 111, 61, 0.14));
+  background: color-mix(in srgb, var(--rule-color) 16%, rgba(245, 234, 212, 0.86));
+}
+
+.knowledge-section-tabs button.is-active,
+.surah-memory-tabs button.is-active {
+  color: #006F3D !important;
+  background: linear-gradient(180deg, #007243, #007243);
+  box-shadow: 0 10px 22px rgba(0, 114, 67, 0.2);
+}
+
+body .page-frame :is(.islamic-learning-screen, .quran-reading-screen, .surah-memorization-screen, .tajweed-detail-screen)
+  :is(.islamic-hero-stats span, .islamic-ruling-chain span, .islamic-ruling-chain button, .knowledge-section-tabs button, .harakat-mini-grid button, .tajweed-game-list span, .surah-memory-tabs button, .namaz-surah-dua-list span) {
+  color: var(--color-text-dark) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+body .page-frame :is(.islamic-learning-screen, .quran-reading-screen, .surah-memorization-screen, .tajweed-detail-screen)
+  :is(.islamic-hero-stats span, .islamic-ruling-chain span, .islamic-ruling-chain button, .knowledge-section-tabs button, .harakat-mini-grid button, .tajweed-game-list span, .surah-memory-tabs button, .namaz-surah-dua-list span) :is(svg, strong, span, small) {
+  color: inherit !important;
+}
+
+body .page-frame :is(.islamic-learning-screen, .quran-reading-screen, .surah-memorization-screen, .tajweed-detail-screen)
+  :is(.knowledge-section-tabs button.is-active, .surah-memory-tabs button.is-active) {
+  color: #006F3D !important;
+}
+
+.islamic-rule-grid,
+.knowledge-topic-grid,
+.tajweed-reading-grid,
+.daily-dua-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.islamic-rule-card,
+.tajweed-rule-card,
+.knowledge-topic-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.islamic-rule-card::before,
+.tajweed-rule-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: var(--rule-color, var(--tajweed-color, var(--color-emerald)));
+}
+
+.islamic-rule-card__head,
+.tajweed-rule-card__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.islamic-rule-card__order,
+.tajweed-rule-card__num {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #006F3D, #006F3D);
+  color: #F5EAD4;
+  font-weight: 950;
+}
+
+.islamic-rule-card__examples,
+.tajweed-rule-card__examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.islamic-rule-card__examples span,
+.tajweed-rule-card__examples span,
+.knowledge-topic-card__examples span {
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(0, 111, 61, 0.09);
+  color: var(--color-text-dark);
+  font-weight: 800;
+}
+
+.knowledge-topic-card {
+  display: grid;
+  gap: 10px;
+  min-height: 170px;
+  padding: 16px;
+  border: 1px solid rgba(0, 111, 61, 0.16);
+  border-radius: 22px;
+  background: rgba(245, 234, 212, 0.66);
+}
+
+.knowledge-topic-card__examples,
+.tajweed-rule-card__examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.practice-quiz {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(0, 111, 61, 0.14);
+  border-radius: 18px;
+  background: rgba(245, 234, 212, 0.68);
+}
+
+.practice-quiz__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.practice-quiz__options button {
+  border: 1px solid rgba(0, 111, 61, 0.18);
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(245, 234, 212, 0.9);
+  color: var(--color-text-dark);
+  font-weight: 850;
+}
+
+.practice-quiz__options button.is-correct {
+  border-color: rgba(22, 163, 74, 0.42);
+  background: rgba(245, 234, 212, 0.86);
+}
+
+.practice-quiz__options button.is-wrong {
+  border-color: rgba(220, 70, 55, 0.36);
+  background: rgba(255, 232, 226, 0.86);
+}
+
+.practice-quiz__result,
+.progress-stars,
+.islamic-progress-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.practice-quiz__result.is-correct,
+.progress-stars {
+  color: #006F3D;
+}
+
+.practice-quiz__result.is-wrong {
+  color: #b94738;
+}
+
+.islamic-progress-line {
+  min-width: min(280px, 100%);
+}
+
+.islamic-progress-line div {
+  flex: 1;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 111, 61, 0.12);
+}
+
+.islamic-progress-line i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #007243, #d6a84f);
+}
+
+.quran-reading-ring {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    conic-gradient(#007243 var(--reading-progress), rgba(0, 111, 61, 0.13) 0),
+    #F5EAD4;
+  color: var(--color-text-dark);
+}
+
+.quran-reading-ring strong {
+  font-size: 1.35rem;
+}
+
+.harakat-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.harakat-mini-grid button {
+  border-radius: 18px;
+}
+
+.harakat-mini-grid strong {
+  display: block;
+  color: var(--color-emerald-dark);
+  font-family: "Noto Naskh Arabic", serif;
+  font-size: 1.8rem;
+}
+
+.arabic-text-block {
+  display: grid;
+  gap: 14px;
+}
+
+.arabic-text-block__line {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(0, 111, 61, 0.12);
+  border-radius: 18px;
+  background: rgba(245, 234, 212, 0.72);
+}
+
+.arabic-text-block__line-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.daily-dua-card {
+  display: grid;
+  gap: 14px;
+}
+
+.tajweed-mark {
+  display: inline;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tajweed-mark--madd {
+  background: rgba(59, 130, 246, 0.18);
+  color: #154c9f;
+}
+
+.tajweed-mark--ghunnah {
+  background: rgba(22, 163, 74, 0.18);
+  color: #006F3D;
+}
+
+.tajweed-mark--qalqalah {
+  background: rgba(214, 168, 79, 0.28);
+  color: #8a5b13;
+}
+
+.tajweed-inline-hint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid rgba(0, 111, 61, 0.16);
+  border-radius: 14px;
+  padding: 8px 11px;
+  background: rgba(245, 234, 212, 0.86);
+}
+
+.ayah-memory-actions {
+  margin-top: 12px;
+}
+
+.islamic-note-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.namaz-surah-dua-card {
+  grid-column: 1 / -1;
+}
+
+.namaz-surah-dua-list {
+  margin: 12px 0;
+}
+
+@media (max-width: 720px) {
+  .islamic-learning-screen .page-header,
+  .quran-reading-screen .page-header,
+  .tajweed-detail-screen .page-header,
+  .surah-memorization-screen .page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .islamic-hero-card,
+  .islamic-overview-card,
+  .quran-reading-hero,
+  .tajweed-detail-hero,
+  .surah-memory-progress,
+  .tajweed-learning-summary,
+  .islamic-note-card {
+    grid-template-columns: 1fr;
+  }
+
+  .islamic-screen-actions,
+  .tajweed-detail-actions,
+  .tajweed-rule-card__actions,
+  .ayah-memory-actions {
+    align-items: stretch;
+  }
+
+  .islamic-screen-actions > *,
+  .tajweed-detail-actions > *,
+  .tajweed-rule-card__actions > *,
+  .ayah-memory-actions > * {
+    flex: 1 1 180px;
+  }
+
+  .islamic-rule-card__head,
+  .tajweed-rule-card__top {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .islamic-rule-card__head .progress-stars,
+  .tajweed-rule-card__top > svg {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 430px) {
+  .page-frame:has(.islamic-learning-screen),
+  .page-frame:has(.quran-reading-screen),
+  .page-frame:has(.tajweed-detail-screen),
+  .page-frame:has(.surah-memorization-screen) {
+    padding-inline: 14px !important;
+  }
+
+  .islamic-learning-screen,
+  .quran-reading-screen,
+  .tajweed-detail-screen,
+  .surah-memorization-screen {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px);
+    overflow-x: hidden;
+  }
+
+  .islamic-learning-screen > *,
+  .quran-reading-screen > *,
+  .tajweed-detail-screen > *,
+  .surah-memorization-screen > * {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .islamic-learning-screen .page-header h1,
+  .quran-reading-screen .page-header h1,
+  .tajweed-detail-screen .page-header h1,
+  .surah-memorization-screen .page-header h1 {
+    font-size: 1.55rem !important;
+  }
+
+  .islamic-learning-screen .page-header p,
+  .quran-reading-screen .page-header p,
+  .tajweed-detail-screen .page-header p,
+  .surah-memorization-screen .page-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .islamic-rule-grid,
+  .knowledge-topic-grid,
+  .tajweed-reading-grid,
+  .daily-dua-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .harakat-mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .harakat-mini-grid button {
+    min-width: 0;
+  }
+
+  .knowledge-section-tabs button,
+  .surah-memory-tabs button,
+  .practice-quiz__options button {
+    flex: 1 1 100%;
+  }
+
+  .quran-reading-ring {
+    width: 96px;
+  }
+}
+
+/* 99 names of Allah */
+.page-frame:has(.allah-names-screen) {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 1180px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 239, 196, 0.84), transparent 34%),
+    radial-gradient(circle at 10% 88%, rgba(0, 111, 61, 0.14), transparent 32%),
+    linear-gradient(180deg, #F5EAD4 0%, #f2dbb5 58%, #F5EAD4 100%) !important;
+}
+
+.allah-names-screen {
+  --color-text-dark: #17352b;
+  --color-text-muted: #715f46;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  color: var(--color-text-dark);
+}
+
+.allah-names-screen .page-header {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.allah-names-screen .page-header__copy {
+  min-width: 0;
+}
+
+.allah-names-screen .page-header h1 {
+  max-width: 100%;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  line-height: 1.08;
+}
+
+.allah-names-hero,
+.allah-names-search,
+.allah-name-card,
+.allah-names-empty {
+  border-color: rgba(0, 111, 61, 0.18) !important;
+  background:
+    linear-gradient(145deg, rgba(245, 234, 212, 0.68), rgba(245, 234, 212, 0.2) 40%),
+    linear-gradient(180deg, rgba(245, 234, 212, 0.96), rgba(245, 234, 212, 0.9)) !important;
+  color: var(--color-text-dark) !important;
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(245, 234, 212, 0.76) !important;
+}
+
+.allah-names-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.allah-names-hero__icon,
+.allah-name-card__number {
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #006F3D, #006F3D);
+  color: #F5EAD4;
+  box-shadow: 0 12px 24px rgba(0, 111, 61, 0.22);
+}
+
+.allah-names-hero__icon {
+  width: 58px;
+  height: 58px;
+}
+
+.allah-names-hero h2,
+.allah-name-card h2,
+.allah-names-empty h2 {
+  margin: 0;
+  color: var(--color-text-dark);
+}
+
+.allah-names-hero p,
+.allah-name-card p,
+.allah-names-empty p {
+  color: var(--color-text-muted);
+}
+
+.allah-names-hero__count {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(0, 111, 61, 0.18);
+  border-radius: 50%;
+  background: #F5EAD4;
+  color: #006F3D;
+  font-size: 1.45rem;
+}
+
+.allah-names-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.allah-names-search input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(0, 111, 61, 0.18) !important;
+  border-radius: 16px;
+  background: rgba(245, 234, 212, 0.88) !important;
+  color: var(--color-text-dark) !important;
+}
+
+.allah-names-search input::placeholder {
+  color: rgba(113, 95, 70, 0.72) !important;
+}
+
+.allah-names-search .quran-search-count {
+  color: var(--color-text-dark);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.allah-names-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.allah-name-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  min-height: 190px;
+}
+
+.allah-name-card__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.allah-name-card__number {
+  width: 42px;
+  height: 42px;
+  font-weight: 950;
+}
+
+.allah-name-card__arabic {
+  min-width: 0;
+  color: #006F3D;
+  font-family: "Noto Naskh Arabic", "Amiri", serif;
+  font-size: clamp(2rem, 8vw, 3.15rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.allah-name-card__body {
+  display: grid;
+  gap: 7px;
+}
+
+.allah-name-card__body h2 {
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.allah-name-card__body p {
+  margin: 0;
+  line-height: 1.42;
+}
+
+@media (max-width: 720px) {
+  .allah-names-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .allah-names-hero__count {
+    grid-column: 1 / -1;
+    width: 58px;
+  }
+
+  .allah-names-search {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .allah-names-search .quran-search-count {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 430px) {
+  .page-frame:has(.allah-names-screen) {
+    padding-inline: 14px !important;
+  }
+
+  .allah-names-screen {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px);
+    overflow-x: hidden;
+  }
+
+  .allah-names-screen > * {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .allah-names-screen .page-header h1 {
+    font-size: 1.55rem !important;
+  }
+
+  .allah-names-screen .page-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .allah-names-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .allah-name-card {
+    min-height: 172px;
+  }
+}
+
+/* Button polish: keep compact controls readable and balanced. */
+.premium-lessons-chapters a {
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto 8px !important;
+  min-height: 86px !important;
+}
+
+.premium-lessons-chapters a::before {
+  grid-row: 3 !important;
+}
+
+.premium-lessons-chapters a small {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  justify-self: start !important;
+  width: fit-content;
+}
+
+.premium-profile-actions button {
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.premium-profile-collapse {
+  min-height: 44px;
+  padding: 8px 0;
+}
+
+.ayah-icon-btn {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 15px !important;
+}
+
+.surah-control-chip {
+  min-width: 42px !important;
+  min-height: 42px !important;
+  padding-inline: 12px !important;
+}
+
+@media (max-width: 720px) {
+  .premium-profile-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .premium-profile-actions button {
+    min-height: 54px !important;
+    flex-direction: row !important;
+    padding: 8px 10px !important;
+    font-size: 0.78rem !important;
+  }
+}

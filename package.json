@@ -1,0 +1,25 @@
+{
+  "name": "al-ilm",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "adhan": "^4.4.3",
+    "lucide-react": "1.14.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "react-router-dom": "7.15.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.1",
+    "vite": "8.0.10"
+  }
+}

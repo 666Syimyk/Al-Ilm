@@ -1,0 +1,43 @@
+﻿<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="theme-color" content="#006F3D" />
+    <meta name="description" content="Учи арабский язык и Коран вместе с Ахмадом и Аминой" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Аль-Ильм" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/al-ilm-logo.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/al-ilm-logo.png" />
+    <title>Al-Ilm / Аль-Ильм</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      if (import.meta.env.DEV && "serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+        await Promise.all(registrations.map((registration) => registration.unregister())).catch(() => {});
+
+        if ("caches" in window) {
+          const keys = await caches.keys().catch(() => []);
+          await Promise.all(keys.map((key) => caches.delete(key))).catch(() => {});
+        }
+
+        if (navigator.serviceWorker.controller && !sessionStorage.getItem("alIlmDevSwCleared")) {
+          sessionStorage.setItem("alIlmDevSwCleared", "true");
+          window.location.reload();
+        }
+      }
+
+      if (import.meta.env.PROD && "serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {});
+        });
+      }
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+

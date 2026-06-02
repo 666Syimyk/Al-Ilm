@@ -1,0 +1,68 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="evening" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2b1830"/>
+      <stop offset=".38" stop-color="#5e3a48"/>
+      <stop offset=".72" stop-color="#c17a45"/>
+      <stop offset="1" stop-color="#291710"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx=".5" cy=".18" r=".35">
+      <stop offset="0" stop-color="#fff1a5" stop-opacity=".92"/>
+      <stop offset=".34" stop-color="#f7a93d" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#f7a93d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe3a1"/>
+      <stop offset=".5" stop-color="#c98a45"/>
+      <stop offset="1" stop-color="#573522"/>
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#evening)"/>
+  <rect width="1600" height="1000" fill="url(#lamp)"/>
+  <g opacity=".4" filter="url(#blur)" fill="#ffdf83">
+    <circle cx="240" cy="250" r="70"/>
+    <circle cx="1320" cy="220" r="82"/>
+    <circle cx="760" cy="175" r="95"/>
+  </g>
+  <g stroke="#F5EAD4" stroke-width="5" fill="none" opacity=".62">
+    <path d="M238 0v156"/>
+    <path d="M1320 0v142"/>
+    <path d="M760 0v116"/>
+  </g>
+  <g fill="#F5EAD4" opacity=".88">
+    <path d="M198 155h80l-12 96h-56z"/>
+    <path d="M1280 142h80l-12 96h-56z"/>
+    <path d="M720 116h80l-12 98h-56z"/>
+  </g>
+  <g transform="translate(135 280)">
+    <g fill="url(#stone)" stroke="#f7c861" stroke-width="3">
+      <path d="M180 624h1108V414c0-58-47-105-105-105H285c-58 0-105 47-105 105z"/>
+      <path d="M442 624V332c0-137 111-248 248-248s248 111 248 248v292z"/>
+      <path d="M498 330c0-106 86-192 192-192s192 86 192 192z" fill="#ffd98c"/>
+      <path d="M572 624V448c0-65 53-118 118-118s118 53 118 118v176z" fill="#332019"/>
+      <rect x="106" y="624" width="1250" height="78" rx="8"/>
+      <rect x="60" y="702" width="1336" height="74" rx="8"/>
+    </g>
+    <g fill="#fff0aa">
+      <rect x="72" y="190" width="25" height="434" rx="12"/>
+      <rect x="1350" y="190" width="25" height="434" rx="12"/>
+      <path d="M84 118c-38 55-38 99 0 133 38-34 38-78 0-133z"/>
+      <path d="M1362 118c-38 55-38 99 0 133 38-34 38-78 0-133z"/>
+      <circle cx="690" cy="82" r="12"/>
+      <path d="M690 22c43 0 80 25 99 62-28-16-62-25-99-25s-71 9-99 25c19-37 56-62 99-62z"/>
+    </g>
+    <g fill="#F5EAD4" opacity=".86">
+      <rect x="296" y="482" width="34" height="82" rx="17"/>
+      <rect x="1050" y="482" width="34" height="82" rx="17"/>
+      <rect x="648" y="490" width="84" height="134" rx="42"/>
+    </g>
+  </g>
+  <g opacity=".42">
+    <rect y="815" width="1600" height="185" fill="#26140d"/>
+    <path d="M0 860c243 51 475 46 695-14 292-80 575-56 905 43v111H0z" fill="#a86132"/>
+    <path d="M0 934c265-39 517-28 782 8 274 38 535 24 818-45v103H0z" fill="#321811"/>
+  </g>
+</svg>
