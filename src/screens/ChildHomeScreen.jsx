@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowRight,
   BookOpen,
   BookOpenCheck,
@@ -19,11 +19,11 @@
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
 import { arabicLetters, getLetterById } from "../data/arabicLetters.js";
 import { lessonPathNodes, withLessonPathStatus } from "../data/lessonPath.js";
-import { prayerTimes } from "../data/prayerTimes.js";
+import usePrayerTimes from "../utils/usePrayerTimes.js";
 import {
   getDailyMissionState,
   getLessonPathState,
@@ -32,8 +32,8 @@ import {
   getQuranTracking,
   getSelectedCharacter,
   getUser,
-  setDailyMissionDone,
-  setProgress
+  claimDailyMission,
+  hasStudiedToday
 } from "../utils/storage.js";
 
 const characterImages = { ahmad, amina };
@@ -48,7 +48,8 @@ const MISSIONS = [
 ];
 
 function getDailyMission() {
-  const dayIndex = Math.floor(Date.now() / 86400000) % MISSIONS.length;
+  const today = new Date();
+  const dayIndex = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000) % MISSIONS.length;
   return MISSIONS[dayIndex];
 }
 
@@ -89,8 +90,9 @@ function safeNumber(value) {
 
 export default function ChildHomeScreen() {
   const navigate = useNavigate();
-  const user = getUser() || { name: "Сыймык" };
-  const greetingName = user.firstName || user.name || "Сыймык";
+  const prayerTimes = usePrayerTimes();
+  const user = getUser() || { name: "юный ученик" };
+  const greetingName = user.firstName || user.name || "юный ученик";
   const birthdayToday = isBirthdayToday(user.dateOfBirth);
   const character = getSelectedCharacter() || "ahmad";
   const characterImage = characterImages[character] || ahmad;
@@ -99,7 +101,9 @@ export default function ChildHomeScreen() {
   const quranTracking = getQuranTracking();
   const currentLetter = getLetterById(progress.currentLesson);
   const mission = getDailyMission();
-  const [missionDone, setMissionDone] = useState(() => getDailyMissionState().done);
+  const [, refreshMission] = useState(0);
+  const [missionHint, setMissionHint] = useState("");
+  const missionDone = getDailyMissionState().done;
   const lessonNodes = withLessonPathStatus(lessonPathNodes, getLessonPathState());
   const currentLetterNodes = lessonNodes.filter((node) => node.letterId === currentLetter.id);
   const currentLetterDone = currentLetterNodes.filter((node) => node.status === "completed").length;
@@ -126,25 +130,26 @@ export default function ChildHomeScreen() {
   ];
 
   const languageSections = [
-    { title: "Огласовки", symbol: "ـَ", to: "/harakat", desc: "Короткие звуки и чтение", progress: 22 },
-    { title: "Словарь", symbol: "ك", to: "/vocabulary", desc: "Слова по темам", progress: 10 },
-    { title: "Грамматика", symbol: "ن", to: "/grammar", desc: "Правила языка", progress: 8 },
-    { title: "Чтение", symbol: "ق", to: "/reading", desc: "Тексты и суры", progress: 14 }
+    { title: "Огласовки", symbol: "ـَ", to: "/harakat", desc: "Короткие звуки и чтение" },
+    { title: "Словарь", symbol: "ك", to: "/vocabulary", desc: "Слова по темам" },
+    { title: "Грамматика", symbol: "ن", to: "/grammar", desc: "Правила языка" },
+    { title: "Чтение", symbol: "ق", to: "/reading", desc: "Тексты и суры" }
   ];
 
   const stats = [
     { label: "Изучено букв", value: `${progress.completedLetters.length}/${arabicLetters.length}`, icon: GraduationCap, progress: lettersPercent },
     { label: "Коран сегодня", value: `${quranToday}/${quranGoal}`, icon: BookOpenCheck, progress: quranPercent },
-    { label: "Выучено сур", value: quranState?.memorizedSurahs?.length || 0, icon: Star, progress: Math.min(100, (quranState?.memorizedSurahs?.length || 0) * 8) },
-    { label: "Серия дней", value: progress.streak || 0, icon: Flame, progress: Math.min(100, (progress.streak || 0) * 12) },
-    { label: "Очки", value: points, icon: Sparkles, progress: Math.min(100, points / 5) }
+    { label: "Выучено сур", value: quranState?.memorizedSurahs?.length || 0, icon: Star },
+    { label: "Серия дней", value: progress.streak || 0, icon: Flame },
+    { label: "Очки", value: points, icon: Sparkles }
   ];
 
   function completeMission() {
-    setDailyMissionDone();
-    setMissionDone(true);
-    const updated = { ...progress, coins: (progress.coins || 0) + mission.reward, points: (progress.points || 0) + mission.reward };
-    setProgress(updated);
+    if (!hasStudiedToday()) {
+      setMissionHint("Сначала выполни задание — награда откроется после первого занятия сегодня.");
+      return;
+    }
+    if (claimDailyMission(mission.reward)) refreshMission((value) => value + 1);
   }
 
   const MissionIcon = mission.icon;
@@ -167,7 +172,7 @@ export default function ChildHomeScreen() {
                 <p>Сегодня отличный день для знаний.</p>
               </div>
               <div className="premium-home-avatar">
-                <img src={characterImage} alt="Ахмад" />
+                <img src={characterImage} alt={character === "amina" ? "Амина" : "Ахмад"} />
               </div>
             </div>
 
@@ -191,7 +196,7 @@ export default function ChildHomeScreen() {
 
             <div className="premium-home-motivation">
               <Target size={18} aria-hidden="true" />
-              <span>Отличная работа! Продолжай путь знаний шаг за шагом.</span>
+              <span>{progress.points > 0 ? "Отличная работа! Продолжай путь знаний шаг за шагом." : "Начни с первой буквы — каждый шаг приносит очки."}</span>
             </div>
           </section>
 
@@ -255,7 +260,7 @@ export default function ChildHomeScreen() {
             <div className="premium-home-mission__body">
               <span className="premium-home-kicker">Задание дня</span>
               <h2>{mission.title}</h2>
-              <p>{mission.desc}</p>
+              <p className={missionHint ? "premium-home-mission__hint" : undefined} role={missionHint ? "status" : undefined}>{missionHint || mission.desc}</p>
             </div>
             <div className="premium-home-mission__actions">
               <span className="premium-home-reward">
@@ -273,7 +278,7 @@ export default function ChildHomeScreen() {
                     Выполнить
                     <ArrowRight size={17} aria-hidden="true" />
                   </button>
-                  <button className="premium-home-link" type="button" onClick={completeMission}>Уже сделал</button>
+                  <button className="premium-home-link" type="button" onClick={completeMission}>Забрать награду</button>
                 </>
               )}
             </div>
@@ -285,7 +290,7 @@ export default function ChildHomeScreen() {
                 <Icon size={20} aria-hidden="true" />
                 <span>{label}</span>
                 <strong>{value}</strong>
-                <div><i style={{ width: `${statProgress}%` }} /></div>
+                {statProgress !== undefined && <div aria-label={`${label}: ${statProgress}%`}><i style={{ width: `${statProgress}%` }} /></div>}
               </article>
             ))}
           </section>
@@ -299,13 +304,12 @@ export default function ChildHomeScreen() {
               <Languages size={22} aria-hidden="true" />
             </div>
             <div className="premium-home-module-grid">
-              {languageSections.map(({ title, symbol, to, desc, progress: moduleProgress }) => (
+              {languageSections.map(({ title, symbol, to, desc }) => (
                 <button className="premium-home-module" key={to} type="button" onClick={() => navigate(to)}>
                   <span className="premium-home-module__symbol">{symbol}</span>
                   <span className="premium-home-module__body">
                     <strong>{title}</strong>
                     <small>{desc}</small>
-                    <i><b style={{ width: `${moduleProgress}%` }} /></i>
                   </span>
                   <ChevronRight size={17} aria-hidden="true" />
                 </button>
@@ -332,8 +336,8 @@ export default function ChildHomeScreen() {
             ) : (
               <div className="premium-home-empty">
                 <Clock3 size={24} aria-hidden="true" />
-                <strong>Время намаза скоро появится</strong>
-                <p>Разрешите геолокацию, чтобы видеть точное время.</p>
+                <strong>Выбери свой город</strong>
+                <p>Укажи город вручную или используй геолокацию для расчёта времени.</p>
               </div>
             )}
             <button className="premium-home-secondary" type="button" onClick={() => navigate("/namaz")}>

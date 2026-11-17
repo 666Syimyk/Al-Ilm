@@ -4,12 +4,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import VoiceCheckPanel from "../components/VoiceCheckPanel.jsx";
-import { getAyahByNumber, getAyahWords, getSurahById } from "../data/quranContent.js";
-import { getAyahAudioUrl } from "../utils/quranAudio.js";
-import { playCachedAudio, speakText, stopAllAudio, stopAudioElement } from "../utils/audioPlayback.js";
+import { getAyahByNumber, getAyahWords, getSurahById, quranSurahs, quranTextSource, translationSource } from "../data/quranContent.js";
+import { getAyahAudioSources } from "../utils/quranAudio.js";
+import { playAudioSources, stopAllAudio, stopAudioElement } from "../utils/audioPlayback.js";
 import { markAyahRead } from "../utils/storage.js";
+import { goBack } from "../utils/navigation.js";
 
 export default function AyahLessonScreen() {
+  const { surahId, ayahNumber } = useParams();
+  const navigate = useNavigate();
+  const surah = quranSurahs.find((item) => item.id === surahId);
+  if (!surah?.ayahs.some((item) => item.number === Number(ayahNumber))) {
+    return <section className="content-stack"><p>Аят не найден.</p><button className="button button--primary" type="button" onClick={() => navigate("/quran/surahs")}>К сурам</button></section>;
+  }
+  return <AyahLessonSession key={`${surahId}:${ayahNumber}`} />;
+}
+
+function AyahLessonSession() {
   const navigate = useNavigate();
   const { surahId, ayahNumber } = useParams();
   const surah = getSurahById(surahId);
@@ -18,6 +29,7 @@ export default function AyahLessonScreen() {
   const nextAyah = surah.ayahs.find((item) => item.number === Number(ayahNumber) + 1);
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
   const [voicePassed, setVoicePassed] = useState(false);
 
   function stopAudio() {
@@ -27,20 +39,20 @@ export default function AyahLessonScreen() {
     setPlaying(false);
   }
 
-  function playFallbackVoice() {
-    audioRef.current = null;
-    setPlaying(true);
-    speakText(ayah.arabic, { lang: "ar-SA", rate: 0.78, onEnd: () => setPlaying(false) });
-  }
-
   function playAudio() {
-    const url = getAyahAudioUrl(surah.number, ayah.number);
+    stopAudio();
     setPlaying(true);
-    playCachedAudio(url, {
-      onPlaying: (audio) => { audioRef.current = audio; },
-      onEnded: () => setPlaying(false),
-      onError: playFallbackVoice
-    }).catch(() => {});
+    setAudioError(false);
+    playAudioSources(getAyahAudioSources(surah.number, ayah.number), {
+      onReady: (audio) => { audioRef.current = audio; },
+      onEnded: () => { setPlaying(false); markAyahRead(`${surah.id}:${ayah.number}`); },
+      onStop: () => setPlaying(false),
+      onError: () => {
+        audioRef.current = null;
+        setPlaying(false);
+        setAudioError(true);
+      }
+    });
   }
 
   function replayAudio() {
@@ -52,7 +64,7 @@ export default function AyahLessonScreen() {
   return (
     <section className="content-stack">
       <Header title={`Аят ${ayah.number}`} subtitle={surah.title} compact>
-        <button className="button button--ghost" type="button" onClick={() => navigate(-1)} aria-label="Назад">
+        <button className="button button--ghost" type="button" onClick={() => goBack(navigate, "/quran/surahs")} aria-label="Назад">
           <ArrowLeft size={18} aria-hidden="true" />
           Назад
         </button>
@@ -60,13 +72,18 @@ export default function AyahLessonScreen() {
 
       <GlassCard className="ayah-lesson-card">
         <p className="arabic-line arabic-line--large">{ayah.arabic}</p>
-        <p>{ayah.translation}</p>
+        <p className="content-source-note">{ayah.translation ? "Перевод смыслов:" : translationSource.note}</p>
+        {ayah.translation && <p>{ayah.translation}</p>}
+        <p className="content-source-note"><a href={quranTextSource.url} target="_blank" rel="noreferrer">Арабский текст: Tanzil</a></p>
+        {audioError ? (
+          <p className="audio-unavailable-note">Аудио временно недоступно. Проверьте интернет или попробуйте позже.</p>
+        ) : null}
         <div className="game-actions">
-          <button className="button button--soft" type="button" onClick={playAudio} aria-label="Слушать аят">
+          <button className="button button--soft" type="button" onClick={playing ? stopAudio : playAudio} aria-label={playing ? "Остановить аят" : "Слушать аят"}>
             <Headphones size={18} aria-hidden="true" />
-            {playing ? "Играет..." : "Слушать"}
+            {playing ? "Стоп" : "Слушать"}
           </button>
-          <button className="button button--soft" type="button" onClick={replayAudio} aria-label="Повторить аят">
+          <button className="button button--soft" type="button" onClick={playAudio} aria-label="Повторить аят">
             <Repeat2 size={18} aria-hidden="true" />
             Повторить
           </button>
@@ -86,10 +103,10 @@ export default function AyahLessonScreen() {
       </GlassCard>
 
       <VoiceCheckPanel
-        targets={[ayah.arabic, ...words.map((word) => word.reading || word.arabic)]}
+        targets={[ayah.arabic]}
         prompt="Прочитай аят вслух после прослушивания."
-        successText="Отлично! Аят прочитан уверенно."
-        threshold={0.52}
+        successText="Распознанный текст совпал с аятом. Произношение проверь с учителем."
+        threshold={0.9}
         onPassed={() => {
           markAyahRead(`${surah.id}:${ayah.number}`);
           setVoicePassed(true);
@@ -102,20 +119,25 @@ export default function AyahLessonScreen() {
         </GlassCard>
       ) : null}
 
-      {words.length ? (
-        <GlassCard className="quran-section-card">
-          <h2>Пословный разбор</h2>
-          <div className="word-breakdown-grid">
-            {words.map((word, index) => (
-              <div className="word-breakdown-card" key={`${word.arabic}-${index}`}>
-                <strong>{word.arabic}</strong>
-                {word.reading ? <span>{word.reading}</span> : null}
-                {word.meaning ? <small>{word.meaning}</small> : null}
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      ) : null}
+      <GlassCard className="quran-section-card">
+        <h2>Пословный разбор</h2>
+        {words.length ? (
+          <>
+            <p className="content-source-note">Транслитерация приблизительная. Требует проверки знающим учителем.</p>
+            <div className="word-breakdown-grid">
+              {words.map((word, index) => (
+                <div className="word-breakdown-card" key={`${word.arabic}-${index}`}>
+                  <strong>{word.arabic}</strong>
+                  {word.reading ? <span>{word.reading}</span> : null}
+                  {word.meaning ? <small>{word.meaning}</small> : null}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="content-source-note">Пословный разбор готовится и будет добавлен после проверки знающим специалистом.</p>
+        )}
+      </GlassCard>
     </section>
   );
 }

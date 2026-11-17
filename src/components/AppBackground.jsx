@@ -32,7 +32,7 @@ export default function AppBackground({ children }) {
 
   return (
     <div
-      className={`app-background ${themeClass}`}
+      className={`app-background app-shell ${themeClass}`}
       style={{
         "--mosque-bg": `url("${backgroundImage}")`,
         "--theme-image": `url("${backgroundImage}")`,

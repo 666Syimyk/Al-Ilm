@@ -54,7 +54,7 @@ export default function RewardScreen() {
 
           <CharacterHelper
             character={character}
-            message="МашаАллах! Ты прошёл урок и стал ближе к чтению новых слов."
+            message="МашаАллах! Урок пройден — ещё один шаг к чтению новых слов."
             mood="success"
           />
 
@@ -69,7 +69,7 @@ export default function RewardScreen() {
 
           <span className="reward-kicker">Награда получена</span>
           <h1>Отличная работа!</h1>
-          <p>Ты прошёл урок буквы {letter.nameRu}. Маленький шаг сегодня, сильное чтение завтра.</p>
+          <p>Урок буквы {letter.nameRu} пройден. Маленький шаг сегодня, сильное чтение завтра.</p>
 
           <div className="reward-letter-medal" aria-label={`Буква ${letter.nameRu}`}>
             <span>{letter.letter}</span>

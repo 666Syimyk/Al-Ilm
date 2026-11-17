@@ -1,9 +1,9 @@
-﻿import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
-import logo from "../assets/brand/al-ilm-logo.png";
-import ahmad from "../assets/characters/ahmad.png";
-import { DEFAULT_ACCESS_PASSWORD, getAge, getSelectedCharacter, loginLocalAccount, setAge, setSelectedCharacter, setSessionActive } from "../utils/storage.js";
+import logo from "../assets/brand/al-ilm-logo.webp";
+import ahmad from "../assets/characters/ahmad.webp";
+import { getAge, getSelectedCharacter, loginLocalAccount, setAge, setSelectedCharacter, setSessionActive } from "../utils/storage.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,7 +43,7 @@ function Field({ children, icon: Icon, label }) {
 
 export default function LoginScreen() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "", remember: true });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
   function updateField(event) {
@@ -65,18 +65,17 @@ export default function LoginScreen() {
     try {
       storedUser = await loginLocalAccount(email, form.password);
     } catch (authError) {
-      setError(authError.message === "not-found" ? "Аккаунт не найден. Зарегистрируйтесь" : "Неверный email или пароль");
+      setError(authError.message === "storage-unavailable" ? "Браузер не разрешает сохранить профиль. Освободи место или разреши хранение данных." : authError.message === "not-found" ? "Аккаунт не найден. Зарегистрируйтесь" : "Неверный email или пароль");
       return;
     }
 
     setSessionActive(true);
 
-    const accessCodeLogin = form.password === DEFAULT_ACCESS_PASSWORD;
-    const age = getAge() || (storedUser.dateOfBirth ? getAgeFromBirthDate(storedUser.dateOfBirth) : null) || (accessCodeLogin ? 8 : null);
+    const age = (storedUser.dateOfBirth ? getAgeFromBirthDate(storedUser.dateOfBirth) : null) || getAge();
     if (age) setAge(age);
     let character = getSelectedCharacter();
-    if (accessCodeLogin && !character) {
-      character = storedUser.preferredCharacter || "ahmad";
+    if (!character && storedUser.preferredCharacter && storedUser.authProvider === "local-access-code") {
+      character = storedUser.preferredCharacter;
       setSelectedCharacter(character);
     }
 
@@ -136,14 +135,11 @@ export default function LoginScreen() {
             </Field>
 
             <Field icon={LockKeyhole} label="Пароль">
-              <input name="password" type="password" value={form.password} onChange={updateField} autoComplete="current-password" placeholder="Введите пароль или 0000" />
+              <input name="password" type="password" value={form.password} onChange={updateField} autoComplete="current-password" placeholder="Введите пароль" />
             </Field>
 
             <div className="form-row premium-login-row">
-              <label className="check-line premium-login-check">
-                <input name="remember" type="checkbox" checked={form.remember} onChange={updateField} />
-                <span>Запомнить меня</span>
-              </label>
+              <span>Профиль сохраняется на этом устройстве.</span>
               <button className="link-button premium-login-link" type="button" onClick={() => navigate("/password-reset")}>
                 Забыли пароль?
               </button>

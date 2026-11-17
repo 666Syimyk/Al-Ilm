@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-2UHhqg_S.js";var t=e(),n=/([؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿](?:[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿\s]*[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿])?)/;function r({text:e}){return String(e??``).split(n).map((e,n)=>n%2?(0,t.jsx)(`bdi`,{className:`inline-arabic`,lang:`ar`,dir:`rtl`,children:e},n):e)}export{r as t};

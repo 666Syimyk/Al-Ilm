@@ -1,17 +1,7 @@
-﻿import { ArrowLeft, ArrowRight, BookOpen, Clock3, Landmark, Languages, Sparkles, UserRound } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, BookOpen, Landmark, Languages, Sparkles, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/brand/al-ilm-logo.png";
-import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
-import { setDailyGoal } from "../utils/storage.js";
-
-const goals = [
-  { minutes: 5, title: "5 минут в день", level: "Лёгкая" },
-  { minutes: 10, title: "10 минут в день", level: "Обычная" },
-  { minutes: 15, title: "15 минут в день", level: "Серьёзная" },
-  { minutes: 20, title: "20 минут в день", level: "Интенсивная" }
-];
+import logo from "../assets/brand/al-ilm-logo.webp";
+import ahmad from "../assets/characters/ahmad.webp";
 
 const features = [
   { title: "Коран", subtitle: "Учись с пониманием", icon: BookOpen },
@@ -30,12 +20,9 @@ const particles = Array.from({ length: 24 }, (_, index) => ({
 
 export default function WelcomeScreen() {
   const navigate = useNavigate();
-  const [step, setStep] = useState("hello");
-  const [selectedGoal, setSelectedGoal] = useState(null);
-  const isGoalStep = step === "goal";
 
   return (
-    <section className={`duo-onboarding-shell premium-welcome premium-welcome--${step}`}>
+    <section className="duo-onboarding-shell premium-welcome premium-welcome--hello">
       <div className="premium-welcome__bg" aria-hidden="true" />
       <div className="premium-welcome__shade" aria-hidden="true" />
       <div className="premium-welcome__sun" aria-hidden="true" />
@@ -59,13 +46,7 @@ export default function WelcomeScreen() {
       </div>
 
       <header className="duo-onboarding-top premium-welcome__top">
-        {isGoalStep ? (
-          <button className="premium-round-button" type="button" onClick={() => setStep("hello")} aria-label="Назад">
-            <ArrowLeft size={25} aria-hidden="true" />
-          </button>
-        ) : (
-          <span />
-        )}
+        <span />
         <div className="premium-logo" aria-label="Al-Ilm Аль-Ильм">
           <span className="premium-logo__mark">
             <img src={logo} alt="" />
@@ -78,66 +59,35 @@ export default function WelcomeScreen() {
         <span />
       </header>
 
-      <main className={`duo-onboarding-center premium-welcome__center premium-welcome__center--${step}`}>
-        {!isGoalStep ? (
-          <>
-            <div className="premium-feature-cloud" aria-label="Возможности Al-Ilm">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
+      <main className="duo-onboarding-center premium-welcome__center premium-welcome__center--hello">
+        <div className="premium-feature-cloud" aria-label="Возможности Al-Ilm">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
 
-                return (
-                  <article className={`premium-feature-card premium-feature-card--${index + 1}`} key={feature.title}>
-                    <span>
-                      <Icon size={25} aria-hidden="true" />
-                    </span>
-                    <div>
-                      <strong>{feature.title}</strong>
-                      <small>{feature.subtitle}</small>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            return (
+              <article className={`premium-feature-card premium-feature-card--${index + 1}`} key={feature.title}>
+                <span>
+                  <Icon size={25} aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>{feature.title}</strong>
+                  <small>{feature.subtitle}</small>
+                </div>
+              </article>
+            );
+          })}
+        </div>
 
-            <section className="premium-hero" aria-label="Приветствие Ахмада">
-              <div className="premium-hero__glow" aria-hidden="true" />
-              <div className="premium-hero__blink" aria-hidden="true" />
-              <img className="premium-hero__character" src={ahmad} alt="Ахмад" />
-              <article className="premium-dialog">
-                <span className="premium-dialog__badge">Ахмад</span>
-                <h1>Ассаляму алейкум!</h1>
-                <p>Я помогу тебе учить арабские буквы и Коран шаг за шагом.</p>
-              </article>
-            </section>
-          </>
-        ) : (
-          <section className="premium-goal-step" aria-label="Выбор дневной цели">
-            <div className="premium-goal-step__guide">
-              <img src={amina} alt="Амина" />
-              <article className="premium-dialog premium-dialog--goal">
-                <span className="premium-dialog__badge">Амина</span>
-                <h1>Выбери темп</h1>
-                <p>Сколько минут будем учиться каждый день?</p>
-              </article>
-            </div>
-            <div className="duo-goal-options premium-goal-options">
-              {goals.map((goal) => (
-                <button
-                  className={`duo-goal-option premium-goal-option ${selectedGoal === goal.minutes ? "is-selected" : ""}`}
-                  key={goal.minutes}
-                  type="button"
-                  onClick={() => setSelectedGoal(goal.minutes)}
-                >
-                  <span>
-                    <Clock3 size={19} aria-hidden="true" />
-                    {goal.title}
-                  </span>
-                  <strong>{goal.level}</strong>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+        <section className="premium-hero" aria-label="Приветствие Ахмада">
+          <div className="premium-hero__glow" aria-hidden="true" />
+          <div className="premium-hero__blink" aria-hidden="true" />
+          <img className="premium-hero__character" src={ahmad} alt="Ахмад" />
+          <article className="premium-dialog">
+            <span className="premium-dialog__badge">Ахмад</span>
+            <h1>Ассаляму алейкум!</h1>
+            <p>Я помогу тебе учить арабские буквы и Коран шаг за шагом.</p>
+          </article>
+        </section>
       </main>
 
       <footer className="duo-lesson-footer duo-onboarding-footer premium-welcome__footer">
@@ -148,17 +98,9 @@ export default function WelcomeScreen() {
         <button
           className="button button--primary duo-main-button premium-next-button"
           type="button"
-          disabled={isGoalStep && !selectedGoal}
-          onClick={() => {
-            if (!isGoalStep) {
-              setStep("goal");
-            } else {
-              if (selectedGoal) setDailyGoal(selectedGoal);
-              navigate("/register");
-            }
-          }}
+          onClick={() => navigate("/register")}
         >
-          {isGoalStep ? "Начать" : "Далее"}
+          Начать
           <ArrowRight size={24} aria-hidden="true" />
         </button>
       </footer>

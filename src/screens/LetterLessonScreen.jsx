@@ -1,17 +1,16 @@
-﻿import { ArrowRight, Check, Gift, Lock, Mic, Play, Sparkles, Star, Volume2, X } from "lucide-react";
+﻿import { ArrowRight, Check, Gift, Lock, Mic, Sparkles, Star, Volume2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CharacterHelper from "../components/CharacterHelper.jsx";
-import { FloatingParticles, GameButton, GameLessonLayout, GameTransition, RewardPopup, TopBar, XPBar } from "../components/GameLessonUI.jsx";
+import { FloatingParticles, GameButton, GameLessonLayout, GameTransition, RewardPopup, TopBar } from "../components/GameLessonUI.jsx";
 import GlassCard from "../components/GlassCard.jsx";
-import { arabicLetters, getLetterById, getNextLetterId } from "../data/arabicLetters.js";
-import { canOpenLessonNode, getLessonNodeByType, getLessonNodesForLetter, getLetterRewardNodeId } from "../data/lessonPath.js";
-import { speakText, stopAllAudio } from "../utils/audioPlayback.js";
-import { completeLessonNode, getLessonPathState, getProgress, getSelectedCharacter, setProgress } from "../utils/storage.js";
+import LetterKnowledgeCheck from "../components/LetterKnowledgeCheck.jsx";
+import { arabicLetters, getLetterById } from "../data/arabicLetters.js";
+import { canOpenLessonNode, getLessonNodeById, getLessonNodeByType, getLessonNodesForLetter, getLetterRewardNodeId } from "../data/lessonPath.js";
+import { getCachedAudio, playCachedAudio, speakText, stopAllAudio } from "../utils/audioPlayback.js";
+import { completeLessonNode, getLessonPathState, getProfilePreferences, getProgress, getSelectedCharacter, getStoredJson, setProgress, setStoredJson } from "../utils/storage.js";
 
 const LETTER_PROGRESS_KEY = "letterLessonProgress:v1";
-const PASS_SCORE = 80;
-const TRACE_READY_PROGRESS = 60;
 
 const voiceAliases = {
   alif: ["алиф", "алеф", "alif"],
@@ -45,72 +44,53 @@ const voiceAliases = {
 };
 
 const lessonAudioPrompts = {
-  alif: "أَ",
-  ba: "بَ",
-  ta: "تَ",
-  tha: "ثَ",
-  jim: "جَ",
-  ha_guttural: "حَ",
-  kha: "خَ",
-  dal: "دَ",
-  dhal: "ذَ",
-  ra: "رَ",
-  zay: "زَ",
-  sin: "سَ",
-  shin: "شَ",
-  sad: "صَ",
-  dad: "ضَ",
-  ta_emphatic: "طَ",
-  za_emphatic: "ظَ",
-  ayn: "عَ",
-  ghayn: "غَ",
-  fa: "فَ",
-  qaf: "قَ",
-  kaf: "كَ",
-  lam: "لَ",
-  mim: "مَ",
-  nun: "نَ",
-  ha_soft: "هَ",
-  waw: "وَ",
-  ya: "يَ"
+  alif: "أَلِفْ",
+  ba: "بَاء",
+  ta: "تَاء",
+  tha: "ثَاء",
+  jim: "جِيم",
+  ha_guttural: "حَاء",
+  kha: "خَاء",
+  dal: "دَال",
+  dhal: "ذَال",
+  ra: "رَاء",
+  zay: "زَاي",
+  sin: "سِين",
+  shin: "شِين",
+  sad: "صَاد",
+  dad: "ضَاد",
+  ta_emphatic: "طَاء",
+  za_emphatic: "ظَاء",
+  ayn: "عَيْن",
+  ghayn: "غَيْن",
+  fa: "فَاء",
+  qaf: "قَاف",
+  kaf: "كَاف",
+  lam: "لَام",
+  mim: "مِيم",
+  nun: "نُون",
+  ha_soft: "هَاء",
+  waw: "وَاو",
+  ya: "يَاء"
 };
 
-const legacyTaskTemplates = [
-  { id: "look", number: 1, title: "Посмотри букву", description: "Узнай, как выглядит буква" },
-  { id: "sound", number: 2, title: "Прослушай звук", description: "Послушай и повтори" },
-  { id: "voice", number: 3, title: "Произнеси вслух", description: "Скажи букву и проверь себя" },
-  { id: "find", number: 4, title: "Найди букву", description: "Найди букву среди других" },
-  { id: "trace", number: 5, title: "Обведи букву", description: "Проведи пальцем или мышкой" },
-  { id: "quiz", number: 6, title: "Проверка", description: "Ответь минимум на 80%" },
-  { id: "reward", number: 7, title: "Награда", description: "Получить звёзды и открыть дальше" }
-];
 
 const taskTemplates = [
   { id: "look", number: 1, title: "Слушай букву", description: "Прослушай произношение 3 раза" },
   { id: "sound", number: 2, title: "Поймай букву", description: "Лови только нужную букву" },
-  { id: "voice", number: 3, title: "Нарисуй букву", description: "Проведи золотую линию" },
-  { id: "find", number: 4, title: "Собери букву", description: "Поставь части на места" },
-  { id: "trace", number: 5, title: "Произнеси букву", description: "Проверь произношение" },
-  { id: "quiz", number: 6, title: "Найди букву в слове", description: "Отметь все нужные буквы" },
+  { id: "voice", number: 3, title: "Практика письма", description: "Обведи и сравни с образцом" },
+  { id: "find", number: 4, title: "Узнай букву", description: "Выбери букву по названию" },
+  { id: "trace", number: 5, title: "Повтори название", description: "С микрофоном или без него" },
+  { id: "quiz", number: 6, title: "Найди букву в ряду", description: "Отметь все нужные буквы" },
   { id: "reward", number: 7, title: "Мини-экзамен", description: "Заверши серию и открой сундук" }
 ];
 
 function readProgressMap() {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(LETTER_PROGRESS_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return getStoredJson(LETTER_PROGRESS_KEY, {});
 }
 
 function writeProgressMap(map) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LETTER_PROGRESS_KEY, JSON.stringify(map));
-  } catch {
-    // Keep the lesson usable when storage is blocked.
-  }
+  setStoredJson(LETTER_PROGRESS_KEY, map);
 }
 
 function getLessonAudioText(letter) {
@@ -118,13 +98,52 @@ function getLessonAudioText(letter) {
   return text || "";
 }
 
-function speakLessonLetter(letter, options = {}) {
-  return speakText(getLessonAudioText(letter), {
+function getLetterAudioUrl(letter) {
+  return `${import.meta.env.BASE_URL}audio/letters/${letter.id}.wav`;
+}
+
+function speakLessonFallback(letter, options = {}) {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    options.onBlocked?.("unsupported");
+    return null;
+  }
+
+  const text = getLessonAudioText(letter);
+  const spokenText = `${text}، ${text}`;
+
+  return speakText(spokenText, {
     lang: "ar-SA",
-    rate: options.rate || 0.68,
-    pitch: 1.03,
-    onEnd: options.onEnd
+    rate: options.rate || 0.58,
+    pitch: 1,
+    volume: 1,
+    onStart: options.onStart,
+    onEnd: options.onEnd,
+    onError: options.onError
   });
+}
+
+function speakLessonLetter(letter, options = {}) {
+  if (!getProfilePreferences().soundEnabled) {
+    options.onBlocked?.("sound-off");
+    return null;
+  }
+
+  const audioUrl = getLetterAudioUrl(letter);
+  let fallbackStarted = false;
+  const startFallback = () => {
+    if (fallbackStarted) return;
+    fallbackStarted = true;
+    options.onFallback?.();
+    speakLessonFallback(letter, options);
+  };
+
+  playCachedAudio(audioUrl, {
+    onPlaying: options.onStart,
+    onEnded: options.onEnd,
+    onError: startFallback
+  }).catch(startFallback);
+
+  return true;
 }
 
 function normalizeSpeech(value) {
@@ -217,19 +236,6 @@ function saveLetterProgress(letterId, progress) {
   });
 }
 
-function isLetterCompletedLocally(letterId) {
-  const saved = readProgressMap()[letterId];
-  const completedLetters = getProgress().completedLetters || [];
-  return completedLetters.includes(letterId) || saved?.completedTasks?.includes("reward");
-}
-
-function canOpenSequentialLetter(letterId) {
-  const letterIndex = arabicLetters.findIndex((item) => item.id === letterId);
-  if (letterIndex <= 0) return true;
-  if (isLetterCompletedLocally(letterId)) return true;
-  const previousLetter = arabicLetters[letterIndex - 1];
-  return Boolean(previousLetter && isLetterCompletedLocally(previousLetter.id));
-}
 
 function resolveCurrentTaskId(completedTasks, preferredTaskId) {
   if (preferredTaskId && !completedTasks.includes(preferredTaskId)) return preferredTaskId;
@@ -242,55 +248,6 @@ function getTaskStatus(taskId, completedTasks) {
   return firstOpen?.id === taskId ? "available" : "locked";
 }
 
-function getChoiceLetters(letter) {
-  const index = arabicLetters.findIndex((item) => item.id === letter.id);
-  const ordered = [
-    letter,
-    ...arabicLetters.slice(index + 1),
-    ...arabicLetters.slice(0, index)
-  ];
-  return ordered.slice(0, 4);
-}
-
-function buildQuiz(letter) {
-  const choices = getChoiceLetters(letter);
-  const names = choices.map((item) => item.nameRu);
-  const sounds = Array.from(new Set([letter.soundText, ...names])).slice(0, 4);
-
-  return [
-    {
-      id: "shape",
-      title: `Какая из этих букв ${letter.nameRu}?`,
-      options: choices.map((item) => item.letter),
-      answer: letter.letter
-    },
-    {
-      id: "sound",
-      title: "Как звучит эта буква?",
-      options: sounds,
-      answer: letter.soundText
-    },
-    {
-      id: "find",
-      title: "Найди букву среди других.",
-      options: [...choices].reverse().map((item) => item.letter),
-      answer: letter.letter
-    },
-    {
-      id: "listen",
-      title: "Прослушай звук и выбери букву.",
-      options: choices.map((item) => item.letter),
-      answer: letter.letter,
-      listen: true
-    },
-    {
-      id: "name",
-      title: `Выбери название буквы ${letter.letter}`,
-      options: names,
-      answer: letter.nameRu
-    }
-  ];
-}
 
 function LetterHintBlock({ letter }) {
   const hints = [
@@ -329,18 +286,19 @@ function completeLegacyPracticeBeforeReward(letterNodes) {
   }
 }
 
-function getNextLetterPath(letterId) {
-  const nextLetterId = getNextLetterId(letterId);
-  return nextLetterId && nextLetterId !== letterId ? `/letter/${nextLetterId}` : "/lessons";
+function getNextOpenLetterPath(letterId) {
+  const node = getLessonNodeById(getLessonPathState().currentLessonNode);
+  if (node.letterId && getLessonNodesForLetter(node.letterId).some((item) => item.id === node.id)) return `/letter/${node.letterId}`;
+  return node.to || "/lessons";
 }
 
-function awardLetterReward(letterId, shouldFallbackPoints) {
+function awardLetterReward(letterId) {
   const saved = readProgressMap()[letterId];
   if (saved?.rewardClaimed) return {};
 
   const progress = getProgress();
-  const nextPoints = progress.points + (shouldFallbackPoints ? 20 : 0);
-  const nextCoins = progress.coins + (shouldFallbackPoints ? 5 : 0);
+  const nextPoints = progress.points;
+  const nextCoins = progress.coins;
   const completedLetters = progress.completedLetters.includes(letterId)
     ? progress.completedLetters
     : [...progress.completedLetters, letterId];
@@ -352,7 +310,7 @@ function awardLetterReward(letterId, shouldFallbackPoints) {
     coins: nextCoins,
     stars: (progress.stars || 0) + 3,
     level: Math.max(1, Math.floor(nextPoints / 150) + 1),
-    currentLesson: getNextLetterId(letterId)
+    currentLesson: getLessonNodeById(getLessonPathState().currentLessonNode).letterId || progress.currentLesson
   });
 
   return { rewardClaimed: true, awardedStars: 3 };
@@ -363,7 +321,7 @@ function GameStage({ letter, title, subtitle, hearts, combo, xp, timeLeft, child
     <GameLessonLayout>
       <FloatingParticles count={18} />
       <TopBar title={title} subtitle={subtitle || `Буква ${letter.nameRu}`} combo={combo} timeLeft={timeLeft} />
-      <XPBar value={xp} max={100} />
+      <div className="game-xp" aria-label={`Прогресс упражнения ${Math.min(100, xp)}%`}><span style={{ width: `${Math.min(100, xp)}%` }} /><strong>Упражнение</strong></div>
       <div className="game-stage">{children}</div>
       <RewardPopup show={Boolean(reward)} title={reward?.title} xp={reward?.xp || 0} coins={reward?.coins || 0} />
       <GameTransition label={transition} />
@@ -375,38 +333,63 @@ function ListenLetterStage({ letter, character, onComplete }) {
   const [repeatCount, setRepeatCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [done, setDone] = useState(false);
+  const [audioMessage, setAudioMessage] = useState("");
+  const [visualPractice, setVisualPractice] = useState(false);
   const fallbackTimerRef = useRef(null);
 
-  useEffect(() => () => {
-    if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
-  }, []);
+  useEffect(() => {
+    getCachedAudio(getLetterAudioUrl(letter));
+    return () => {
+      if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
+    };
+  }, [letter.id]);
 
   function play() {
     if (repeatCount >= 3 || isPlaying) return;
     setIsPlaying(true);
+    setAudioMessage("Запускаю звук буквы...");
+    let fired = false;
 
-    const finish = () => {
+    const clearFallbackTimer = () => {
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
         fallbackTimerRef.current = null;
       }
-      setIsPlaying(false);
-      setRepeatCount((current) => {
-        const next = Math.min(3, current + 1);
-        if (next >= 3 && !done) {
-          setDone(true);
-          window.setTimeout(() => onComplete("look", { score: 15 }), 500);
-        }
-        return next;
-      });
     };
 
-    speakLessonLetter(letter, { onEnd: finish });
-    fallbackTimerRef.current = window.setTimeout(finish, 1600);
+    const finish = () => {
+      if (fired) return;
+      fired = true;
+      clearFallbackTimer();
+      setIsPlaying(false);
+      const next = Math.min(3, repeatCount + 1);
+      setRepeatCount(next);
+      setAudioMessage(next >= 3 ? "Отлично, звук прослушан 3 раза." : "Нажми ещё раз и повтори вслух.");
+      if (next >= 3) setDone(true);
+    };
+
+    const started = speakLessonLetter(letter, {
+      onStart: () => setAudioMessage("Слушай внимательно и повторяй вслух."),
+      onEnd: finish,
+      onFallback: () => setAudioMessage("Локальный файл не запустился, пробую голос браузера."),
+      onError: () => { clearFallbackTimer(); setIsPlaying(false); setAudioMessage("Не получилось запустить озвучку. Можно продолжить зрительную практику."); },
+      onBlocked: (reason) => {
+        fired = true;
+        clearFallbackTimer();
+        setIsPlaying(false);
+        setAudioMessage(reason === "sound-off"
+          ? "Звук выключен в профиле. Включи: Профиль → Настройки → Звук."
+          : "Этот браузер не поддерживает озвучку. Попробуй Chrome или Edge.");
+      }
+    });
+
+    if (started) {
+      fallbackTimerRef.current = window.setTimeout(() => { setIsPlaying(false); setAudioMessage("Звук не завершился. Повтори запуск или выбери зрительную практику."); }, 10000);
+    }
   }
 
   return (
-    <GameStage letter={letter} title="Слушай букву" combo={repeatCount} xp={repeatCount * 5} reward={done ? { title: "Слух настроен", xp: 15 } : null}>
+    <GameStage letter={letter} title="Слушай букву" combo={repeatCount} xp={Math.round(repeatCount / 3 * 100)}>
       <div className={`listen-game ${isPlaying ? "is-playing" : ""}`}>
         <CharacterHelper character={character} message={`Слушай мягко и повторяй: ${letter.soundText}.`} mood="teaching" compact />
         <div className="magic-letter-card">
@@ -418,209 +401,101 @@ function ListenLetterStage({ letter, character, onComplete }) {
         <GameButton icon={Volume2} onClick={play} disabled={repeatCount >= 3 || isPlaying}>
           {repeatCount >= 3 ? "Прослушано" : "Слушать"}
         </GameButton>
+        {audioMessage ? <p className="letter-audio-message">{audioMessage}</p> : null}
+        {done ? <GameButton onClick={() => onComplete("look", { audioPractice: "listened-three-times" })}>Продолжить</GameButton> : null}
+        <button className="button button--soft" type="button" onClick={() => { stopAllAudio(); setIsPlaying(false); setVisualPractice(true); }}>Зрительная практика без аудио</button>
+        {visualPractice ? <><p>Произношение можно послушать позже. Сейчас проверим узнавание буквы.</p><LetterKnowledgeCheck letters={[letter]} onComplete={() => onComplete("look", { audioPractice: "visual-alternative" })} /></> : null}
       </div>
     </GameStage>
   );
 }
 
 function CatchLetterStage({ letter, onComplete }) {
-  const [items, setItems] = useState([]);
-  const [basketX, setBasketX] = useState(50);
-  const [hearts, setHearts] = useState(3);
-  const [combo, setCombo] = useState(0);
-  const [xp, setXp] = useState(0);
-  const [caught, setCaught] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(45);
-  const [popup, setPopup] = useState("");
-  const doneRef = useRef(false);
-  const basketXRef = useRef(50);
-
-  useEffect(() => {
-    const spawnTimer = window.setInterval(() => {
-      setItems((current) => {
-        const isTarget = Math.random() > 0.48;
-        const pool = arabicLetters.filter((item) => item.id !== letter.id);
-        const source = isTarget ? letter : pool[Math.floor(Math.random() * pool.length)];
-        return [
-          ...current.slice(-14),
-          {
-            key: `${Date.now()}-${Math.random()}`,
-            id: source.id,
-            glyph: source.letter,
-            x: 8 + Math.random() * 84,
-            y: -8,
-            speed: 1.6 + Math.random() * 1.3
-          }
-        ];
-      });
-    }, 720);
-
-    const fallTimer = window.setInterval(() => {
-      setItems((current) => {
-        const nextItems = [];
-        for (const item of current) {
-          const next = { ...item, y: item.y + item.speed };
-          const hitsBasket = next.y > 76 && Math.abs(next.x - basketXRef.current) < 12;
-          if (hitsBasket) {
-            if (next.id === letter.id) {
-              setCaught((value) => value + 1);
-              setCombo((value) => value + 1);
-              setXp((value) => Math.min(100, value + 10));
-              setPopup("+10 XP");
-            } else {
-              setCombo(0);
-              setHearts((value) => Math.max(0, value - 1));
-              setPopup("-1 сердце");
-            }
-          } else if (next.y < 96) {
-            nextItems.push(next);
-          }
-        }
-        return nextItems;
-      });
-    }, 48);
-
-    const timer = window.setInterval(() => setTimeLeft((value) => Math.max(0, value - 1)), 1000);
-    return () => {
-      window.clearInterval(spawnTimer);
-      window.clearInterval(fallTimer);
-      window.clearInterval(timer);
-    };
-  }, [letter]);
-
-  useEffect(() => {
-    if ((caught >= 8 || timeLeft === 0) && !doneRef.current) {
-      doneRef.current = true;
-      window.setTimeout(() => onComplete("sound", { score: Math.max(25, xp) }), 450);
+  const [round, setRound] = useState(0);
+  const [selected, setSelected] = useState("");
+  const [message, setMessage] = useState("");
+  const options = useMemo(() => {
+    const index = arabicLetters.findIndex((item) => item.id === letter.id);
+    const others = [1, 3, 5, 8, 11].map((offset) => arabicLetters[(index + offset + round) % arabicLetters.length]).filter((item) => item.id !== letter.id);
+    const items = [...new Map([letter, ...others].map((item) => [item.id, item])).values()];
+    for (let i = items.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
     }
-  }, [caught, timeLeft, xp, onComplete]);
+    return items;
+  }, [letter, round]);
+  const correct = selected === letter.id;
 
-  function moveBasket(event) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-    const nextX = Math.max(8, Math.min(92, ((clientX - rect.left) / rect.width) * 100));
-    basketXRef.current = nextX;
-    setBasketX(nextX);
+  function choose(item) {
+    if (correct) return;
+    setSelected(item.id);
+    setMessage(item.id === letter.id ? "Верно! Ты узнал букву." : "Пока не эта буква. Сравни с образцом.");
+  }
+
+  function next() {
+    if (!correct) return;
+    if (round === 4) onComplete("sound");
+    else { setRound((value) => value + 1); setSelected(""); setMessage(""); }
   }
 
   return (
-    <GameStage letter={letter} title="Поймай букву" hearts={hearts} combo={combo} xp={xp} timeLeft={timeLeft} transition={popup}>
-      <div className="catch-sky" onPointerMove={moveBasket} onPointerDown={moveBasket}>
-        <div className="target-scroll">Лови только <strong>{letter.letter}</strong></div>
-        {items.map((item) => (
-          <span className={`falling-letter ${item.id === letter.id ? "is-target" : ""}`} key={item.key} style={{ left: `${item.x}%`, top: `${item.y}%` }}>
-            {item.glyph}
-          </span>
+    <GameStage letter={letter} title="Поймай букву" combo={round} xp={round * 20}>
+      <p className="letter-task-copy">Найди {letter.letter}. Раунд {round + 1} из 5.</p>
+      <div className="game-options">
+        {options.map((item) => (
+          <button className={`game-letter-button ${selected === item.id ? correct ? "is-correct" : "is-wrong" : ""}`} key={item.id} type="button" disabled={correct} onClick={() => choose(item)} dir="rtl">
+            {item.letter}
+          </button>
         ))}
-        <div className="letter-basket" style={{ left: `${basketX}%` }} />
       </div>
+      <p role="status">{message}</p>
+      <GameButton disabled={!correct} onClick={next}>{round === 4 ? "Завершить упражнение" : "Следующий раунд"}</GameButton>
     </GameStage>
   );
 }
 
 function DrawLetterStage({ letter, onComplete }) {
   const [points, setPoints] = useState([]);
-  const [progress, setProgress] = useState(0);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const doneRef = useRef(false);
+  const drawingRef = useRef(false);
+  const boardRef = useRef(null);
+  const [compared, setCompared] = useState(false);
+  const distance = points.reduce((sum, point, index) => point.start || !index ? sum : sum + Math.hypot(point.x - points[index - 1].x, point.y - points[index - 1].y), 0);
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const span = points.length ? Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) : 0;
+  const hasPractice = distance >= 25 && span >= 18;
 
-  function addPoint(event) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = Math.round(((event.clientX - rect.left) / rect.width) * 100);
-    const y = Math.round(((event.clientY - rect.top) / rect.height) * 100);
-    setPoints((current) => {
-      const next = [...current, { x, y }];
-      setProgress(Math.min(100, Math.round((next.length / 42) * 100)));
-      return next;
-    });
+  function addPoint(event, start = false) {
+    const rect = boardRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
+    setPoints((current) => current.length < 3000 ? [...current, { x, y, start }] : current);
+    setCompared(false);
   }
-
-  function draw(event) {
-    if (!isDrawing) return;
-    event.preventDefault();
-    addPoint(event);
-  }
-
-  useEffect(() => {
-    if (progress >= 80 && !doneRef.current) {
-      doneRef.current = true;
-      window.setTimeout(() => onComplete("voice", { traceProgress: progress, score: 35 }), 620);
-    }
-  }, [progress, onComplete]);
 
   return (
-    <GameStage letter={letter} title="Нарисуй букву" combo={Math.floor(progress / 20)} xp={progress} reward={progress >= 80 ? { title: "Линия завершена", xp: 35 } : null}>
-      <div className="draw-board" onPointerDown={(event) => { setIsDrawing(true); addPoint(event); }} onPointerMove={draw} onPointerUp={() => setIsDrawing(false)} onPointerLeave={() => setIsDrawing(false)}>
-        <span className="draw-board__ghost">{letter.letter}</span>
-        <span className="draw-board__start">Начни здесь</span>
+    <GameStage letter={letter} title="Практика письма" xp={hasPractice ? 100 : 0}>
+      <p className="letter-task-copy">Обведи букву и сравни с образцом. Это самостоятельная практика: приложение не оценивает правильность почерка.</p>
+      <div ref={boardRef} className="draw-board" style={{ touchAction: "none" }}
+        onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); drawingRef.current = true; addPoint(event, true); }}
+        onPointerMove={(event) => { if (drawingRef.current) { event.preventDefault(); addPoint(event); } }}
+        onPointerUp={() => { drawingRef.current = false; }} onPointerCancel={() => { drawingRef.current = false; }}>
+        <span className="draw-board__ghost" dir="rtl">{letter.letter}</span>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-          <polyline points={points.map((point) => `${point.x},${point.y}`).join(" ")} />
+          <path d={points.map((point) => `${point.start ? "M" : "L"} ${point.x} ${point.y}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-      <div className="letter-task-progress"><i style={{ width: `${progress}%` }} /></div>
-      <strong className="game-percent">{progress}%</strong>
+      <button className="button button--soft" type="button" onClick={() => { setPoints([]); setCompared(false); }}>Очистить и повторить</button>
+      <label className="check-line"><input type="checkbox" checked={compared} disabled={!hasPractice} onChange={(event) => setCompared(event.target.checked)} />Я сверил форму и точки с образцом</label>
+      <GameButton disabled={!hasPractice || !compared} onClick={() => onComplete("voice", { writingPractice: "self-check" })}>Продолжить после практики</GameButton>
     </GameStage>
   );
 }
 
 function AssembleLetterStage({ letter, onComplete }) {
-  const targets = [
-    { id: "left", x: 32, y: 62, rotate: -8 },
-    { id: "center", x: 50, y: 56, rotate: 0 },
-    { id: "right", x: 68, y: 62, rotate: 8 }
-  ];
-  const [pieces, setPieces] = useState(() => targets.map((target, index) => ({ ...target, x: 22 + index * 28, y: 84, placed: false })));
-  const [dragId, setDragId] = useState(null);
-  const [shakeId, setShakeId] = useState("");
-  const doneRef = useRef(false);
-  const completed = pieces.every((piece) => piece.placed);
-
-  useEffect(() => {
-    if (completed && !doneRef.current) {
-      doneRef.current = true;
-      window.setTimeout(() => onComplete("find", { score: 45 }), 650);
-    }
-  }, [completed, onComplete]);
-
-  function movePiece(event) {
-    if (!dragId) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setPieces((current) => current.map((piece) => piece.id === dragId ? { ...piece, x, y } : piece));
-  }
-
-  function endDrag() {
-    if (!dragId) return;
-    setPieces((current) => current.map((piece) => {
-      if (piece.id !== dragId) return piece;
-      const target = targets.find((item) => item.id === piece.id);
-      const distance = Math.hypot(piece.x - target.x, piece.y - target.y);
-      if (distance < 16) return { ...piece, x: target.x, y: target.y, placed: true };
-      setShakeId(piece.id);
-      window.setTimeout(() => setShakeId(""), 300);
-      return piece;
-    }));
-    setDragId(null);
-  }
-
   return (
-    <GameStage letter={letter} title="Собери букву" combo={pieces.filter((piece) => piece.placed).length} xp={pieces.filter((piece) => piece.placed).length * 15} reward={completed ? { title: "Буква собрана", xp: 45 } : null}>
-      <div className="puzzle-board" onPointerMove={movePiece} onPointerUp={endDrag} onPointerLeave={endDrag}>
-        <span className={`puzzle-board__complete ${completed ? "is-complete" : ""}`}>{letter.letter}</span>
-        {targets.map((target) => <span className="puzzle-slot" key={target.id} style={{ left: `${target.x}%`, top: `${target.y}%` }} />)}
-        {pieces.map((piece) => (
-          <button
-            className={`puzzle-piece ${piece.placed ? "is-placed" : ""} ${shakeId === piece.id ? "is-shaking" : ""}`}
-            key={piece.id}
-            type="button"
-            style={{ left: `${piece.x}%`, top: `${piece.y}%`, rotate: `${piece.rotate}deg` }}
-            onPointerDown={() => !piece.placed && setDragId(piece.id)}
-          >
-            {letter.letter}
-          </button>
-        ))}
-      </div>
+    <GameStage letter={letter} title="Узнай букву" xp={0}>
+      <LetterKnowledgeCheck letters={[letter]} onComplete={() => onComplete("find")} />
     </GameStage>
   );
 }
@@ -628,26 +503,80 @@ function AssembleLetterStage({ letter, onComplete }) {
 function PronounceLetterStage({ letter, onComplete }) {
   const [isRecording, setIsRecording] = useState(false);
   const [quality, setQuality] = useState("");
+  const [heardText, setHeardText] = useState("");
   const [attempts, setAttempts] = useState(0);
+  const [isAccepted, setIsAccepted] = useState(false);
+  const [manualPractice, setManualPractice] = useState(false);
+  const recognitionRef = useRef(null);
 
-  function record() {
-    if (isRecording) return;
-    setIsRecording(true);
-    setQuality("");
-    window.setTimeout(() => {
-      const nextAttempts = attempts + 1;
-      const score = nextAttempts >= 2 ? "Отлично" : Math.random() > 0.45 ? "Почти правильно" : "Попробуй ещё раз";
-      setAttempts(nextAttempts);
-      setQuality(score);
-      setIsRecording(false);
-      if (score === "Отлично" || score === "Почти правильно") {
-        window.setTimeout(() => onComplete("trace", { score: score === "Отлично" ? 60 : 50 }), 700);
-      }
-    }, 1500);
+  useEffect(() => () => {
+    recognitionRef.current?.abort?.();
+  }, []);
+
+  function checkSpokenText(text) {
+    const normalized = normalizeSpeech(text);
+    const expectedAnswers = getExpectedVoiceAnswers(letter);
+
+    return expectedAnswers.some((answer) => normalized === answer || normalized.split(" ").includes(answer));
   }
 
+  function record() {
+    if (isRecording || isAccepted) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setQuality("Браузер не поддерживает проверку голоса. Открой в Chrome или Edge.");
+      return;
+    }
+
+    recognitionRef.current?.abort?.();
+    stopAllAudio();
+    setIsRecording(true);
+    setQuality("Слушаю...");
+    setHeardText("");
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "ru-RU";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 5;
+
+    recognition.onresult = (event) => {
+      const results = Array.from(event.results?.[0] || []);
+      const transcript = results.map((result) => result.transcript).join(" ").trim();
+      const accepted = results.some((result) => checkSpokenText(result.transcript)) || checkSpokenText(transcript);
+      const nextAttempts = attempts + 1;
+
+      setAttempts(nextAttempts);
+      setHeardText(transcript);
+      setIsRecording(false);
+
+      if (accepted) {
+        setIsAccepted(true);
+        setQuality("Название распознано. Точность арабского произношения проверяй с учителем.");
+        return;
+      }
+
+      setQuality(`Попробуй ещё раз. Нужно сказать: ${letter.soundText}.`);
+    };
+
+    recognition.onerror = () => {
+      setAttempts((current) => current + 1);
+      setIsRecording(false);
+      setQuality(`Не расслышал. Произнеси: ${letter.soundText}.`);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    try { recognition.start(); } catch { setIsRecording(false); setQuality("Микрофон недоступен. Можно продолжить без записи."); }
+  }
+
+  const qualityType = isAccepted ? "great" : quality === "Слушаю..." ? "ok" : "retry";
+
   return (
-    <GameStage letter={letter} title="Произнеси букву" combo={attempts} xp={quality === "Отлично" ? 60 : attempts * 12} reward={quality === "Отлично" ? { title: "Отличное произношение", xp: 60 } : null}>
+    <GameStage letter={letter} title="Повтори название" combo={attempts} xp={isAccepted ? 100 : 0}>
       <div className={`voice-orb ${isRecording ? "is-recording" : ""}`}>
         <Mic size={54} aria-hidden="true" />
         <span />
@@ -655,10 +584,15 @@ function PronounceLetterStage({ letter, onComplete }) {
         <span />
       </div>
       <h2 className="game-stage-title">{letter.soundText}</h2>
-      <GameButton icon={Mic} onClick={record} disabled={isRecording}>
-        {isRecording ? "Слушаю..." : "Нажми и произнеси"}
+      <LetterHintBlock letter={letter} />
+      <GameButton icon={Mic} onClick={record} disabled={isRecording || isAccepted}>
+        {isRecording ? "Слушаю..." : isAccepted ? "Принято" : "Нажми и произнеси"}
       </GameButton>
-      {quality ? <div className={`voice-quality voice-quality--${quality === "Отлично" ? "great" : quality === "Почти правильно" ? "ok" : "retry"}`}>{quality}</div> : null}
+      {quality ? <div className={`voice-quality voice-quality--${qualityType}`}>{quality}</div> : null}
+      {heardText ? <p className="letter-task-copy">Я услышал: {heardText}</p> : null}
+      {isAccepted ? <GameButton onClick={() => onComplete("trace", { pronunciationPractice: "name-recognized" })}>Продолжить</GameButton> : null}
+      <button className="button button--soft" type="button" onClick={() => { recognitionRef.current?.abort?.(); setIsRecording(false); setManualPractice(true); }}>Практика без микрофона</button>
+      {manualPractice ? <><p>Повтори название вслух или про себя, затем ответь на вопросы. Это проверка узнавания буквы, а не произношения.</p><LetterKnowledgeCheck letters={[letter]} detailed onComplete={() => onComplete("trace", { pronunciationPractice: "visual-alternative" })} /></> : null}
     </GameStage>
   );
 }
@@ -666,22 +600,23 @@ function PronounceLetterStage({ letter, onComplete }) {
 function FindLetterInWordStage({ letter, onComplete }) {
   const wordLetters = useMemo(() => {
     const index = arabicLetters.findIndex((item) => item.id === letter.id);
-    return [
+    const items = [
       arabicLetters[(index + 2) % arabicLetters.length],
       letter,
       arabicLetters[(index + 5) % arabicLetters.length],
       letter,
       arabicLetters[(index + 8) % arabicLetters.length]
     ];
+    for (let i = items.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
   }, [letter]);
   const targetIndexes = wordLetters.map((item, index) => item.id === letter.id ? index : -1).filter((index) => index >= 0);
   const [selected, setSelected] = useState([]);
   const [wrong, setWrong] = useState(-1);
   const done = targetIndexes.every((index) => selected.includes(index));
-
-  useEffect(() => {
-    if (done) window.setTimeout(() => onComplete("quiz", { quizScore: 100, score: 80 }), 650);
-  }, [done, onComplete]);
 
   function choose(item, index) {
     if (item.id === letter.id) {
@@ -693,7 +628,7 @@ function FindLetterInWordStage({ letter, onComplete }) {
   }
 
   return (
-    <GameStage letter={letter} title="Найди букву в слове" combo={selected.length} xp={selected.length * 20} reward={done ? { title: "Все буквы найдены", xp: 80 } : null}>
+    <GameStage letter={letter} title="Найди букву в ряду" combo={selected.length} xp={selected.length * 50}>
       <div className="word-find-card" dir="rtl">
         {wordLetters.map((item, index) => (
           <button className={`${selected.includes(index) ? "is-found" : ""} ${wrong === index ? "is-wrong" : ""}`} key={`${item.id}-${index}`} type="button" onClick={() => choose(item, index)}>
@@ -702,7 +637,8 @@ function FindLetterInWordStage({ letter, onComplete }) {
         ))}
       </div>
       <div className="game-counter">{selected.length} / {targetIndexes.length}</div>
-      <p className="letter-task-copy">Нажми все буквы {letter.letter} в слове.</p>
+      <p className="letter-task-copy">Это ряд отдельных букв. Нажми все {letter.letter}.</p>
+      <GameButton disabled={!done} onClick={() => onComplete("quiz")}>Продолжить</GameButton>
     </GameStage>
   );
 }
@@ -711,17 +647,19 @@ function MiniExamStage({ letter, completedTasks, onComplete, onNext }) {
   const required = taskTemplates.filter((task) => task.id !== "reward");
   const ready = required.every((task) => completedTasks.includes(task.id));
   const [opened, setOpened] = useState(completedTasks.includes("reward"));
+  const [claimedNow, setClaimedNow] = useState(false);
+  const [examResult, setExamResult] = useState(null);
   const stars = ready ? 3 : Math.max(1, Math.floor(completedTasks.length / 2));
 
   function openChest() {
-    if (!ready) return;
-    setOpened(true);
-    window.setTimeout(() => onComplete("reward", { score: 100 }), 700);
+    if (!ready || !examResult || opened) return;
+    if (onComplete("reward", { examResult }) !== false) { setOpened(true); setClaimedNow(true); }
   }
 
   return (
-    <GameStage letter={letter} title="Мини-экзамен" combo={stars} xp={ready ? 100 : completedTasks.length * 12} reward={opened ? { title: "Сундук открыт", xp: 100, coins: 50 } : null}>
+    <GameStage letter={letter} title="Мини-экзамен" combo={stars} xp={opened ? 100 : 0} reward={claimedNow ? { title: "Награда за букву", xp: 20, coins: 5 } : null}>
       <div className="mini-exam">
+        {ready && !opened && !examResult ? <LetterKnowledgeCheck letters={[letter]} detailed onComplete={setExamResult} /> : null}
         <div className="mini-exam__steps">
           {required.map((task) => (
             <span className={completedTasks.includes(task.id) ? "is-done" : ""} key={task.id}>
@@ -729,21 +667,22 @@ function MiniExamStage({ letter, completedTasks, onComplete, onNext }) {
             </span>
           ))}
         </div>
-        <button className={`reward-chest ${opened ? "is-open" : ""}`} type="button" onClick={openChest} disabled={!ready || opened}>
+        <button className={`reward-chest ${opened ? "is-open" : ""}`} type="button" onClick={openChest} disabled={!ready || !examResult || opened} aria-label="Получить награду за букву">
           <Gift size={64} aria-hidden="true" />
         </button>
         <div className="mini-exam__stars" aria-label={`${stars} звезды`}>
           {Array.from({ length: 3 }, (_, index) => <Star key={index} size={28} fill={index < stars ? "currentColor" : "none"} />)}
         </div>
-        <GameButton onClick={opened ? onNext : openChest} disabled={!ready && !opened}>
-          {opened ? "Дальше" : ready ? "Открыть награду" : "Заверши игры"}
+        {opened && !claimedNow ? <p>Эта буква уже пройдена. Награда сохранена.</p> : null}
+        <GameButton onClick={opened ? onNext : openChest} disabled={!opened && (!ready || !examResult)}>
+          {opened ? "К следующему шагу" : ready ? "Открыть награду" : "Заверши игры"}
         </GameButton>
       </div>
     </GameStage>
   );
 }
 
-export default function LetterLessonScreen() {
+function LetterLesson() {
   const navigate = useNavigate();
   const { letterId } = useParams();
   const letter = getLetterById(letterId);
@@ -754,33 +693,16 @@ export default function LetterLessonScreen() {
   const rewardNode = getRewardNode(letterNodes);
   const [lessonProgress, setLessonProgress] = useState(() => getInitialProgress(letter, letterNodes));
   const [activeTaskId, setActiveTaskId] = useState(() => getInitialProgress(letter, letterNodes).currentTaskId);
-  const [voiceStarted, setVoiceStarted] = useState(false);
-  const [findChoice, setFindChoice] = useState("");
-  const [findMessage, setFindMessage] = useState("");
-  const [traceProgress, setTraceProgress] = useState(() => getInitialProgress(letter, letterNodes).traceProgress || 0);
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizMessage, setQuizMessage] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
-  const lessonState = useMemo(() => getLessonPathState(), [refreshKey, lessonProgress]);
   const completedTasks = lessonProgress.completedTasks || [];
   const activeTask = taskTemplates.find((task) => task.id === activeTaskId) || taskTemplates[0];
-  const quiz = useMemo(() => buildQuiz(letter), [letter]);
   const doneCount = completedTasks.length;
   const progressPercent = Math.round((doneCount / taskTemplates.length) * 100);
-  const reviewNumber = Math.ceil((arabicLetters.findIndex((item) => item.id === letter.id) + 1) / 4);
-  const reviewDue = (arabicLetters.findIndex((item) => item.id === letter.id) + 1) % 4 === 0;
   const activeTaskIndex = taskTemplates.findIndex((task) => task.id === activeTaskId);
 
   useEffect(() => {
     const nextProgress = getInitialProgress(letter, letterNodes);
     setLessonProgress(nextProgress);
     setActiveTaskId(nextProgress.currentTaskId);
-    setTraceProgress(nextProgress.traceProgress || 0);
-    setVoiceStarted(false);
-    setFindChoice("");
-    setFindMessage("");
-    setQuizAnswers({});
-    setQuizMessage("");
   }, [letter.id, letterNodes]);
 
   useEffect(() => {
@@ -794,8 +716,7 @@ export default function LetterLessonScreen() {
     const isCompleted = rewardNodeId && state.completedLessonNodes.includes(rewardNodeId);
     const canOpen = canOpenLessonNode(letterNodeId, state)
       || state.completedLessonNodes.includes(letterNodeId)
-      || isCompleted
-      || canOpenSequentialLetter(letter.id);
+      || isCompleted;
     if (!canOpen) navigate("/lessons", { replace: true });
   }, [letter.id, letterNodeId, rewardNodeId, navigate]);
 
@@ -814,21 +735,19 @@ export default function LetterLessonScreen() {
       trace: getTraceNode(letterNodes)
     };
 
-    let rewardBlocked = false;
-
     if (taskId === "quiz") {
       completeLegacyPracticeBeforeReward(letterNodes);
     } else if (taskId === "reward") {
       completeLegacyPracticeBeforeReward(letterNodes);
       if (rewardNode) {
-        const result = completeLessonNode(rewardNode.id, { completedLetterId: letter.id });
-        rewardBlocked = Boolean(result?.blocked);
+        const result = completeLessonNode(rewardNode.id, { completedLetterId: letter.id, perfect: extra.examResult?.perfect });
+        if (result?.blocked) { navigate("/lessons"); return false; }
       }
     } else {
       completeLegacyNode(legacyMap[taskId]);
     }
 
-    const rewardExtra = taskId === "reward" ? awardLetterReward(letter.id, rewardBlocked) : {};
+    const rewardExtra = taskId === "reward" ? awardLetterReward(letter.id) : {};
 
     const nextProgress = updateProgress((current) => {
       const completed = Array.from(new Set([...(current.completedTasks || []), taskId]));
@@ -836,7 +755,7 @@ export default function LetterLessonScreen() {
       return { ...current, ...extra, ...rewardExtra, completedTasks: completed, currentTaskId };
     });
     setActiveTaskId(nextProgress.currentTaskId);
-    setRefreshKey((value) => value + 1);
+    return true;
   }
 
   function handleTaskSelect(task) {
@@ -851,54 +770,6 @@ export default function LetterLessonScreen() {
     handleTaskSelect(nextTask);
   }
 
-  function handleSound() {
-    speakLessonLetter(letter);
-    completeTask("sound");
-  }
-
-  function handleVoiceConfirm() {
-    completeTask("voice");
-    setVoiceStarted(false);
-  }
-
-  function handleFindChoice(choice) {
-    setFindChoice(choice);
-    if (choice === letter.letter) {
-      setFindMessage("Верно. Ты нашёл нужную букву.");
-      window.setTimeout(() => completeTask("find"), 220);
-      return;
-    }
-    setFindMessage(`Попробуй ещё раз. Буква ${letter.nameRu} выглядит так: ${letter.letter}`);
-  }
-
-  function handleTraceMove(event) {
-    if (completedTasks.includes("trace")) return;
-    if (event.buttons === 0 && event.pointerType === "mouse") return;
-    setTraceProgress((current) => {
-      const next = Math.min(100, current + 8);
-      updateProgress((progress) => ({ ...progress, traceProgress: next }));
-      return next;
-    });
-  }
-
-  function submitQuiz() {
-    const correct = quiz.filter((question) => quizAnswers[question.id] === question.answer).length;
-    const score = Math.round((correct / quiz.length) * 100);
-
-    if (score >= PASS_SCORE) {
-      setQuizMessage(`Отлично: ${score}%. Буква закреплена.`);
-      completeTask("quiz", { quizScore: score, score });
-      return;
-    }
-
-    updateProgress((current) => ({ ...current, quizScore: score, score, currentTaskId: "find" }));
-    setQuizMessage(`Давай повторим ещё раз. Сейчас ${score}%, нужно минимум ${PASS_SCORE}%.`);
-    setActiveTaskId("find");
-  }
-
-  function handleReward() {
-    completeTask("reward", { score: Math.max(lessonProgress.score || 0, lessonProgress.quizScore || 100) });
-  }
 
   function renderTaskContent() {
     if (activeTask.id === "look") {
@@ -931,172 +802,12 @@ export default function LetterLessonScreen() {
           letter={letter}
           completedTasks={completedTasks}
           onComplete={completeTask}
-          onNext={() => navigate(getNextLetterPath(letter.id))}
+          onNext={() => navigate(getNextOpenLetterPath(letter.id))}
         />
       );
     }
 
-    if (activeTask.id === "look") {
-      return (
-        <>
-          <CharacterHelper character={character} message={`Это буква ${letter.nameRu}. Она звучит как "${letter.soundText}".`} mood="teaching" compact />
-          <span className="hero-letter hero-letter--lesson">{letter.letter}</span>
-          <p className="letter-task-copy">Посмотри на форму буквы спокойно. Запомни, где у неё точки и как она выглядит.</p>
-          <LetterHintBlock letter={letter} />
-          <button className="button button--primary duo-main-button" type="button" onClick={() => completeTask("look")}>
-            Понятно
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        </>
-      );
-    }
-
-    if (activeTask.id === "sound") {
-      return (
-        <>
-          <span className="hero-letter hero-letter--lesson">{letter.letter}</span>
-          <p className="letter-task-copy">Слушай внимательно и повтори звук без спешки.</p>
-          <LetterHintBlock letter={letter} />
-          <button className="button button--primary duo-sound-button" type="button" onClick={handleSound}>
-            <Volume2 size={22} aria-hidden="true" />
-            Прослушать
-          </button>
-        </>
-      );
-    }
-
-    if (activeTask.id === "voice") {
-      return (
-          <div className="letter-task-panel">
-            <div className="letter-task-mic">
-              <Mic size={42} aria-hidden="true" />
-            </div>
-            <h2>Произнеси: {letter.nameRu}</h2>
-            <p>Нажми микрофон, скажи букву вслух, затем подтверди, что произнёс правильно.</p>
-          <LetterHintBlock letter={letter} />
-            {!voiceStarted ? (
-              <button className="button button--primary" type="button" onClick={() => setVoiceStarted(true)}>
-                <Mic size={18} aria-hidden="true" />
-              Нажать микрофон
-            </button>
-          ) : (
-            <button className="button button--primary" type="button" onClick={handleVoiceConfirm}>
-              <Check size={18} aria-hidden="true" />
-              Я произнёс правильно
-            </button>
-          )}
-          <small>Это MVP-проверка. Позже сюда можно подключить точное распознавание речи.</small>
-        </div>
-      );
-    }
-
-    if (activeTask.id === "find") {
-      const choices = getChoiceLetters(letter);
-      return (
-        <div className="letter-task-panel">
-          <h2>Найди букву {letter.nameRu}</h2>
-          <p>Выбери правильную букву среди карточек.</p>
-          <div className="letter-choice-grid">
-            {choices.map((choice) => (
-              <button
-                className={`${findChoice === choice.letter ? choice.letter === letter.letter ? "is-correct" : "is-wrong" : ""}`}
-                key={choice.id}
-                type="button"
-                onClick={() => handleFindChoice(choice.letter)}
-              >
-                {choice.letter}
-              </button>
-            ))}
-          </div>
-          {findMessage ? <p className="letter-task-message">{findMessage}</p> : null}
-        </div>
-      );
-    }
-
-    if (activeTask.id === "trace") {
-      return (
-        <div className="letter-task-panel">
-          <h2>Обведи букву</h2>
-          <p>Проведи пальцем или мышкой по пунктирной букве. Кнопка откроется, когда ты попробуешь обвести хотя бы большую часть формы.</p>
-          <div className="letter-trace-pad" onPointerMove={handleTraceMove} onPointerDown={handleTraceMove}>
-            <span>{letter.letter}</span>
-          </div>
-          <div className="letter-task-progress" aria-label={`Прогресс обведения ${traceProgress}%`}>
-            <i style={{ width: `${traceProgress}%` }} />
-          </div>
-          <p className="letter-trace-status">
-            {traceProgress >= TRACE_READY_PROGRESS ? "Хорошо! Теперь можно завершить." : `РћР±РІРµРґРё РµС‰С‘ РЅРµРјРЅРѕРіРѕ: РЅСѓР¶РЅРѕ РјРёРЅРёРјСѓРј ${TRACE_READY_PROGRESS}%.`}
-          </p>
-          <button
-            className="button button--primary"
-            type="button"
-            onClick={() => completeTask("trace", { traceProgress: Math.max(traceProgress, TRACE_READY_PROGRESS) })}
-            disabled={traceProgress < TRACE_READY_PROGRESS}
-          >
-            {traceProgress >= TRACE_READY_PROGRESS ? "Готово" : "Сначала обведи букву"}
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        </div>
-      );
-    }
-
-    if (activeTask.id === "quiz") {
-      return (
-        <div className="letter-task-panel letter-quiz-panel">
-          <h2>Мини-проверка</h2>
-          <p>Ответь минимум на {PASS_SCORE}%, чтобы буква считалась изученной.</p>
-          {quiz.map((question) => (
-            <div className="letter-quiz-question" key={question.id}>
-              <div>
-                <strong>{question.title}</strong>
-                {question.listen ? (
-                  <button className="icon-button" type="button" onClick={() => speakLessonLetter(letter)} aria-label="Прослушать">
-                    <Play size={18} aria-hidden="true" />
-                  </button>
-                ) : null}
-              </div>
-              <div className="letter-quiz-options">
-                {question.options.map((option) => (
-                  <button
-                    className={quizAnswers[question.id] === option ? "is-selected" : ""}
-                    key={option}
-                    type="button"
-                    onClick={() => setQuizAnswers((current) => ({ ...current, [question.id]: option }))}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-          {quizMessage ? <p className="letter-task-message">{quizMessage}</p> : null}
-          <button className="button button--primary" type="button" onClick={submitQuiz}>
-            Проверить
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="letter-task-panel letter-reward-panel">
-        <div className="letter-reward-stars" aria-hidden="true">в… в… в…</div>
-        <h2>Молодец! Ты выучил букву {letter.nameRu}.</h2>
-        <p>Буква пройдена: форма, звук, произношение, поиск, обведение и проверка.</p>
-        {reviewDue ? <p className="letter-task-message">После этой буквы открылось повторение {reviewNumber}: закрепи уже изученные буквы на карте уроков.</p> : null}
-        {!completedTasks.includes("reward") ? (
-          <button className="button button--primary" type="button" onClick={handleReward}>
-            Получить награду
-            <Sparkles size={18} aria-hidden="true" />
-          </button>
-        ) : (
-          <button className="button button--primary" type="button" onClick={() => navigate(getNextLetterPath(letter.id))}>
-            Следующая буква
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        )}
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -1180,4 +891,9 @@ export default function LetterLessonScreen() {
       </footer>
     </section>
   );
+}
+
+export default function LetterLessonScreen() {
+  const { letterId } = useParams();
+  return <LetterLesson key={letterId} />;
 }

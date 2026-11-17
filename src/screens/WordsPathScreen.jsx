@@ -1,5 +1,5 @@
 ﻿import { ArrowRight, CheckCircle2, Lock, Volume2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
@@ -48,7 +48,7 @@ function WordsHub({ onSelect, onBack }) {
                 {isDone ? <CheckCircle2 size={18} aria-hidden="true" /> : isLocked ? <Lock size={18} aria-hidden="true" /> : lesson.order}
               </div>
               <div className="reading-path-card__body">
-                <span className="section-kicker">{lesson.words[0]?.arabic}</span>
+                <span className="reading-path-card__sample" lang="ar" dir="rtl">{lesson.words[0]?.arabic}</span>
                 <h3>{lesson.title}</h3>
                 <p>{lesson.subtitle}</p>
               </div>
@@ -70,7 +70,13 @@ function WordLesson({ lessonId, onBack }) {
   const [partsRevealed, setPartsRevealed] = useState(false);
   const [translationRevealed, setTranslationRevealed] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [selected, setSelected] = useState("");
   const word = lesson.words[activeIndex];
+  const choices = useMemo(() => {
+    const options = [...new Set([word.translation, ...lesson.words.filter((item) => item.translation !== word.translation).slice(0, 2).map((item) => item.translation)])];
+    const offset = activeIndex % options.length;
+    return [...options.slice(offset), ...options.slice(0, offset)];
+  }, [lesson.words, activeIndex, word]);
 
   useEffect(() => {
     if (!canOpenLessonNode(lesson.nodeId, getLessonPathState())) {
@@ -79,6 +85,7 @@ function WordLesson({ lessonId, onBack }) {
   }, [lesson.nodeId, navigate]);
 
   function goNext() {
+    if (selected !== word.translation) return;
     if (activeIndex + 1 >= lesson.words.length) {
       const result = completeLessonNode(lesson.nodeId);
       if (result.blocked) return;
@@ -88,6 +95,7 @@ function WordLesson({ lessonId, onBack }) {
     setActiveIndex((current) => current + 1);
     setPartsRevealed(false);
     setTranslationRevealed(false);
+    setSelected("");
   }
 
   function openNext() {
@@ -140,7 +148,7 @@ function WordLesson({ lessonId, onBack }) {
       <VoiceCheckPanel
         targets={[word.arabic, word.reading]}
         prompt={`Прочитай слово: ${word.arabic}`}
-        successText="Отлично! Слово прочитано уверенно."
+        successText="Браузер распознал слово. Точность произношения проверяй с учителем."
         onPassed={() => {
           setPartsRevealed(true);
           setTranslationRevealed(true);
@@ -170,11 +178,17 @@ function WordLesson({ lessonId, onBack }) {
         {translationRevealed ? <p className="reading-path-translation">{word.translation}</p> : null}
       </GlassCard>
 
+      <GlassCard>
+        <h2>Выбери значение слова</h2>
+        <div className="game-actions">{choices.map((choice) => <button className={`button button--soft ${selected === choice ? choice === word.translation ? "is-correct" : "is-wrong" : ""}`} key={choice} type="button" onClick={() => setSelected(choice)}>{choice}</button>)}</div>
+        <p role="status">{selected ? selected === word.translation ? "Верно!" : "Сверь с переводом и попробуй ещё раз." : "Прочитай слово и выбери его значение."}</p>
+      </GlassCard>
+
       <div className="reading-path-footer">
         <button className="button button--soft" type="button" onClick={() => speakArabic(word.arabic)}>
           Повторить слово
         </button>
-        <button className="button button--primary" type="button" onClick={goNext}>
+        <button className="button button--primary" type="button" onClick={goNext} disabled={selected !== word.translation}>
           {activeIndex + 1 >= lesson.words.length ? "Завершить урок" : "Следующее слово"}
           <ArrowRight size={18} aria-hidden="true" />
         </button>
@@ -188,7 +202,7 @@ export default function WordsPathScreen() {
   const navigate = useNavigate();
 
   if (lessonId) {
-    return <WordLesson lessonId={lessonId} onBack={() => navigate("/lessons/words")} />;
+    return <WordLesson key={lessonId} lessonId={lessonId} onBack={() => navigate("/lessons/words")} />;
   }
 
   return <WordsHub onSelect={(id) => navigate(`/lessons/words/${id}`)} onBack={() => navigate("/lessons")} />;

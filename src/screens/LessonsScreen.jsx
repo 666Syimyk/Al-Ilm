@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
@@ -22,12 +22,13 @@
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
 import { getLetterById } from "../data/arabicLetters.js";
-import { getChapterById, getNodeReward, lessonChapters, lessonPathNodes, withLessonPathStatus } from "../data/lessonPath.js";
-import { getLessonPathState, getProgress, getSelectedCharacter } from "../utils/storage.js";
+import { getChapterById, getLessonNodesForLetter, getNodeReward, lessonChapters, lessonPathNodes, withLessonPathStatus } from "../data/lessonPath.js";
+import { getLessonPathState, getProgress, getSelectedCharacter, getStoredJson, getStoredValue, setStoredValue } from "../utils/storage.js";
 
+import { countSteps } from "../utils/plural.js";
 const characterImages = { ahmad, amina };
 const LETTER_PROGRESS_KEY = "letterLessonProgress:v1";
 const missionTypes = ["sound", "writing", "game", "quiz", "reward"];
@@ -48,7 +49,7 @@ const categories = [
   { id: "quran", label: "Коран", icon: BookOpenCheck },
   { id: "namaz", label: "Намаз", icon: Landmark },
   { id: "basics", label: "Основы", icon: ShieldCheck },
-  { id: "tajweed", label: "Тажвид", icon: GraduationCap },
+  { id: "tajweed", label: "Таджвид", icon: GraduationCap },
   { id: "repeat", label: "Повторение", icon: RotateCcw }
 ];
 
@@ -117,12 +118,7 @@ const statusLabels = {
 
 function getDaysAway() {
   if (typeof window === "undefined") return 0;
-  let lastVisit = "";
-  try {
-    lastVisit = window.localStorage.getItem("lastLessonsVisit");
-  } catch {
-    return 0;
-  }
+  const lastVisit = getStoredValue("lastLessonsVisit", "");
   if (!lastVisit) return 0;
   const diff = Date.now() - new Date(lastVisit).getTime();
   return Math.floor(diff / 86400000);
@@ -143,12 +139,7 @@ function getTaskTitle(node) {
 }
 
 function readLetterProgressMap() {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(LETTER_PROGRESS_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return getStoredJson(LETTER_PROGRESS_KEY, {});
 }
 
 function getCompletedLetterTaskIds(letterId, nodes) {
@@ -171,7 +162,7 @@ function getCompletedLetterTaskIds(letterId, nodes) {
 
 function getCharacterMessage(currentNode, completedCount, stepsToReward, daysAway, currentLetterName) {
   if (daysAway >= 3) return "Рад видеть тебя снова! Продолжим путь?";
-  if (completedCount === 0 || currentNode.id === "alif-letter") return "Начнем с первой буквы - Алиф!";
+  if (completedCount === 0 || currentNode.id === "alif-letter") return "Начнём с первой буквы — Алиф!";
   if (stepsToReward === 1) return "Остался один шаг до награды!";
   if (currentNode.type === "syllable") return "Теперь соединяем буквы в слоги. Это первый шаг к настоящему чтению.";
   if (currentNode.type === "word") return "Отлично, теперь из слогов собираем слова.";
@@ -187,7 +178,7 @@ function buildMission(currentNode, nodes) {
     return {
       title: currentNode.title,
       subtitle: currentNode.subtitle,
-      letter: currentNode.letter || "в…",
+      letter: currentNode.letter || "★",
       tasks: [task],
       completed: task.done ? 1 : 0,
       total: 1,
@@ -317,13 +308,7 @@ export default function LessonsScreen() {
   const currentChapterPercent = currentChapterNodes.length ? Math.round((currentChapterCompleted / currentChapterNodes.length) * 100) : 0;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem("lastLessonsVisit", new Date().toISOString());
-      } catch {
-        // Ignore blocked storage.
-      }
-    }
+    setStoredValue("lastLessonsVisit", new Date().toISOString());
   }, []);
 
   function showLockedMessage(nodeId) {
@@ -338,7 +323,7 @@ export default function LessonsScreen() {
       showLockedMessage(node.id);
       return;
     }
-    const target = node.letterId && letterSequenceNodeTypes.includes(node.type)
+    const target = node.letterId && letterSequenceNodeTypes.includes(node.type) && getLessonNodesForLetter(node.letterId).some((item) => item.id === node.id)
       ? `/letter/${node.letterId}`
       : node.to;
     navigate(target);
@@ -371,7 +356,7 @@ export default function LessonsScreen() {
             <div className="premium-lessons-hero__copy">
               <span className="premium-lessons-kicker">Твой путь знаний</span>
               <h2>{currentChapter.title}</h2>
-              <p>Ты прошел {completedCount} из {nodes.length} шагов. Следующий урок: {currentNode.title}.</p>
+              <p>Пройдено {completedCount} из {nodes.length} шагов. Следующий урок: {currentNode.title}.</p>
             </div>
             <div className="premium-lessons-hero__character">
               <img src={characterImage} alt="Ахмад" />
@@ -519,7 +504,7 @@ export default function LessonsScreen() {
               </div>
               <Trophy size={22} aria-hidden="true" />
             </div>
-            <p>До следующей награды: {stepsToReward} шагов.</p>
+            <p>До следующей награды: {countSteps(stepsToReward)}.</p>
             <button className="premium-lessons-secondary" type="button" onClick={() => openNode(currentNode)}>
               Идти к награде
               <ArrowRight size={17} aria-hidden="true" />
@@ -530,7 +515,7 @@ export default function LessonsScreen() {
             <div className="premium-lessons-section-head">
               <div>
                 <span className="premium-lessons-kicker">Откроется позже</span>
-                <h2>{lockedCount} шагов</h2>
+                <h2>{countSteps(lockedCount)}</h2>
               </div>
               <Lock size={22} aria-hidden="true" />
             </div>

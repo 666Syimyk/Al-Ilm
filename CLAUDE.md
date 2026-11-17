@@ -8,18 +8,20 @@ Educational React SPA teaching Arabic alphabet, Quran, and Islamic prayer to Mus
 
 | Layer | Choice |
 |-------|--------|
-| Framework | React 18 (functional components + hooks only) |
-| Router | React Router DOM v6 |
-| Build | Vite 5, ES modules (`"type": "module"`) |
+| Framework | React 19 (functional components + hooks only) |
+| Router | React Router DOM 7 |
+| Build | Vite 8, ES modules (`"type": "module"`), Node ≥ 22.15 |
 | Icons | lucide-react |
-| Prayer times | adhan (v4) |
-| Audio | Web Speech API (TTS, Arabic) + `new Audio()` (CDN MP3) |
+| Prayer times | adhan (v4); magnetic declination for Qibla: geomagnetism (WMM) |
+| Audio | Local/EveryAyah MP3 for Quran (never TTS); Web Speech API only for non-Quran Arabic |
 | State | localStorage only — no Redux, no Context, no Zustand |
-| CSS | Two files: `global.css` + `responsive.css` (no CSS-in-JS, no Tailwind) |
+| CSS | Five files loaded in `main.jsx` order: `global.css`, `theme-polish.css`, `reference-redesign.css`, `mobile-app.css`, `responsive.css` (later wins; new rules go at the end of `responsive.css`) |
+| Images | Edit PNG sources in `src/assets`, then `npm run optimize:images`; code imports the generated `.webp` |
 | Fonts | Nunito (UI) + Noto Naskh Arabic (Arabic text) from Google Fonts |
 
-**Dev:** `npm run dev` → localhost:5173  
-**Build:** `npm run build` → verify `✓ built` before done
+**Dev:** `npm run dev` → localhost:5174  
+**Verify before done:** `npm run verify` (tests + content validation + build + bundle check)  
+**Deploy:** `npm run build:pages`, then commit `docs/` (GitHub Pages serves `docs/`; CI fails if it is stale)
 
 ---
 
@@ -35,12 +37,15 @@ src/
 ├── data/                    # 10 data/constants files
 ├── utils/
 │   └── storage.js           # ALL localStorage access — single source of truth
-└── styles/
-    ├── global.css           # Variables, components, utilities (~9000 lines)
-    └── responsive.css       # Breakpoints (980px, 700px)
+└── styles/                  # five layered files, see Tech Stack
 public/
-├── manifest.json            # PWA manifest
-└── sw.js                    # Service worker
+├── manifest.json            # PWA manifest (icons in public/icons)
+└── sw.js                    # Service worker; CACHE_VERSION is stamped at build time
+scripts/
+├── checkBuild.mjs           # Checks the built output users download (dist/ or docs/)
+├── buildPages.mjs           # Builds docs/ for GitHub Pages
+└── optimizeImages.mjs       # PNG sources → WebP + PWA icons
+archive/reference/           # Legacy unlicensed translation, kept out of the site
 ```
 
 ---
@@ -48,6 +53,8 @@ public/
 ## Routing
 
 All screens are `React.lazy()` imported. Routes are in `App.jsx`. BottomNav shows on `childPaths`.
+
+**Route guard:** `resolveGuardRedirect` in `App.jsx` sends every non-public screen to `/welcome` without an active profile, and to `/age`, `/character` or `/adult-soon` until setup is done. Public: `/welcome /register /login /password-reset /sources`. Add a new onboarding screen to `setupPaths`.
 
 ```
 /welcome → /register → /login → /age → /character → /home
@@ -96,7 +103,8 @@ All screens are `React.lazy()` imported. Routes are in `App.jsx`. BottomNav show
 
 ### Key getters
 ```js
-getUser()           // { name, email, password } or null
+getUser()           // active profile { name, email, dateOfBirth, passwordHash, ... } or null
+hasActiveProfile()  // signed-in profile exists and session is active
 getAge()            // number or null
 getSelectedCharacter() // "ahmad" | "amina" | null
 getSessionActive()  // boolean
@@ -118,6 +126,16 @@ toggleFavoriteSurah(id)     setDailyQuranGoal(n)      setLastOpenedSurah(id)
 setBackgroundTheme(id)      setBackgroundCustomImage(base64)
 ```
 
+### Accounts (local only, no server)
+```js
+createLocalAccount(profile, password)   loginLocalAccount(email, password)
+resetLocalPassword(email, new, current) recoverLocalPassword(email, firstName, dateOfBirth, new)
+clearSession()      // signs out AND removes the active `user`, so writes cannot reach that profile
+exportAccountBackup() / importAccountBackup(json)   // file backup in Profile → Мои данные
+```
+There is no master password. `0000` only lets a pre-password legacy profile set a real password.
+Failed writes dispatch `storageWriteFailed`; `App.jsx` shows a warning.
+
 ### Ayah reference format
 ```js
 const ref = `${surahId}:${ayah.number}` // e.g. "al-fatihah:1"
@@ -135,22 +153,25 @@ import { arabicLetters, getLetterById, getNextLetterId } from "../data/arabicLet
 
 ### quranContent.js
 ```js
-// 114 surahs (34 filled with ayahs). Shape:
+// 114 surahs, all 6236 ayahs from Tanzil Uthmani 1.1 (exact copy). translation and words stay empty:
+// no licensed Russian translation yet. Never add one without a versioned licence. Shape:
 // { id, number, title, arabicTitle, translation, status, ayahs: [{ number, arabic, translation, words[] }] }
 import { quranSurahs, quranSections, getSurahById, getAyahByNumber } from "../data/quranContent.js";
 ```
 
 ### namazGuide.js
 ```js
-// PRAYERS[], buildPrayerGuide(prayer) → flat steps array
-// FATIHA_AYAHS + IKHLAS_AYAHS have audioUrl (everyayah.com CDN)
-// Other duas: no audioUrl → use Web Speech API fallback
+// PRAYERS[], buildPrayerGuide(prayer, { gender: "male" | "female" }) → flat steps array
+// Hanafi order; posture notes differ for boys and girls (POSTURE_NOTES).
+// Quran text comes from prayerAyahs.js (exact Tanzil lines, checked by tests) — not quranContent.js,
+// so the prayer screen does not load the whole corpus. Quran ayahs have audioUrl; other duas use TTS.
 import { PRAYERS, buildPrayerGuide } from "../data/namazGuide.js";
 ```
 
 ### prayerTimes.js
 ```js
 // Uses adhan library + geolocation. Returns { nextPrayer, nextPrayerTime, countdown }
+// Settings: { method, madhab, adjustments: { fajr..isha: ±30 min } } so families match their mosque.
 import { prayerTimes, updateCountdown, requestPrayerTimes } from "../data/prayerTimes.js";
 ```
 
@@ -168,58 +189,16 @@ backgroundThemes.js → backgroundThemes[], getBackgroundThemeById(id)
 
 ## Audio Patterns
 
-### Quran ayah audio (CDN)
-```js
-function getAudioUrl(surahNum, ayahNum) {
-  return `https://everyayah.com/data/Alafasy_128kbps/${String(surahNum).padStart(3,"0")}${String(ayahNum).padStart(3,"0")}.mp3`;
-}
-```
+Use the helpers in `src/utils/audioPlayback.js` (`playAudioSources`, `speakText`, `stopAllAudio`, `stopSpeech`) — never `new Audio()` or `speechSynthesis` directly.
 
-### Arabic TTS (Web Speech API)
-```js
-const utt = new SpeechSynthesisUtterance(arabicText);
-utt.lang = "ar";
-utt.rate = 0.65; // default; use speedRef.current for user-controlled speed
-window.speechSynthesis.cancel(); // always cancel before speaking
-window.speechSynthesis.speak(utt);
-```
-
-### Sequential playback pattern (NamazScreen / SurahDetailScreen)
-```js
-const isPlayingRef = useRef(false);  // mutable — avoids stale closure in onended
-const audioElRef = useRef(null);
-
-function cancelAll() {
-  window.speechSynthesis?.cancel();
-  if (audioElRef.current) { audioElRef.current.pause(); audioElRef.current = null; }
-}
-
-function playFrom(idx) {
-  if (!isPlayingRef.current || idx >= playlist.length) {
-    setPlaying(false); isPlayingRef.current = false; return;
-  }
-  setCurrentIdx(idx);
-  cancelAll();
-  const item = playlist[idx];
-  if (item.audioUrl) {
-    const audio = new Audio(item.audioUrl);
-    audioElRef.current = audio;
-    audio.playbackRate = speedRef.current;
-    audio.onended = () => playFrom(idx + 1);
-    audio.onerror = () => { audioElRef.current = null; playTTS(item, () => playFrom(idx + 1)); };
-    audio.play().catch(() => playTTS(item, () => playFrom(idx + 1)));
-  } else {
-    playTTS(item, () => playFrom(idx + 1));
-  }
-}
-
-useEffect(() => () => { cancelAll(); isPlayingRef.current = false; }, []);
-```
+- **Quran ayahs:** `getAyahAudioSources(surah, ayah)` in `src/utils/quranAudio.js` returns the local MP3 (if downloaded) and the EveryAyah URL. Quran is **never** read by TTS; if a recording fails, show an error.
+- **Non-Quran Arabic (dhikr, dua, letters):** `speakText(text, { lang: "ar-SA", rate })`, labelled as browser speech.
+- **Sequential playback** (NamazScreen, SurahDetailScreen): keep `isPlayingRef`, `speedRef`, `audioElRef` and a `runRef` counter in refs; callbacks compare `run === runRef.current` so a stale `onended` never advances a newer playlist.
+- `App.jsx` calls `stopAllAudio()` on every route change.
 
 **Speed control:** `SPEEDS = [0.5, 0.65, 1, 1.5, 2]`. Use `speedRef.current` (not state) inside closures.
 
 ---
-
 ## Component Patterns
 
 ### Screen structure
@@ -270,7 +249,7 @@ export default function MyScreen() {
 ```jsx
 const navigate = useNavigate();
 navigate("/quran/surah/al-fatihah");
-navigate(-1); // go back
+goBack(navigate, "/quran/surahs"); // utils/navigation.js — navigate(-1) leaves the site on a shared link
 navigate(`/letter/${letterId}`);
 ```
 
@@ -415,9 +394,9 @@ window.dispatchEvent(new CustomEvent("backgroundThemeChange"));
 requestPrayerTimes() // async, uses navigator.geolocation + adhan
 updateCountdown()    // call on interval (every second)
 
-// Qibla formula (in NamazScreen.jsx)
-function calcQibla(lat, lng) { /* returns bearing in degrees 0-360 */ }
-// DeviceOrientationEvent for compass heading
+// Qibla bearing (true north): calculateQiblaDirection(lat, lng) in prayerTimes.js
+// Compass: src/utils/compass.js — readTrueHeading(event, declination) adds the
+// magnetic declination (WMM) and the screen rotation; phone sensors report magnetic north.
 ```
 
 ---
@@ -451,7 +430,7 @@ function calcQibla(lat, lng) { /* returns bearing in degrees 0-360 */ }
 
 3. **Surah IDs are strings**: `"al-fatihah"`, not numbers. Route param is `:surahId`. Convert with `getSurahById(surahId)`.
 
-4. **All surahs exist in quranContent.js** (114 total), but only 34 have `ayahs` filled. Always check `surah.ayahs?.length > 0` before rendering ayahs.
+4. **All 114 surahs have ayahs** from Tanzil, but `translation` and `words` are empty on purpose. Never render a translation or word gloss without a licensed, versioned source; `npm run build` fails if one is bundled.
 
 5. **Revelation place lookup**: Not stored in data — use the `REVEAL` object defined in `SurahDetailScreen.jsx` and `SurahListScreen.jsx`.
 
@@ -459,18 +438,26 @@ function calcQibla(lat, lng) { /* returns bearing in degrees 0-360 */ }
 
 7. **Lazy imports**: Every new screen added to `App.jsx` must be `React.lazy()` — not a static import.
 
-8. **CSS in global.css**: All component styles live here. Group by component with a comment header like `/* ── MyComponent ── */`.
+8. **CSS layering**: Five stylesheets with thousands of `!important` rules; later files win. Put new component styles at the end of `responsive.css` under a `/* ── MyComponent ── */` header and scope them with `#root .app-shell`.
 
 9. **No `window.location.reload()`**: Avoid it. Only QuranScreen goal-change uses it as a shortcut — prefer state updates.
 
-10. **Prayer times**: Real calculation via `adhan` + geolocation. Cached in localStorage. City fallback map is in `NamazScreen.jsx` (`CITY_COORDS`).
+10. **Prayer times**: Real calculation via `adhan` + geolocation. Cached in localStorage. City fallback map is in `NamazScreen.jsx` (`CITY_COORDS`). Settings are React state in NamazScreen: without a saved city the schedule object does not change, so it cannot trigger a re-render.
+
+11. **Production is `docs/`**: users get whatever is committed there. After any change run `npm run build:pages` and commit `docs/`; `scripts/checkBuild.mjs` inspects the built files, not the source.
+
+12. **Religious content**: the namaz order is Hanafi with separate boys/girls postures. Mark anything not reviewed by a scholar `needsReview: true` and `verified: false` in its metadata.
+
+13. **Russian counts**: write numbers with `plural()` / `countAyahs()` from `utils/plural.js` ("3 аята", not "3 аятов"). Address the child with «ты», in gender-neutral phrasing ("Урок пройден", not "Ты прошёл").
+
+14. **No dark theme, one language**: the dark theme was removed because most screens were unreadable in it; Russian is the only UI language, so there is no language setting.
 
 ---
 
 ## PWA
 
-- `public/manifest.json` — app name, icons, theme color `#2E7D5B`, standalone display
-- `public/sw.js` — caches static assets
+- `public/manifest.json` — icons in `public/icons` (192, 512, maskable), any orientation (never lock portrait/landscape)
+- `public/sw.js` — network-first pages, stale-while-revalidate assets; `CACHE_VERSION` is replaced at build time
 - Meta tags in `index.html` for iOS
 
 ---
@@ -490,7 +477,8 @@ function calcQibla(lat, lng) { /* returns bearing in degrees 0-360 */ }
 - Speed control (0.5x / 0.65x / 1x / 1.5x / 2x) for prayer audio
 
 **Pending / Partial:**
-- Quran data: 80 surahs still have empty `ayahs: []` (only Juz Amma + Al-Fatiha filled)
+- Licensed Russian translation of meanings (none bundled)
+- Scholar review of the namaz guide, transliteration, 99 names and prophet stories
 - Adult mode: shows "coming soon" — not yet built
-- Push notifications for prayer times: architecture exists, real scheduling not implemented
-- TraceLetterGame: canvas validation is minimal (no stroke length check)
+- Push notifications for prayer times: reminders work only while the Namaz screen is open
+- No server: progress is per browser; file backup/restore in Profile → Мои данные

@@ -1,8 +1,9 @@
 ﻿import { ArrowRight, CheckCircle2, Gamepad2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import CharacterHelper from "../components/CharacterHelper.jsx";
 import GlassCard from "../components/GlassCard.jsx";
+import LetterKnowledgeCheck from "../components/LetterKnowledgeCheck.jsx";
 import FindLetterGame from "../games/FindLetterGame.jsx";
 import ListenAndChooseGame from "../games/ListenAndChooseGame.jsx";
 import TraceLetterGame from "../games/TraceLetterGame.jsx";
@@ -13,25 +14,30 @@ import { canOpenLessonNode, getLessonNodeForGame, getLessonNodesForLetter } from
 import { stopAllAudio } from "../utils/audioPlayback.js";
 import { completeLessonNode, getLessonPathState, getSelectedCharacter } from "../utils/storage.js";
 
+function LetterQuiz({ letter, onComplete }) {
+  return <LetterKnowledgeCheck letters={[letter]} detailed onComplete={onComplete} />;
+}
+
 const games = {
-  "find-letter": { title: "Выберите правильную букву", label: "Новое задание", progress: 32, Component: FindLetterGame },
-  listen: { title: "Что вы услышали?", label: "Слушание", progress: 48, Component: ListenAndChooseGame },
-  quiz: { title: "Проверка знаний", label: "Проверка", progress: 62, Component: ListenAndChooseGame },
-  trace: { title: "Напишите букву", label: "Письмо", progress: 72, Component: TraceLetterGame },
-  dots: { title: "Выберите точки", label: "Форма буквы", progress: 54, Component: DotPlacementGame },
-  catch: { title: "Поймайте нужную букву", label: "Тренировка", progress: 82, Component: CatchLetterGame }
+  "find-letter": { title: "Выбери правильную букву", label: "Новое задание", progress: 32, Component: FindLetterGame },
+  listen: { title: "Какую букву ты слышишь?", label: "Слушание", progress: 48, Component: ListenAndChooseGame },
+  quiz: { title: "Проверка знаний", label: "Проверка", progress: 62, Component: LetterQuiz },
+  trace: { title: "Напиши букву", label: "Письмо", progress: 72, Component: TraceLetterGame },
+  dots: { title: "Выбери точки", label: "Форма буквы", progress: 54, Component: DotPlacementGame },
+  catch: { title: "Поймай нужную букву", label: "Тренировка", progress: 82, Component: CatchLetterGame }
 };
 
-export default function MiniGameScreen() {
+function MiniGameLesson() {
   const navigate = useNavigate();
   const { gameType = "find-letter", letterId } = useParams();
+  const [searchParams] = useSearchParams();
   const letter = getLetterById(letterId);
   const character = getSelectedCharacter() || "ahmad";
   const [complete, setComplete] = useState(false);
   const game = games[gameType] || games["find-letter"];
   const GameComponent = game.Component;
   const progressValue = complete ? 100 : 0;
-  const nodeId = getLessonNodeForGame(letter.id, gameType);
+  const [nodeId] = useState(() => getLessonNodeForGame(letter.id, gameType, getLessonPathState(), searchParams.get("node")));
   const availableGameNodes = getLessonNodesForLetter(letter.id).filter((node) => node.gameType && games[node.gameType]);
 
   useEffect(() => {
@@ -46,10 +52,10 @@ export default function MiniGameScreen() {
     }
   }, [navigate, nodeId]);
 
-  function finishGame() {
+  function finishGame(result = {}) {
     if (!nodeId) return;
-    const result = completeLessonNode(nodeId);
-    if (result.blocked) return;
+    const completion = completeLessonNode(nodeId, { perfect: result.perfect === true });
+    if (completion.blocked) return;
     setComplete(true);
   }
 
@@ -132,4 +138,10 @@ export default function MiniGameScreen() {
       </footer>
     </section>
   );
+}
+
+export default function MiniGameScreen() {
+  const { gameType, letterId } = useParams();
+  const [searchParams] = useSearchParams();
+  return <MiniGameLesson key={`${gameType}:${letterId}:${searchParams.get("node") || ""}`} />;
 }

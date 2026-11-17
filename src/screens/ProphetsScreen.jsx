@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
-import { prophetStories } from "../data/prophetsData.js";
+import { prophetStories, prophetStoriesDisclaimer } from "../data/prophetsData.js";
 
 function normalize(value) {
   return value.toLocaleLowerCase("ru").trim();
@@ -53,6 +53,10 @@ export default function ProphetsScreen() {
           </p>
         </div>
         <strong className="prophets-hero__count">25</strong>
+      </GlassCard>
+
+      <GlassCard className="islamic-note-card">
+        <p>{prophetStoriesDisclaimer.note}</p>
       </GlassCard>
 
       <GlassCard className="quran-search-panel prophets-search">
@@ -116,7 +120,7 @@ export default function ProphetsScreen() {
 
             <div className="prophet-quran-refs" aria-label={`Аяты о пророке ${activeProphet.name}`}>
               {activeProphet.quranRefs.map((ref) => (
-                <span key={ref}>{ref}</span>
+                <a key={ref} href={`https://tanzil.net/#${ref.split("-")[0]}`} target="_blank" rel="noopener noreferrer">Коран {ref}</a>
               ))}
             </div>
           </GlassCard>

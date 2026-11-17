@@ -2410,11 +2410,11 @@ html body .juz-screen .juz-surah-row__copy small {
     background: #F5EAD4;
   }
 
-  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(1)::before { content: "вЂ"; color: #f0a72f; }
-  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(2)::before { content: "вЂ"; color: #f2b43a; }
-  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(3)::before { content: "вЂ"; color: #2fb766; background: #e9f8e8; }
-  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(4)::before { content: "вЂ"; color: #ff7841; }
-  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(5)::before { content: "в—ђ"; color: #8c62c7; background: #f3eefb; }
+  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(1)::before { content: "☀"; color: #f0a72f; }
+  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(2)::before { content: "☀"; color: #f2b43a; }
+  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(3)::before { content: "☀"; color: #2fb766; background: #e9f8e8; }
+  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(4)::before { content: "☀"; color: #ff7841; }
+  .page-frame:has(.namaz-feature-grid) .namaz-prayer-card:nth-child(5)::before { content: "☾"; color: #8c62c7; background: #f3eefb; }
 
   .page-frame:has(.namaz-feature-grid) .namaz-prayer-card.is-next {
     background: linear-gradient(90deg, rgba(55, 174, 91, 0.14), rgba(245, 234, 212, 0.84)) !important;
@@ -3617,6 +3617,16 @@ html body .juz-screen .juz-surah-row__copy small {
   font-weight: 1000;
 }
 
+.letter-audio-message {
+  max-width: 360px;
+  margin: 0;
+  color: rgba(245, 234, 212, 0.84);
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .catch-sky,
 .draw-board,
 .puzzle-board {
@@ -3730,8 +3740,11 @@ html body .juz-screen .juz-surah-row__copy small {
 }
 
 .puzzle-board {
+  position: relative;
+  overflow: hidden;
   background: radial-gradient(circle at center, rgba(246, 195, 91, 0.1), transparent 42%);
   min-height: 430px;
+  border-radius: 24px;
 }
 
 .puzzle-board__complete {
@@ -3754,9 +3767,9 @@ html body .juz-screen .juz-surah-row__copy small {
 .puzzle-piece {
   position: absolute;
   translate: -50% -50%;
-  width: 124px;
-  height: 124px;
-  border-radius: 28px;
+  width: clamp(82px, 10vw, 104px);
+  height: clamp(82px, 10vw, 104px);
+  border-radius: 22px;
 }
 
 .puzzle-slot {
@@ -3768,12 +3781,14 @@ html body .juz-screen .juz-surah-row__copy small {
   z-index: 2;
   display: grid;
   place-items: center;
+  padding: 0 0 10px;
   border: 1px solid rgba(255, 232, 176, 0.54);
   background: linear-gradient(145deg, #ffdc7d, #d8962e);
   color: #123128;
   font-family: "Noto Naskh Arabic", serif;
-  font-size: 6.2rem;
-  box-shadow: 0 9px 0 rgba(90, 56, 19, 0.4);
+  font-size: clamp(4.1rem, 7vw, 5.2rem);
+  line-height: 1;
+  box-shadow: 0 7px 0 rgba(90, 56, 19, 0.36), 0 14px 22px rgba(0, 0, 0, 0.18);
   cursor: grab;
   touch-action: none;
 }
@@ -3832,35 +3847,42 @@ html body .juz-screen .juz-surah-row__copy small {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #F5EAD4, #e8c892);
-  box-shadow: 0 10px 0 rgba(83, 62, 34, 0.26);
+  flex-wrap: wrap;
+  gap: 10px;
+  width: min(100%, 620px);
+  padding: 18px;
+  border: 1px solid rgba(246, 195, 91, 0.28);
+  border-radius: 18px;
+  background: rgba(245, 234, 212, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 232, 176, 0.08);
 }
 
 .word-find-card button {
-  width: 82px;
-  height: 92px;
-  border: 1px solid rgba(0, 111, 61, 0.18);
-  border-radius: 24px;
-  background: rgba(245, 234, 212, 0.58);
+  width: clamp(64px, 8vw, 78px);
+  height: clamp(72px, 9vw, 86px);
+  display: grid;
+  place-items: center;
+  padding: 0 0 8px;
+  border: 1px solid rgba(255, 232, 176, 0.34);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 244, 214, 0.96), rgba(234, 205, 142, 0.9));
   color: #006F3D;
   font-family: "Noto Naskh Arabic", serif;
-  font-size: 4.4rem;
-  box-shadow: 0 6px 0 rgba(83, 62, 34, 0.16);
-  transition: transform 160ms ease, background 160ms ease;
+  font-size: clamp(3.25rem, 6vw, 4.1rem);
+  line-height: 1;
+  box-shadow: 0 4px 0 rgba(83, 62, 34, 0.16), 0 10px 20px rgba(0, 0, 0, 0.12);
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .word-find-card button.is-found {
-  background: #9be770;
-  transform: scale(1.08);
-  box-shadow: 0 0 26px rgba(0, 111, 61, 0.42);
+  background: linear-gradient(180deg, #8be85d, #47c40a);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 0 rgba(20, 105, 22, 0.35), 0 0 24px rgba(88, 204, 2, 0.42);
 }
 
 .word-find-card button.is-wrong {
   animation: wrongShake 280ms ease;
-  background: #ffd4d9;
+  background: linear-gradient(180deg, #ffe1e4, #ff9aa5);
 }
 
 .game-lesson-layout .game-topbar__eyebrow,
@@ -11283,19 +11305,8 @@ body.dark-mode .bottom-nav .bottom-nav__item.is-active {
 
 @media (max-width: 780px) and (orientation: portrait) {
   .orientation-hint {
-    display: grid !important;
-    place-items: center !important;
-    align-content: center !important;
-    gap: 12px !important;
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 999 !important;
-    padding: 24px !important;
-    text-align: center !important;
-    color: #f5ead4 !important;
-    background:
-      linear-gradient(180deg, rgba(0, 42, 29, 0.9), rgba(0, 20, 14, 0.94)),
-      var(--mosque-bg) center / cover no-repeat !important;
+    display: none !important;
+    pointer-events: none !important;
   }
 }
 
@@ -11762,5 +11773,1159 @@ body.dark-mode .bottom-nav .bottom-nav__item.is-active {
 
   html body main.page-frame:has(.premium-namaz) .namaz-radio-panel .namaz-radio-card__lang {
     display: none !important;
+  }
+}
+
+/* ── Namaz screen: align with lesson/game visual language ── */
+html body main.page-frame:has(.premium-namaz) {
+  max-width: none !important;
+  padding: clamp(14px, 2.2vw, 32px) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) > .premium-namaz.content-stack {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.15fr) minmax(300px, 0.95fr) !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+  gap: clamp(14px, 1.8vw, 22px) !important;
+  width: 100% !important;
+  max-width: 1680px !important;
+  min-height: calc(100dvh - 52px) !important;
+  margin: 0 auto !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header,
+html body main.page-frame:has(.premium-namaz) .premium-namaz > :is(.namaz-next-card, .namaz-feature-card, .namaz-feature-panel, .geo-prompt-card, .namaz-city-search-card, .namaz-settings-card, .namaz-day-header, .namaz-prayer-list, .namaz-city-label) {
+  border: 1px solid rgba(246, 195, 91, 0.24) !important;
+  background: linear-gradient(145deg, rgba(3, 39, 46, 0.92), rgba(1, 26, 32, 0.86)) !important;
+  color: #F5EAD4 !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 232, 176, 0.08) !important;
+  backdrop-filter: blur(16px) saturate(1.1) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  min-height: 88px !important;
+  padding: 18px 22px !important;
+  border-radius: 22px !important;
+  background: linear-gradient(135deg, rgba(0, 111, 61, 0.96), rgba(4, 74, 66, 0.9)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header h1 {
+  color: #F5EAD4 !important;
+  font-size: clamp(2rem, 3vw, 3rem) !important;
+  line-height: 0.95 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header p:not(.brand-mark) {
+  max-width: 440px !important;
+  color: rgba(245, 234, 212, 0.86) !important;
+  font-size: 0.98rem !important;
+  line-height: 1.15 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card {
+  grid-column: 1 !important;
+  grid-row: 2 / 4 !important;
+  display: grid !important;
+  min-height: 420px !important;
+  padding: clamp(18px, 2vw, 28px) !important;
+  border-radius: 22px !important;
+  background: radial-gradient(circle at 78% 18%, rgba(88, 204, 2, 0.25), transparent 34%),
+    linear-gradient(145deg, rgba(0, 111, 61, 0.96), rgba(4, 72, 56, 0.92)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card :is(.section-kicker, h2, .namaz-next-date, .namaz-next-time, .namaz-countdown, .namaz-next-ring) {
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card h2 {
+  font-size: clamp(2rem, 3.2vw, 3.4rem) !important;
+  line-height: 0.95 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-time {
+  font-size: clamp(3.8rem, 6vw, 6.8rem) !important;
+  color: #F5EAD4 !important;
+  text-shadow: 0 8px 22px rgba(0, 0, 0, 0.18) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-countdown,
+html body main.page-frame:has(.premium-namaz) .namaz-next-ring {
+  border: 1px solid rgba(255, 232, 176, 0.28) !important;
+  background: rgba(245, 234, 212, 0.16) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  min-height: 74px !important;
+  padding: 16px 18px !important;
+  border-radius: 20px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header > span {
+  color: #F5EAD4 !important;
+  font-size: clamp(1.25rem, 1.7vw, 1.65rem) !important;
+  font-weight: 1000 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-count {
+  border: 1px solid rgba(246, 195, 91, 0.32) !important;
+  background: rgba(245, 234, 212, 0.12) !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-list {
+  grid-column: 2 !important;
+  grid-row: 3 / 5 !important;
+  display: grid !important;
+  gap: 12px !important;
+  align-content: start !important;
+  padding: 16px !important;
+  border-radius: 22px !important;
+  background: rgba(3, 39, 46, 0.72) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card,
+html body main.page-frame:has(.premium-namaz) .namaz-kaza-row,
+html body main.page-frame:has(.premium-namaz) .namaz-note-item {
+  border: 1px solid rgba(246, 195, 91, 0.18) !important;
+  background: rgba(245, 234, 212, 0.1) !important;
+  color: #F5EAD4 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 232, 176, 0.06) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card {
+  min-height: 78px !important;
+  padding: 13px 14px !important;
+  border-radius: 18px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card.is-next {
+  border-color: rgba(88, 204, 2, 0.54) !important;
+  background: linear-gradient(135deg, rgba(10, 109, 66, 0.54), rgba(245, 234, 212, 0.1)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-arrow-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__play,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__icon {
+  border: 1px solid rgba(255, 232, 176, 0.28) !important;
+  background: rgba(245, 234, 212, 0.12) !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn.is-checked,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card.is-active .namaz-radio-card__play {
+  background: #05874d !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-name,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy strong,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body strong {
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-nameRu,
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-sub,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__meta,
+html body main.page-frame:has(.premium-namaz) .namaz-panel-note {
+  color: rgba(245, 234, 212, 0.68) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) :is(.namaz-time-badge, .namaz-time-plain, .namaz-radio-card__lang) {
+  border: 1px solid rgba(246, 195, 91, 0.24) !important;
+  background: rgba(245, 234, 212, 0.12) !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-grid {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card {
+  min-height: 102px !important;
+  padding: 14px 12px !important;
+  border-radius: 18px !important;
+  grid-template-columns: 1fr !important;
+  justify-items: center !important;
+  text-align: center !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card svg {
+  width: 42px !important;
+  height: 42px !important;
+  padding: 10px !important;
+  border-radius: 999px !important;
+  background: rgba(88, 204, 2, 0.18) !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card:is(.is-active, :hover) {
+  border-color: rgba(88, 204, 2, 0.54) !important;
+  background: linear-gradient(145deg, rgba(7, 92, 64, 0.94), rgba(3, 39, 46, 0.88)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card :is(strong, small) {
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card) {
+  grid-column: 3 !important;
+  grid-row: 3 / 5 !important;
+  align-self: start !important;
+  padding: 18px !important;
+  border-radius: 22px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel__head {
+  align-items: start !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel__head h2 {
+  color: #F5EAD4 !important;
+  font-size: clamp(1.35rem, 2vw, 2rem) !important;
+  line-height: 1.08 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel__head svg {
+  color: #F5EAD4 !important;
+  opacity: 0.8 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-radio-list,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-list,
+html body main.page-frame:has(.premium-namaz) .namaz-kaza-list,
+html body main.page-frame:has(.premium-namaz) .namaz-note-list {
+  gap: 10px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card {
+  grid-column: 1 !important;
+  grid-row: 4 !important;
+  align-self: end !important;
+  padding: 16px !important;
+  border-radius: 20px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-city-label {
+  grid-column: 1 !important;
+  grid-row: 5 !important;
+  width: fit-content !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+  color: rgba(245, 234, 212, 0.78) !important;
+}
+
+@media (max-width: 1180px) {
+  html body main.page-frame:has(.premium-namaz) > .premium-namaz.content-stack {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header,
+  html body main.page-frame:has(.premium-namaz) .namaz-next-card,
+  html body main.page-frame:has(.premium-namaz) .namaz-day-header,
+  html body main.page-frame:has(.premium-namaz) .namaz-prayer-list,
+  html body main.page-frame:has(.premium-namaz) .namaz-feature-grid,
+  html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card),
+  html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card,
+  html body main.page-frame:has(.premium-namaz) .namaz-city-label {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+
+  html body main.page-frame:has(.premium-namaz) .namaz-next-card {
+    min-height: 300px !important;
+  }
+}
+
+/* ── Namaz palette lock: green + beige as primary colors ── */
+html body main.page-frame:has(.premium-namaz) {
+  --namaz-green: #078246;
+  --namaz-green-deep: #045f35;
+  --namaz-green-soft: #dff3cd;
+  --namaz-beige: #f5ead4;
+  --namaz-beige-deep: #ead4a7;
+  --namaz-ink: #3c3428;
+  --namaz-muted: rgba(60, 52, 40, 0.68);
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header,
+html body main.page-frame:has(.premium-namaz) .namaz-next-card {
+  background:
+    radial-gradient(circle at 82% 22%, rgba(245, 234, 212, 0.18), transparent 26%),
+    linear-gradient(145deg, var(--namaz-green), var(--namaz-green-deep)) !important;
+  border-color: rgba(245, 234, 212, 0.38) !important;
+  color: var(--namaz-beige) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header :is(h1, h2, h3, p, span, strong),
+html body main.page-frame:has(.premium-namaz) .namaz-next-card :is(.section-kicker, h2, .namaz-next-date, .namaz-next-time, .namaz-countdown, .namaz-countdown strong, .namaz-countdown small, .namaz-next-ring, .namaz-next-ring span, .namaz-next-ring strong) {
+  color: var(--namaz-beige) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header,
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-list,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card),
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card,
+html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card,
+html body main.page-frame:has(.premium-namaz) .geo-prompt-card,
+html body main.page-frame:has(.premium-namaz) .namaz-city-search-card,
+html body main.page-frame:has(.premium-namaz) .namaz-settings-card {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(223, 243, 205, 0.5), transparent 24%),
+    linear-gradient(145deg, var(--namaz-beige), var(--namaz-beige-deep)) !important;
+  border-color: rgba(7, 130, 70, 0.18) !important;
+  color: var(--namaz-ink) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card,
+html body main.page-frame:has(.premium-namaz) .namaz-kaza-row,
+html body main.page-frame:has(.premium-namaz) .namaz-note-item {
+  background: rgba(255, 249, 231, 0.62) !important;
+  border-color: rgba(7, 130, 70, 0.16) !important;
+  color: var(--namaz-ink) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card.is-next,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card:is(.is-active, :hover),
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card.is-active {
+  background:
+    linear-gradient(145deg, rgba(245, 234, 212, 0.92), var(--namaz-green-soft)) !important;
+  border-color: rgba(7, 130, 70, 0.36) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-name,
+html body main.page-frame:has(.premium-namaz) .namaz-day-header > span,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card strong,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel__head h2,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy strong,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body strong {
+  color: var(--namaz-ink) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-nameRu,
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-sub,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card small,
+html body main.page-frame:has(.premium-namaz) .namaz-panel-note,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__meta {
+  color: var(--namaz-muted) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-arrow-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__play,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__icon,
+html body main.page-frame:has(.premium-namaz) .city-search-form .button--primary,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel .button--primary {
+  background: var(--namaz-green) !important;
+  color: var(--namaz-beige) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn:not(.is-checked),
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card svg {
+  background: rgba(7, 130, 70, 0.12) !important;
+  color: var(--namaz-green) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) :is(.namaz-time-badge, .namaz-time-plain, .namaz-radio-card__lang, .namaz-day-count, .namaz-change-city-button, .namaz-location-button) {
+  background: rgba(245, 234, 212, 0.76) !important;
+  border-color: rgba(7, 130, 70, 0.2) !important;
+  color: var(--namaz-green-deep) !important;
+}
+
+/* ── Namaz screen: home-style dashboard polish ── */
+html body main.page-frame:has(.premium-namaz) {
+  max-width: none !important;
+  padding: clamp(18px, 2.2vw, 34px) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) > .premium-namaz.content-stack {
+  display: grid !important;
+  grid-template-columns: minmax(310px, 0.92fr) minmax(420px, 1.35fr) minmax(330px, 0.95fr) !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+  gap: clamp(16px, 1.8vw, 24px) !important;
+  width: 100% !important;
+  max-width: 1740px !important;
+  min-height: calc(100dvh - 56px) !important;
+  margin: 0 auto !important;
+  color: #3C3C3C !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+  min-height: 250px !important;
+  align-content: start !important;
+  padding: 28px 28px !important;
+  border: 1px solid rgba(255, 232, 176, 0.34) !important;
+  border-radius: 26px !important;
+  background: radial-gradient(circle at 82% 24%, rgba(245, 234, 212, 0.2), transparent 24%),
+    linear-gradient(145deg, #06924f, #04733f) !important;
+  box-shadow: 0 14px 0 rgba(4, 86, 50, 0.35), 0 28px 52px rgba(0, 0, 0, 0.24) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header h1 {
+  max-width: 320px !important;
+  color: #F5EAD4 !important;
+  font-size: clamp(2.45rem, 4vw, 4.2rem) !important;
+  line-height: 0.95 !important;
+  letter-spacing: 0 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header p:not(.brand-mark) {
+  max-width: 300px !important;
+  color: rgba(245, 234, 212, 0.92) !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  line-height: 1.18 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card {
+  grid-column: 1 !important;
+  grid-row: 3 / 5 !important;
+  min-height: 360px !important;
+  padding: 28px !important;
+  border: 1px solid rgba(255, 232, 176, 0.32) !important;
+  border-radius: 26px !important;
+  background: linear-gradient(145deg, #07894d, #04713f) !important;
+  color: #F5EAD4 !important;
+  box-shadow: 0 14px 0 rgba(4, 86, 50, 0.32), 0 26px 48px rgba(0, 0, 0, 0.22) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card :is(.section-kicker, h2, .namaz-next-date, .namaz-next-time, .namaz-countdown, .namaz-next-ring) {
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-card h2 {
+  font-size: clamp(2.4rem, 3.8vw, 4.2rem) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-next-time {
+  font-size: clamp(4.5rem, 6.5vw, 7.4rem) !important;
+  line-height: 0.92 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-countdown,
+html body main.page-frame:has(.premium-namaz) .namaz-next-ring {
+  border: 1px solid rgba(255, 232, 176, 0.28) !important;
+  background: rgba(245, 234, 212, 0.2) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header,
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-list,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card),
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card,
+html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card,
+html body main.page-frame:has(.premium-namaz) .geo-prompt-card,
+html body main.page-frame:has(.premium-namaz) .namaz-city-search-card,
+html body main.page-frame:has(.premium-namaz) .namaz-settings-card {
+  border: 1px solid rgba(196, 177, 124, 0.34) !important;
+  background: linear-gradient(145deg, rgba(245, 234, 212, 0.96), rgba(232, 213, 170, 0.9)) !important;
+  color: #3C3C3C !important;
+  box-shadow: 0 12px 0 rgba(83, 62, 34, 0.13), 0 24px 46px rgba(0, 0, 0, 0.16) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  min-height: 118px !important;
+  padding: 22px 24px !important;
+  border-radius: 26px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header > span {
+  color: #3C3C3C !important;
+  font-size: clamp(1.85rem, 2.8vw, 2.7rem) !important;
+  line-height: 1 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-count {
+  border: 1px solid rgba(196, 177, 124, 0.36) !important;
+  background: rgba(255, 255, 255, 0.36) !important;
+  color: #006F3D !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header .button,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel .button,
+html body main.page-frame:has(.premium-namaz) .namaz-change-city-button,
+html body main.page-frame:has(.premium-namaz) .namaz-location-button {
+  border: 1px solid rgba(0, 111, 61, 0.2) !important;
+  background: rgba(245, 234, 212, 0.64) !important;
+  color: #006F3D !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-list {
+  grid-column: 2 !important;
+  grid-row: 2 / 5 !important;
+  display: grid !important;
+  gap: 14px !important;
+  align-content: start !important;
+  padding: 18px !important;
+  border-radius: 26px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card {
+  min-height: 86px !important;
+  padding: 15px 16px !important;
+  border: 1px solid rgba(196, 177, 124, 0.32) !important;
+  border-radius: 20px !important;
+  background: rgba(255, 252, 240, 0.52) !important;
+  color: #3C3C3C !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-card.is-next {
+  border-color: rgba(0, 111, 61, 0.28) !important;
+  background: linear-gradient(145deg, rgba(255, 252, 240, 0.78), rgba(223, 243, 205, 0.68)) !important;
+  box-shadow: 0 0 0 2px rgba(88, 204, 2, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-name,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy strong,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body strong,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card strong,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel__head h2 {
+  color: #3C3C3C !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-nameRu,
+html body main.page-frame:has(.premium-namaz) .namaz-prayer-sub,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__copy small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__body small,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__meta,
+html body main.page-frame:has(.premium-namaz) .namaz-panel-note,
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card small {
+  color: rgba(60, 60, 60, 0.62) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-arrow-btn,
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card__play,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card__icon {
+  border: 0 !important;
+  background: #05874d !important;
+  color: #F5EAD4 !important;
+  box-shadow: 0 5px 0 rgba(4, 86, 50, 0.28) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-check-btn:not(.is-checked) {
+  background: rgba(0, 111, 61, 0.1) !important;
+  box-shadow: none !important;
+}
+
+html body main.page-frame:has(.premium-namaz) :is(.namaz-time-badge, .namaz-time-plain, .namaz-radio-card__lang) {
+  border: 1px solid rgba(196, 177, 124, 0.34) !important;
+  background: rgba(255, 255, 255, 0.34) !important;
+  color: #3C3C3C !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-grid {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card {
+  min-height: 118px !important;
+  padding: 16px 12px !important;
+  border-radius: 22px !important;
+  grid-template-columns: 1fr !important;
+  justify-items: center !important;
+  text-align: center !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card svg {
+  width: 42px !important;
+  height: 42px !important;
+  padding: 10px !important;
+  border-radius: 999px !important;
+  background: rgba(0, 111, 61, 0.12) !important;
+  color: #006F3D !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-card:is(.is-active, :hover) {
+  border-color: rgba(0, 111, 61, 0.24) !important;
+  background: linear-gradient(145deg, rgba(245, 234, 212, 0.98), rgba(222, 243, 207, 0.94)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card) {
+  grid-column: 3 !important;
+  grid-row: 2 / 4 !important;
+  align-self: start !important;
+  padding: 22px !important;
+  border-radius: 26px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-radio-card,
+html body main.page-frame:has(.premium-namaz) .namaz-mosque-card,
+html body main.page-frame:has(.premium-namaz) .namaz-kaza-row,
+html body main.page-frame:has(.premium-namaz) .namaz-note-item {
+  border: 1px solid rgba(196, 177, 124, 0.3) !important;
+  background: rgba(255, 252, 240, 0.5) !important;
+  color: #3C3C3C !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card {
+  grid-column: 3 !important;
+  grid-row: 4 !important;
+  align-self: end !important;
+  padding: 18px !important;
+  border-radius: 24px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-city-label {
+  grid-column: 1 !important;
+  grid-row: 5 !important;
+  width: fit-content !important;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(196, 177, 124, 0.34) !important;
+  border-radius: 999px !important;
+  background: rgba(245, 234, 212, 0.86) !important;
+  color: #3C3C3C !important;
+}
+
+@media (max-width: 1180px) {
+  html body main.page-frame:has(.premium-namaz) > .premium-namaz.content-stack {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body main.page-frame:has(.premium-namaz) .premium-namaz > .page-header,
+  html body main.page-frame:has(.premium-namaz) .namaz-next-card,
+  html body main.page-frame:has(.premium-namaz) .namaz-day-header,
+  html body main.page-frame:has(.premium-namaz) .namaz-prayer-list,
+  html body main.page-frame:has(.premium-namaz) .namaz-feature-grid,
+  html body main.page-frame:has(.premium-namaz) .namaz-feature-panel:not(.namaz-surah-dua-card),
+  html body main.page-frame:has(.premium-namaz) .namaz-surah-dua-card,
+  html body main.page-frame:has(.premium-namaz) .namaz-city-label {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
+
+/* Namaz day title card: green block with beige text. */
+html body main.page-frame:has(.premium-namaz) .namaz-day-header {
+  border-color: rgba(245, 234, 212, 0.38) !important;
+  background:
+    radial-gradient(circle at 86% 18%, rgba(245, 234, 212, 0.16), transparent 28%),
+    linear-gradient(145deg, #078246, #045f35) !important;
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-header > span {
+  color: #F5EAD4 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .namaz-day-count,
+html body main.page-frame:has(.premium-namaz) .namaz-day-header .button {
+  border-color: rgba(245, 234, 212, 0.32) !important;
+  background: rgba(245, 234, 212, 0.86) !important;
+  color: #045f35 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-day-header.namaz-day-header--green {
+  border: 1px solid rgba(245, 234, 212, 0.42) !important;
+  background: var(--namaz-day-bg) !important;
+  color: var(--namaz-day-text) !important;
+  box-shadow: 0 14px 0 rgba(8, 94, 49, 0.28), 0 26px 48px rgba(0, 0, 0, 0.18) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-day-header.namaz-day-header--green > span {
+  color: var(--namaz-day-text) !important;
+  opacity: 1 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-day-header.namaz-day-header--green .namaz-day-count,
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-day-header.namaz-day-header--green .button {
+  border-color: rgba(245, 234, 212, 0.34) !important;
+  background: rgba(245, 234, 212, 0.9) !important;
+  color: var(--green-dark) !important;
+}
+
+/* Namaz next-prayer card: keep the clock readable in one line. */
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto 1fr !important;
+  align-content: stretch !important;
+  gap: 18px !important;
+  border: 1px solid rgba(245, 234, 212, 0.42) !important;
+  background: var(--namaz-next-bg) !important;
+  color: var(--namaz-next-text) !important;
+  box-shadow: 0 14px 0 rgba(8, 94, 49, 0.28), 0 26px 48px rgba(0, 0, 0, 0.18) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-left,
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-right {
+  grid-column: 1 !important;
+  min-width: 0 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-left {
+  align-content: start !important;
+  gap: 12px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-right {
+  align-self: end !important;
+  justify-items: end !important;
+  width: 100% !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green :is(.section-kicker, h2, .namaz-next-date, .namaz-countdown, .namaz-countdown strong, .namaz-countdown small, .namaz-next-ring, .namaz-next-ring span, .namaz-next-ring strong) {
+  color: var(--namaz-next-text) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-time {
+  display: block !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  color: var(--namaz-next-text) !important;
+  font-size: clamp(3.5rem, 5.4vw, 6.2rem) !important;
+  line-height: 0.9 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-countdown,
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-next-card.namaz-next-card--green .namaz-next-ring {
+  border-color: rgba(245, 234, 212, 0.34) !important;
+  background: rgba(245, 234, 212, 0.18) !important;
+}
+
+/* Namaz prayer rows: fixed columns prevent time/name overlap. */
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-list.namaz-prayer-list--fixed {
+  border-color: rgba(245, 234, 212, 0.28) !important;
+  background: #087A3F !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed {
+  display: grid !important;
+  grid-template-columns: minmax(190px, 1fr) minmax(78px, auto) 36px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-height: 82px !important;
+  padding: 14px 16px !important;
+  border-color: rgba(8, 122, 63, 0.16) !important;
+  background: rgba(245, 234, 212, 0.92) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed.is-next {
+  border-color: rgba(8, 122, 63, 0.52) !important;
+  background: linear-gradient(145deg, rgba(245, 234, 212, 0.98), rgba(223, 243, 205, 0.9)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-info {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-name {
+  display: block !important;
+  color: #3C3C3C !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-sub {
+  display: block !important;
+  color: rgba(60, 60, 60, 0.58) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-time-block {
+  justify-self: end !important;
+  min-width: 72px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed :is(.namaz-time-badge, .namaz-time-plain) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 64px !important;
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(8, 122, 63, 0.16) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 249, 231, 0.72) !important;
+  color: #6B5A40 !important;
+  font-size: 0.9rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-arrow-btn {
+  justify-self: end !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-check-btn {
+  display: none !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-nameRu {
+  display: inline !important;
+}
+
+@media (max-width: 760px) {
+  html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed {
+    grid-template-columns: minmax(126px, 1fr) minmax(66px, auto) 32px !important;
+    gap: 10px !important;
+  }
+
+  html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-prayer-card.namaz-prayer-card--fixed .namaz-prayer-nameRu {
+    display: none !important;
+  }
+}
+
+/* Namaz wudu guide. */
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-feature-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-panel {
+  background:
+    radial-gradient(circle at 92% 10%, rgba(8, 122, 63, 0.14), transparent 26%),
+    linear-gradient(145deg, rgba(245, 234, 212, 0.98), rgba(234, 212, 167, 0.94)) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-panel .namaz-feature-panel__head h2 {
+  color: #3C3C3C !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-panel .namaz-feature-panel__head p {
+  color: rgba(60, 60, 60, 0.64) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-panel .namaz-feature-panel__head svg {
+  color: #087A3F !important;
+  opacity: 1 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-list {
+  display: grid !important;
+  gap: 10px !important;
+  margin-top: 14px !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-step {
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 10px !important;
+  padding: 11px 12px !important;
+  border: 1px solid rgba(8, 122, 63, 0.16) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 249, 231, 0.62) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-step__num {
+  display: grid !important;
+  place-items: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  background: #087A3F !important;
+  color: #F5EAD4 !important;
+  font-size: 0.86rem !important;
+  font-weight: 950 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-step__body {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-step__body strong {
+  color: #3C3C3C !important;
+  font-size: 0.96rem !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-step__body small {
+  color: rgba(60, 60, 60, 0.66) !important;
+  font-size: 0.8rem !important;
+  font-weight: 850 !important;
+  line-height: 1.22 !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-note {
+  display: grid !important;
+  gap: 4px !important;
+  margin-top: 12px !important;
+  padding: 12px !important;
+  border: 1px solid rgba(8, 122, 63, 0.2) !important;
+  border-radius: 16px !important;
+  background: rgba(8, 122, 63, 0.1) !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-note strong {
+  color: #087A3F !important;
+  font-size: 0.92rem !important;
+}
+
+html body main.page-frame:has(.premium-namaz) .premium-namaz .namaz-wudu-note span {
+  color: rgba(60, 60, 60, 0.66) !important;
+  font-size: 0.8rem !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+}
+
+/* Tajweed lesson cards: calmer reading layout. */
+html body .tajweed-screen {
+  padding-bottom: 120px !important;
+}
+
+html body .tajweed-screen .tajweed-section {
+  padding: clamp(18px, 2vw, 24px) !important;
+  border: 1px solid rgba(8, 122, 63, 0.14) !important;
+  border-radius: 24px !important;
+  background: rgba(245, 234, 212, 0.72) !important;
+  box-shadow: 0 18px 48px rgba(61, 43, 20, 0.08) !important;
+}
+
+html body .tajweed-screen .tajweed-section-head {
+  margin-bottom: 4px !important;
+}
+
+html body .tajweed-screen .tajweed-section-head h2 {
+  color: #2F2A21 !important;
+  font-size: clamp(1.25rem, 1.5vw, 1.7rem) !important;
+  line-height: 1.1 !important;
+}
+
+html body .tajweed-screen .tajweed-section-head span {
+  color: #6B5A40 !important;
+  font-size: 0.92rem !important;
+}
+
+html body .tajweed-screen .tajweed-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card {
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  gap: 16px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(8, 122, 63, 0.16) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, rgba(255, 249, 231, 0.94), rgba(245, 234, 212, 0.88)) !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card::before {
+  width: 100% !important;
+  height: 6px !important;
+  inset: 0 0 auto !important;
+  background: var(--tajweed-color, #087A3F) !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__top {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) auto !important;
+  gap: 14px !important;
+  align-items: start !important;
+  padding: 24px 22px 0 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__num {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  background: #087A3F !important;
+  color: #F5EAD4 !important;
+  font-size: 1rem !important;
+  box-shadow: 0 8px 0 rgba(8, 122, 63, 0.16) !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__intro {
+  min-width: 0 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__intro h3 {
+  margin: 0 0 8px !important;
+  color: #2F2A21 !important;
+  font-size: clamp(1.15rem, 1.2vw, 1.45rem) !important;
+  line-height: 1.15 !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__intro p {
+  max-width: 34ch !important;
+  margin: 0 !important;
+  color: #6B5A40 !important;
+  font-size: 0.98rem !important;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__top > svg {
+  color: #087A3F !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__body {
+  display: grid !important;
+  grid-template-rows: auto auto 1fr !important;
+  gap: 14px !important;
+  padding: 0 22px 22px !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__examples {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__examples span {
+  display: grid !important;
+  place-items: center !important;
+  min-height: 50px !important;
+  padding: 8px 10px !important;
+  border: 1px solid rgba(8, 122, 63, 0.14) !important;
+  border-radius: 16px !important;
+  background: rgba(8, 122, 63, 0.08) !important;
+  color: #2F2A21 !important;
+  font-family: "Noto Naskh Arabic", "Times New Roman", serif !important;
+  font-size: 1.38rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  text-align: center !important;
+}
+
+html body .tajweed-screen .practice-quiz.practice-quiz--compact {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 14px !important;
+  border: 1px solid rgba(8, 122, 63, 0.14) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 249, 231, 0.62) !important;
+}
+
+html body .tajweed-screen .practice-quiz.practice-quiz--compact > strong {
+  color: #2F2A21 !important;
+  font-size: 0.98rem !important;
+  line-height: 1.3 !important;
+}
+
+html body .tajweed-screen .practice-quiz__options {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+html body .tajweed-screen .practice-quiz__options button {
+  width: 100% !important;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(8, 122, 63, 0.18) !important;
+  border-radius: 999px !important;
+  background: rgba(245, 234, 212, 0.78) !important;
+  color: #3C3C3C !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  line-height: 1.18 !important;
+  text-align: center !important;
+  white-space: normal !important;
+}
+
+html body .tajweed-screen .practice-quiz__result {
+  margin: 0 !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__actions {
+  align-self: end !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__actions .button,
+html body .tajweed-screen .tajweed-rule-card__actions button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  padding: 8px 12px !important;
+  justify-content: center !important;
+  border-color: rgba(8, 122, 63, 0.2) !important;
+  background: rgba(255, 249, 231, 0.78) !important;
+  color: #087A3F !important;
+  font-size: 0.92rem !important;
+  font-weight: 950 !important;
+  line-height: 1.12 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  box-shadow: 0 5px 0 rgba(8, 122, 63, 0.14) !important;
+}
+
+html body .tajweed-screen .tajweed-rule-card__actions .button:disabled,
+html body .tajweed-screen .tajweed-rule-card__actions button:disabled {
+  opacity: 0.72 !important;
+}
+
+@media (max-width: 980px) {
+  html body .tajweed-screen .tajweed-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  html body .tajweed-screen .tajweed-section {
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  html body .tajweed-screen .tajweed-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html body .tajweed-screen .tajweed-rule-card__top {
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    padding: 20px 16px 0 !important;
+  }
+
+  html body .tajweed-screen .tajweed-rule-card__num {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  html body .tajweed-screen .tajweed-rule-card__body {
+    padding: 0 16px 18px !important;
+  }
+
+  html body .tajweed-screen .tajweed-rule-card__actions {
+    grid-template-columns: 1fr !important;
   }
 }

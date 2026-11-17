@@ -79,8 +79,9 @@ export default function QuranSearchScreen() {
 
       <GlassCard className="quran-search-panel">
         <Search size={20} aria-hidden="true" />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: 2:255, Фатиха, الحمد, Милостивый" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: 2:255, Фатиха, الحمد" aria-label="Поиск по названию, номеру или арабскому тексту" />
       </GlassCard>
+      <p className="content-source-note">Ищи по названию суры, номеру аята или арабскому тексту.</p>
 
       {query.trim() && (
         <p className="quran-search-count">
@@ -112,10 +113,10 @@ export default function QuranSearchScreen() {
                 {result.type === "ayah" ? (
                   <>
                     <span className="quran-search-result__meta">
-                      {result.surah.number}:{result.ayah.number} В· {getJuzForAyah(result.surah.number, result.ayah.number)} джуз
+                      {result.surah.number}:{result.ayah.number} · {getJuzForAyah(result.surah.number, result.ayah.number)} джуз
                     </span>
                     <span className="quran-search-arabic" dir="rtl">{highlightMatch(result.ayah.arabic, query)}</span>
-                    <span>{highlightMatch(result.ayah.translation, query)}</span>
+                    {result.ayah.translation && <span>{highlightMatch(result.ayah.translation, query)}</span>}
                   </>
                 ) : (
                   <span>{highlightMatch(result.surah.translation, query)}</span>
@@ -125,8 +126,8 @@ export default function QuranSearchScreen() {
           ))
         ) : (
           <GlassCard className="quran-warning-card">
-            <h2>Начни поиск</h2>
-            <p>Можно искать по названию суры, номеру, арабскому тексту или переводу.</p>
+            <h2>{query.trim() ? "Совпадений не найдено" : "Начни поиск"}</h2>
+            <p>Можно искать по названию суры, номеру аята или арабскому тексту.</p>
           </GlassCard>
         )}
       </div>

@@ -1,5 +1,6 @@
 ﻿import { RotateCcw, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { plural } from "../utils/plural.js";
 
 const MIN_STROKE_LENGTH = 250;
 const MIN_STROKES = 1;
@@ -69,7 +70,7 @@ function evaluateBowlLetter(letterId, strokes, totalLength) {
   const rule = traceRules[letterId];
   const stats = strokes.map(getStrokeStats).filter((stroke) => stroke.points.length);
   const bodyCandidates = stats
-    .filter((stroke) => stroke.length >= 95 && stroke.width >= 100 && stroke.width > stroke.height * 1.15 && stroke.height <= 135)
+    .filter((stroke) => stroke.length >= 160 && stroke.width >= 100 && stroke.width > stroke.height * 1.15 && stroke.height >= 20 && stroke.height <= 135)
     .sort((a, b) => b.length - a.length);
   const body = bodyCandidates[0];
 
@@ -79,6 +80,13 @@ function evaluateBowlLetter(letterId, strokes, totalLength) {
       score: Math.min(55, Math.round((totalLength / MIN_STROKE_LENGTH) * 48)),
       message: "Сначала напиши широкую основную линию буквы, как в образце."
     };
+  }
+
+  const edgeGap = Math.max(12, body.height * 0.2);
+  const hasBowl = body.maxY - body.points[0].y >= edgeGap
+    && body.maxY - body.points.at(-1).y >= edgeGap;
+  if (!hasBowl || totalLength < MIN_STROKE_LENGTH) {
+    return { passed: false, score: 55, message: "Проведи широкую изогнутую линию: середина ниже обоих краёв. Затем добавь точки." };
   }
 
   const dotZoneGap = Math.max(18, body.height * 0.28);
@@ -124,7 +132,7 @@ function evaluateBowlLetter(letterId, strokes, totalLength) {
     };
   }
 
-  if (dotCount > rule.dotCount + 1) {
+  if (dotCount > rule.dotCount) {
     return {
       passed: false,
       score: Math.min(82, score),
@@ -135,7 +143,7 @@ function evaluateBowlLetter(letterId, strokes, totalLength) {
   return {
     passed: true,
     score: 100,
-    message: "Молодец! Отлично написал!"
+    message: "Основная форма и точки похожи на образец. Сверь почерк с учителем."
   };
 }
 
@@ -193,6 +201,10 @@ export default function TraceLetterGame({ letter, onComplete }) {
     context.lineWidth = 14;
     context.lineCap = "round";
     context.lineJoin = "round";
+    context.fillStyle = context.strokeStyle;
+    context.beginPath();
+    context.arc(point.x, point.y, 7, 0, Math.PI * 2);
+    context.fill();
     context.beginPath();
     context.moveTo(point.x, point.y);
     lastPointRef.current = point;
@@ -258,7 +270,7 @@ export default function TraceLetterGame({ letter, onComplete }) {
       setMessage(
         strokeLengthRef.current < MIN_STROKE_LENGTH
           ? "Напиши букву подольше — веди карандаш медленно"
-          : `Напиши ещё ${requiredStrokes - strokeCountRef.current} штрих(а)`
+          : `Напиши ещё ${requiredStrokes - strokeCountRef.current} ${plural(requiredStrokes - strokeCountRef.current, "штрих", "штриха", "штрихов")}`
       );
       return;
     }
@@ -273,7 +285,7 @@ export default function TraceLetterGame({ letter, onComplete }) {
 
   return (
     <div className="game-content trace-game">
-      <h3>Напишите букву «{letter.nameRu}»</h3>
+      <h3>Напиши букву «{letter.nameRu}»</h3>
 
       <div className="trace-progress-row">
         <div className="trace-progress-bar" aria-label={`Прогресс: ${progress}%`}>

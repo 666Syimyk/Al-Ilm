@@ -1,5 +1,7 @@
 ﻿import { Coordinates, CalculationMethod, HighLatitudeRule, Madhab, PrayerTimes, Prayer, Qibla } from "adhan";
 
+import { getStoredJson, getStoredValue, setStoredJson, setStoredValue } from "../utils/storage.js";
+
 const PRAYER_NAMES_RU = {
   [Prayer.Fajr]: "Фаджр",
   [Prayer.Sunrise]: "Восход",
@@ -18,12 +20,29 @@ const STORAGE_KEY_REGION = "prayerRegion";
 const STORAGE_KEY_SETTINGS = "prayerSettings";
 
 export const PRAYER_METHODS = [
-  { id: "mwl", label: "Muslim World League" },
-  { id: "egyptian", label: "Egyptian" },
-  { id: "karachi", label: "Karachi" },
-  { id: "umm_al_qura", label: "Umm al-Qura" },
-  { id: "north_america", label: "North America" }
+  { id: "mwl", label: "Всемирная исламская лига (MWL)" },
+  { id: "moonsighting", label: "Комитет наблюдения луны (северные широты)" },
+  { id: "turkey", label: "Диянет (Турция)" },
+  { id: "egyptian", label: "Египет" },
+  { id: "karachi", label: "Карачи (Пакистан)" },
+  { id: "umm_al_qura", label: "Умм аль-Кура (Мекка)" },
+  { id: "dubai", label: "Дубай" },
+  { id: "kuwait", label: "Кувейт" },
+  { id: "qatar", label: "Катар" },
+  { id: "north_america", label: "Северная Америка (ISNA)" }
 ];
+
+// Local muftiates publish their own timetables. Per-prayer minute offsets let a family
+// match the schedule of their mosque instead of trusting a generic method.
+export const PRAYER_ADJUSTMENT_KEYS = [
+  { id: "fajr", label: "Фаджр" },
+  { id: "sunrise", label: "Восход" },
+  { id: "dhuhr", label: "Зухр" },
+  { id: "asr", label: "Аср" },
+  { id: "maghrib", label: "Магриб" },
+  { id: "isha", label: "Иша" }
+];
+export const MAX_PRAYER_ADJUSTMENT = 30;
 
 export const ASR_MADHABS = [
   { id: "shafi", label: "Шафии, Малики, Ханбали" },
@@ -32,16 +51,30 @@ export const ASR_MADHABS = [
 
 const DEFAULT_SETTINGS = {
   method: "mwl",
-  madhab: "hanafi"
+  madhab: "hanafi",
+  adjustments: {}
 };
 
 const METHOD_BUILDERS = {
   mwl: () => CalculationMethod.MuslimWorldLeague(),
+  moonsighting: () => CalculationMethod.MoonsightingCommittee(),
+  turkey: () => CalculationMethod.Turkey(),
   egyptian: () => CalculationMethod.Egyptian(),
   karachi: () => CalculationMethod.Karachi(),
   umm_al_qura: () => CalculationMethod.UmmAlQura(),
+  dubai: () => CalculationMethod.Dubai(),
+  kuwait: () => CalculationMethod.Kuwait(),
+  qatar: () => CalculationMethod.Qatar(),
   north_america: () => CalculationMethod.NorthAmerica()
 };
+
+function sanitizeAdjustments(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.fromEntries(PRAYER_ADJUSTMENT_KEYS.map(({ id }) => {
+    const minutes = Math.round(Number(source[id]) || 0);
+    return [id, Math.max(-MAX_PRAYER_ADJUSTMENT, Math.min(MAX_PRAYER_ADJUSTMENT, minutes))];
+  }));
+}
 
 function pad(n) {
   return String(Math.floor(n)).padStart(2, "0");
@@ -83,55 +116,45 @@ function getTodayDateString() {
 }
 
 function loadCachedCoords() {
-  try {
-    const date = localStorage.getItem(STORAGE_KEY_DATE);
-    if (date !== getTodayDateString()) return null;
-    const raw = localStorage.getItem(STORAGE_KEY_COORDS);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (!isValidCoordinate(parsed?.lat, parsed?.lng)) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+  const parsed = getStoredJson(STORAGE_KEY_COORDS);
+  if (!isValidCoordinate(parsed?.lat, parsed?.lng)) return null;
+  return parsed;
 }
 
 function readStorage(key, fallback = null) {
-  try {
-    return localStorage.getItem(key) || fallback;
-  } catch {
-    return fallback;
-  }
+  return getStoredValue(key, fallback) || fallback;
 }
 
 function writeStorage(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // ignore storage errors
-  }
+  setStoredValue(key, value);
 }
 
 function saveCoords(lat, lng, city, timeZone = getBrowserTimeZone(), region = "") {
-  writeStorage(STORAGE_KEY_COORDS, JSON.stringify({ lat, lng, timeZone, region }));
+  setStoredJson(STORAGE_KEY_COORDS, { lat, lng, timeZone, region });
   writeStorage(STORAGE_KEY_DATE, getTodayDateString());
   if (city) writeStorage(STORAGE_KEY_CITY, city);
   if (timeZone) writeStorage(STORAGE_KEY_TIMEZONE, timeZone);
   if (region) writeStorage(STORAGE_KEY_REGION, region);
-}
-
-export function getPrayerSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
-    return { ...DEFAULT_SETTINGS, ...(raw ? JSON.parse(raw) : {}), madhab: "hanafi" };
-  } catch {
-    return DEFAULT_SETTINGS;
+  if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") {
+    window.dispatchEvent(new CustomEvent("prayerTimesChange"));
   }
 }
 
+export function getPrayerSettings() {
+  const stored = getStoredJson(STORAGE_KEY_SETTINGS, {}) || {};
+  return {
+    method: PRAYER_METHODS.some((item) => item.id === stored.method) ? stored.method : DEFAULT_SETTINGS.method,
+    madhab: ASR_MADHABS.some((item) => item.id === stored.madhab) ? stored.madhab : DEFAULT_SETTINGS.madhab,
+    adjustments: sanitizeAdjustments(stored.adjustments)
+  };
+}
+
 export function setPrayerSettings(settings) {
-  const next = { ...getPrayerSettings(), ...settings, madhab: "hanafi" };
-  writeStorage(STORAGE_KEY_SETTINGS, JSON.stringify(next));
-  return next;
+  const next = { ...getPrayerSettings(), ...settings };
+  next.adjustments = sanitizeAdjustments(next.adjustments);
+  setStoredJson(STORAGE_KEY_SETTINGS, next);
+  if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("prayerTimesChange"));
+  return getPrayerSettings();
 }
 
 function buildParams(settings = getPrayerSettings(), coords = null) {
@@ -139,10 +162,13 @@ function buildParams(settings = getPrayerSettings(), coords = null) {
   const params = build();
   params.madhab = settings.madhab === "hanafi" ? Madhab.Hanafi : Madhab.Shafi;
   if (coords) params.highLatitudeRule = HighLatitudeRule.recommended(coords);
+  // Methods such as Dubai keep their own methodAdjustments; the family's correction is added on top.
+  params.adjustments = sanitizeAdjustments(settings.adjustments);
   return params;
 }
 
 function isValidCoordinate(lat, lng) {
+  if (lat === null || lat === undefined || lat === "" || lng === null || lng === undefined || lng === "") return false;
   const latitude = Number(lat);
   const longitude = Number(lng);
   return Number.isFinite(latitude)
@@ -192,13 +218,16 @@ function buildPrayerData(lat, lng, cityName, settings = getPrayerSettings(), opt
 
   const timeZone = options.timeZone || options.timezone || readStorage(STORAGE_KEY_TIMEZONE, getBrowserTimeZone());
   const region = options.region || readStorage(STORAGE_KEY_REGION, "Авто");
-  const coords = new Coordinates(lat, lng);
+  const coords = new Coordinates(Number(lat), Number(lng));
   const today = getDateInTimeZone(timeZone);
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
   const times = makePrayerTimes(coords, today, settings);
   const tomorrowTimes = makePrayerTimes(coords, tomorrow, settings);
   const prayerEntries = buildPrayerEntries(times, timeZone);
+  if (prayerEntries.some((entry) => !Number.isFinite(entry.date.getTime()))) {
+    return { ...DEFAULT_FALLBACK, city: cityName || "Ваш город", error: "Для этой широты выбранный метод не даёт полного расписания. Используйте расписание местной общины." };
+  }
   const now = new Date();
   const nextEntry = [...prayerEntries, ...buildPrayerEntries(tomorrowTimes, timeZone)]
     .filter((entry) => FARD_PRAYER_KEYS.has(entry.key))
@@ -215,6 +244,8 @@ function buildPrayerData(lat, lng, cityName, settings = getPrayerSettings(), opt
     nextPrayerTime: nextEntry ? nextEntry.time : "",
     countdown: formatCountdown(msTillNext),
     times: prayerEntries.map(({ name, time }) => ({ name, time })),
+    entries: [...prayerEntries, ...buildPrayerEntries(tomorrowTimes, timeZone)],
+    nextPrayerDate: nextEntry?.date.toISOString(),
     lat,
     lng,
     settings,
@@ -251,26 +282,39 @@ function buildFromCached() {
 
 export const prayerTimes = buildFromCached() || DEFAULT_FALLBACK;
 
-export function requestPrayerTimes(onUpdate, onError) {
-  if (!navigator.geolocation) {
+export function getCurrentPrayerTimes() {
+  return buildFromCached() || DEFAULT_FALLBACK;
+}
+
+export function getPrayerReminders(data, now = new Date()) {
+  return (data.entries || []).filter((entry) => FARD_PRAYER_KEYS.has(entry.key)).map((entry) => ({
+    name: entry.name,
+    at: new Date(entry.date).getTime() - 5 * 60 * 1000
+  })).filter((entry) => entry.at > now.getTime() && entry.at - now.getTime() <= 86400000);
+}
+
+export function requestPrayerTimes(onUpdate, onError, { isCurrent = () => true } = {}) {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
     if (onError) onError();
     return;
   }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
+      if (!isCurrent()) return;
       const { latitude: lat, longitude: lng } = pos.coords;
       const timeZone = getBrowserTimeZone();
-      const city = readStorage(STORAGE_KEY_CITY, "Моё местоположение");
+      const city = "Моё местоположение";
       saveCoords(lat, lng, city, timeZone, "GPS");
       const data = buildPrayerData(lat, lng, city, getPrayerSettings(), { timeZone, region: "GPS" });
       onUpdate(data);
     },
-    () => { if (onError) onError(); },
+    () => { if (isCurrent() && onError) onError(); },
     { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
   );
 }
 
 export function buildPrayerDataFromCoords(lat, lng, city, settings = getPrayerSettings(), options = {}) {
+  if (!isValidCoordinate(lat, lng)) throw new Error("Некорректные координаты");
   const timeZone = options.timeZone || options.timezone || readStorage(STORAGE_KEY_TIMEZONE, getBrowserTimeZone());
   const region = options.region || options.country || "";
   saveCoords(lat, lng, city, timeZone, region);
@@ -278,7 +322,7 @@ export function buildPrayerDataFromCoords(lat, lng, city, settings = getPrayerSe
 }
 
 export function updateCountdown(data) {
-  if (!data.lat || !data.lng) return data;
+  if (!isValidCoordinate(data?.lat, data?.lng)) return data;
   return buildPrayerData(data.lat, data.lng, data.city, data.settings || getPrayerSettings(), {
     timeZone: data.timeZone,
     region: data.region,

@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import CharacterHelper from "../components/CharacterHelper.jsx";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
+import LetterKnowledgeCheck from "../components/LetterKnowledgeCheck.jsx";
+import { arabicLetters } from "../data/arabicLetters.js";
 import { canOpenLessonNode, getChapterById, lessonPathNodes } from "../data/lessonPath.js";
 import { completeLessonNode, getLessonPathState, getSelectedCharacter } from "../utils/storage.js";
 
@@ -20,16 +22,18 @@ export default function ChapterChallengeScreen({ mode = "checkpoint" }) {
 
   const canFinish = Boolean(targetNode && canOpenLessonNode(targetNode.id, lessonState));
 
-  function finishChallenge() {
+  const letters = arabicLetters.filter((letter) => chapter.letters.includes(letter.letter));
+
+  function finishChallenge(result) {
     if (!canFinish) return;
-    completeLessonNode(targetNode.id);
+    completeLessonNode(targetNode.id, { perfect: result.perfect });
     navigate("/lessons");
   }
 
   return (
     <section className="content-stack">
       <Header title={title} subtitle="Проверим знания спокойно и уверенно">
-        <CharacterHelper character={character} message="Ты уже многое прошёл. Давай закрепим результат." mood="success" compact />
+        <CharacterHelper character={character} message="Позади уже большой путь. Давай закрепим результат." mood="success" compact />
       </Header>
 
       <GlassCard className="chapter-challenge-card">
@@ -46,10 +50,8 @@ export default function ChapterChallengeScreen({ mode = "checkpoint" }) {
           <span><CheckCircle2 size={18} aria-hidden="true" /> Вспомнить звуки</span>
           <span><CheckCircle2 size={18} aria-hidden="true" /> Закрепить без спешки</span>
         </div>
-        <button className="button button--primary" type="button" onClick={finishChallenge} disabled={!canFinish}>
-          Завершить шаг
-          <ArrowRight size={18} aria-hidden="true" />
-        </button>
+        {canFinish && letters.length ? <LetterKnowledgeCheck key={targetNode.id} letters={letters} onComplete={finishChallenge} /> : <p>Сначала заверши предыдущие задания на карте уроков.</p>}
+        <button className="button button--soft" type="button" onClick={() => navigate("/lessons")}>К карте уроков</button>
       </GlassCard>
     </section>
   );

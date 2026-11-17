@@ -1,0 +1,299 @@
+{
+  "provider": "EveryAyah",
+  "reciter": "Mishary Rashid Alafasy",
+  "format": "MP3 128 kbps",
+  "sourcePage": "https://everyayah.com/recitations_ayat.html",
+  "checksumUrl": "https://everyayah.com/data/Alafasy_128kbps/000_checksum.md5",
+  "downloadedAt": "2026-09-28T07:24:34.683Z",
+  "license": "Public download links; no explicit redistribution license located. Not a claim of public-domain or commercial reuse rights.",
+  "files": {
+    "1:1": {
+      "path": "audio/quran/alafasy/001001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 146830,
+      "sha256": "8808f3fc313d9df87b6090ee9efc8c11859da58b0100ad92621c5ee9a93d7280",
+      "publisherMd5": "92cd0474a1073e264fac310fb0c28351"
+    },
+    "1:2": {
+      "path": "audio/quran/alafasy/001002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 89988,
+      "sha256": "7056ff0c287ee428272e12d16fb8f10b2786487f5d553841a828396750906b6b",
+      "publisherMd5": "11848d9c4bc843a8c382bd069c5829ca"
+    },
+    "1:3": {
+      "path": "audio/quran/alafasy/001003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 74523,
+      "sha256": "3bd5bb13dcdf6ab178b6c6cb2810ad2aaac8d4dfb371e553ca78021f56c93abd",
+      "publisherMd5": "745b32efae58b737fa22957dd6770126"
+    },
+    "1:4": {
+      "path": "audio/quran/alafasy/001004.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001004.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 74941,
+      "sha256": "dca0c09844dd0e9ebf558b25a24352ae8517a9543094d0b1380e962b2bac201a",
+      "publisherMd5": "160379b534fa2ba26d243248d9ad937e"
+    },
+    "1:5": {
+      "path": "audio/quran/alafasy/001005.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001005.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 107960,
+      "sha256": "7828eb8f7400b04181d2c08885b9409dbe18037e4e4cfa08153692f25bb252fd",
+      "publisherMd5": "ae19be9030d6926cce6f00528761f42c"
+    },
+    "1:6": {
+      "path": "audio/quran/alafasy/001006.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001006.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 89988,
+      "sha256": "44afd93fa73f7fe363c75146a9b28c59a2cbdbf70bfb7ed71d823ed51c5b6327",
+      "publisherMd5": "cef3dfccab9ca6d5dbd21fef84c3dd0f"
+    },
+    "1:7": {
+      "path": "audio/quran/alafasy/001007.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/001007.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 212450,
+      "sha256": "6165fc6954e63686f556a8049c0d5231d6dbe812158da9b63e6d5f7191b1320e",
+      "publisherMd5": "9f22544f277c0e271f3be9590bc980a5"
+    },
+    "112:1": {
+      "path": "audio/quran/alafasy/112001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/112001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 48192,
+      "sha256": "8166d4ae6fbdae1748e215d5b31dbbf246530da0e849f1488ac35316488f1caf",
+      "publisherMd5": "ece54af4443590234cebc5ecd835fe74"
+    },
+    "112:2": {
+      "path": "audio/quran/alafasy/112002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/112002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 41087,
+      "sha256": "52fd57829c924926152df2175343d115aecbf3b83632f853cb94356697421eee",
+      "publisherMd5": "45d42309e66a71507007ffc7ba5920f5"
+    },
+    "112:3": {
+      "path": "audio/quran/alafasy/112003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/112003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 48192,
+      "sha256": "b50ce19c51314817e9a4885de55ad332a19585e0e221dbec86b98405a08400c4",
+      "publisherMd5": "3d809c403cfa9c298cec62217e731b3c"
+    },
+    "112:4": {
+      "path": "audio/quran/alafasy/112004.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/112004.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 78285,
+      "sha256": "67a565d4951ff5956a8299eb84cf57b5e0d44374dba8e24c9f0175cb4309b68e",
+      "publisherMd5": "04be143578ad6fde888c28b261cab501"
+    },
+    "113:1": {
+      "path": "audio/quran/alafasy/113001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/113001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 56133,
+      "sha256": "36b36414695bfc69cf038c2060bcd73c4845cd6cce1fb8179de3ce43718b58d0",
+      "publisherMd5": "ffa1fff8077ccba9e5f1a3b4b2d42e62"
+    },
+    "113:2": {
+      "path": "audio/quran/alafasy/113002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/113002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 58641,
+      "sha256": "4ca15d21ebe9888142d29c3580bf62a9062513c04f4c7f222a89a00676252943",
+      "publisherMd5": "16eb2dd96882ac5b3e4d7de7f2a0c40c"
+    },
+    "113:3": {
+      "path": "audio/quran/alafasy/113003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/113003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 81211,
+      "sha256": "e0ee7929798463fdf1c41c93204bb1917f1304819d76cd6911c6d3df773de1a4",
+      "publisherMd5": "1c29c6d0b07612a5a78bdb6ae8eadab7"
+    },
+    "113:4": {
+      "path": "audio/quran/alafasy/113004.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/113004.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 96675,
+      "sha256": "aa34657feaf7ea666ec62f253d2458b98c3cb01835f8c915da0b58ef4c87ed2c",
+      "publisherMd5": "1f44c301864d8dd1d66d41f49d1eedaf"
+    },
+    "113:5": {
+      "path": "audio/quran/alafasy/113005.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/113005.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 91242,
+      "sha256": "c83d3988ef8809ea0bfd107f62732d1e9b8697bb26ee8004ea514b9301389fe8",
+      "publisherMd5": "85b8ba771dd18207e346e44693a1f1d5"
+    },
+    "114:1": {
+      "path": "audio/quran/alafasy/114001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 98347,
+      "sha256": "85f84b7f45d8249a94265f5453997a3e55fc027763114b8df91b15fa39c0e484",
+      "publisherMd5": "b57c2ed00f96bd38a11021f6f3083cd9"
+    },
+    "114:2": {
+      "path": "audio/quran/alafasy/114002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 84972,
+      "sha256": "522638668af16887a5a514d92903c1172d8afa28622eeb90f7d8550b56c6eae2",
+      "publisherMd5": "2b3420e51e5d885388f158604a79b305"
+    },
+    "114:3": {
+      "path": "audio/quran/alafasy/114003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 86226,
+      "sha256": "b07db0b577e3f14304b7279cea34c9b261fe55d6a31c58e33657279d19ec1309",
+      "publisherMd5": "58a04cd375d35d9ef76ad5c9e97edf9c"
+    },
+    "114:4": {
+      "path": "audio/quran/alafasy/114004.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114004.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 128440,
+      "sha256": "3a3ae4ed53b7cf5123c5bf01842be316657c509e4306ae3f7270e8fb612fb8e9",
+      "publisherMd5": "8113e77d0ce0f6c2ecf6fbdad6e165d9"
+    },
+    "114:5": {
+      "path": "audio/quran/alafasy/114005.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114005.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 127186,
+      "sha256": "bbc6d4bdabc7350738bba1309eaed60389de12c9e8284de316878318b8f32ec1",
+      "publisherMd5": "99636805287a3d2684f6e8672f18bb35"
+    },
+    "114:6": {
+      "path": "audio/quran/alafasy/114006.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/114006.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 132620,
+      "sha256": "99047f038edf3db4ce4914f0d935d46693f8b95ca00316ecf2457002e457c2f9",
+      "publisherMd5": "b76defdbcb355aae156ebdf804000acd"
+    },
+    "108:1": {
+      "path": "audio/quran/alafasy/108001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/108001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 107960,
+      "sha256": "78727509e3bfbdddc4870824b2f82801de683855512bac8256a9e392b9e835e1",
+      "publisherMd5": "ef44d2a1a7720a7416b7bcbda30d2f02"
+    },
+    "108:2": {
+      "path": "audio/quran/alafasy/108002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/108002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 57387,
+      "sha256": "1b2fd99849465460e46cd999476e2c735bb66c905b8604fbac37af0ee82d5bd4",
+      "publisherMd5": "997c2b1b2a2060d6739221bc96e15970"
+    },
+    "108:3": {
+      "path": "audio/quran/alafasy/108003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/108003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 84554,
+      "sha256": "bc17accf54a75ce5f4dc8a2f0384c6d0d24a91d2b941713c487ed87ee2d891d9",
+      "publisherMd5": "6cf6bbd016f6d6279ddc1e7e16f32ffd"
+    },
+    "103:1": {
+      "path": "audio/quran/alafasy/103001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/103001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 28966,
+      "sha256": "d493ae54ffc12ee347642d86972079ea6992d2b9a2e3de58505af210202cf6ac",
+      "publisherMd5": "6943d2a618b5586308457b118e5abccb"
+    },
+    "103:2": {
+      "path": "audio/quran/alafasy/103002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/103002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 93331,
+      "sha256": "a0e02b3390e81caaf41e3db0e63d95843305fd0b28938e81d19c938e01e5b7da",
+      "publisherMd5": "61241131cc8721026f7570ca2cca3c31"
+    },
+    "103:3": {
+      "path": "audio/quran/alafasy/103003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/103003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 201165,
+      "sha256": "1da9dcfe76e656f3857b5cc4764de2e13ae6746a9e55641f7ddf1c35164fc767",
+      "publisherMd5": "4337da148c228f643cd98e36b1032b40"
+    },
+    "109:1": {
+      "path": "audio/quran/alafasy/109001.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109001.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 120917,
+      "sha256": "dc63bda5e59440132c7595c0937bcf3b78fad837ae4b5b2bd9b562d54b856643",
+      "publisherMd5": "74378d012bb63fd236f06480884eaf75"
+    },
+    "109:2": {
+      "path": "audio/quran/alafasy/109002.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109002.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 119663,
+      "sha256": "b1bd23813478a6c3381b9722268b85de2866982dafab2893b95129ca85485684",
+      "publisherMd5": "9a35c89c73b259e91a125828456d27b9"
+    },
+    "109:3": {
+      "path": "audio/quran/alafasy/109003.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109003.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 132202,
+      "sha256": "05a1b20eaa49ee4b512fb6641df0c4b37f0a4c33a4ff721d13d10a5a3d400a93",
+      "publisherMd5": "f5dc34f8b076cea6f46487feba061b4b"
+    },
+    "109:4": {
+      "path": "audio/quran/alafasy/109004.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109004.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 107124,
+      "sha256": "8f24db7c653b35ffba85bd5de8ecdee3cca0749ba58fb9c0d944b33fab99bc96",
+      "publisherMd5": "9fbededbcd9b23d9c53cb5a4366d1e3d"
+    },
+    "109:5": {
+      "path": "audio/quran/alafasy/109005.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109005.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 135545,
+      "sha256": "c29f951513f059b50948e929e6ad0818dc72ac01b659c455fa9b0b78c4b4ef81",
+      "publisherMd5": "5d2a1b6300a73297aa1cea4f278a0912"
+    },
+    "109:6": {
+      "path": "audio/quran/alafasy/109006.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/109006.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 100437,
+      "sha256": "b02824abd42beba0fe06f061fd7d6d090f2bb82a57e719a163a8f1a6aaa4cb71",
+      "publisherMd5": "2698ce9321a71ceaff470214c7785fa6"
+    },
+    "17:24": {
+      "path": "audio/quran/alafasy/017024.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/017024.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 184320,
+      "sha256": "6bc6d3f3ff152c5c3df4240f0d134901e5fdd989a1fb12d2b973e06058ec4123",
+      "publisherMd5": "71148d023f8c3591e89522112bf666f6"
+    },
+    "20:114": {
+      "path": "audio/quran/alafasy/020114.mp3",
+      "sourceUrl": "https://everyayah.com/data/Alafasy_128kbps/020114.mp3",
+      "downloadedAt": "2026-09-28T07:24:34.683Z",
+      "bytes": 287265,
+      "sha256": "628435895441868cd3936b833da3c8f45ede1af81d6a6bde21714fc24485accc",
+      "publisherMd5": "73012954482ce0a600db60d9b54029d1"
+    }
+  }
+}

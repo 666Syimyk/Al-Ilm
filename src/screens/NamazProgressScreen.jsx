@@ -10,12 +10,14 @@
   Trophy
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import GlassCard from "../components/GlassCard.jsx";
 import { PRAYERS } from "../data/namazGuide.js";
 import {
   getDonePrayersForDate,
   getNamazProgress,
-  getSelectedCharacter
+  getSelectedCharacter,
+  setNamazProgress
 } from "../utils/storage.js";
 
 const PRAYER_STEPS = [
@@ -35,7 +37,8 @@ const DAY_LABELS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 function getWeekHistory() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 86400000);
+    const date = new Date();
+    date.setDate(date.getDate() - i);
     days.push({ date, done: getDonePrayersForDate(date) });
   }
   return days;
@@ -46,6 +49,8 @@ function countFard(done) {
 }
 
 export default function NamazProgressScreen() {
+  const [, refresh] = useState(0);
+  useEffect(() => { const timer = setInterval(() => refresh((n) => n + 1), 60000); return () => clearInterval(timer); }, []);
   const navigate = useNavigate();
   const character = getSelectedCharacter() || "ahmad";
   const namazProgress = getNamazProgress();
@@ -61,8 +66,10 @@ export default function NamazProgressScreen() {
 
   const streak = (() => {
     let count = 0;
-    for (let i = weekHistory.length - 1; i >= 0; i--) {
-      if (countFard(weekHistory[i].done) === totalPrayers) count++;
+    const date = new Date();
+    if (todayCount !== totalPrayers) date.setDate(date.getDate() - 1);
+    for (let i = 0; i < 10000; i++) {
+      if (countFard(getDonePrayersForDate(date)) === totalPrayers) { count++; date.setDate(date.getDate() - 1); }
       else break;
     }
     return count;
@@ -92,7 +99,7 @@ export default function NamazProgressScreen() {
             <span>сегодня</span>
           </div>
           <div className="namaz-progress-helper">
-            <span className="namaz-progress-avatar" aria-hidden="true">{character === "amina" ? "рџ‘§" : "рџ‘¦"}</span>
+            <span className="namaz-progress-avatar" aria-hidden="true">{character === "amina" ? "👧" : "👦"}</span>
             <div>
               <strong>{characterName}</strong>
               <p>{heroMessage}</p>
@@ -120,7 +127,7 @@ export default function NamazProgressScreen() {
         <GlassCard className="namaz-progress-stat">
           <Star size={24} aria-hidden="true" />
           <strong>{practiceCount}</strong>
-          <span>практик</span>
+          <span>завершённых дней</span>
         </GlassCard>
       </div>
 
@@ -199,7 +206,10 @@ export default function NamazProgressScreen() {
             {PRAYER_STEPS.map((step) => {
               const learned = learnedSteps.includes(step.id);
               return (
-                <div key={step.id} className={`namaz-step-row${learned ? " is-learned" : ""}`}>
+                <button key={step.id} type="button" aria-pressed={learned} className={`namaz-step-row${learned ? " is-learned" : ""}`} onClick={() => {
+                  setNamazProgress({ learnedSteps: learned ? learnedSteps.filter((id) => id !== step.id) : [...learnedSteps, step.id] });
+                  refresh((n) => n + 1);
+                }}>
                   {learned
                     ? <CheckCircle2 size={18} className="namaz-check-done" aria-hidden="true" />
                     : <Circle size={18} className="namaz-check-empty" aria-hidden="true" />
@@ -208,7 +218,7 @@ export default function NamazProgressScreen() {
                     <strong>{step.label}</strong>
                     <span>{step.desc}</span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -218,11 +228,11 @@ export default function NamazProgressScreen() {
           <Trophy size={28} aria-hidden="true" />
           <div>
             <span>Практика</span>
-            <strong>{practiceCount > 0 ? "Есть выполненные тренировки" : "Пока без завершённых тренировок"}</strong>
+            <strong>{practiceCount > 0 ? "Есть завершённые дни" : "Первый полный день ещё впереди"}</strong>
             <p>
               {practiceCount > 0
-                ? `Полный намаз пройден ${practiceCount} раз. Так держать!`
-                : "Открой раздел намаза и пройди практику, чтобы здесь появилась награда."}
+                ? `Дней со всеми пятью отметками: ${practiceCount}. Продолжай в своём темпе.`
+                : "Отметь все пять молитв за день. Элементы намаза выше можно отмечать после изучения с учителем."}
             </p>
           </div>
         </GlassCard>

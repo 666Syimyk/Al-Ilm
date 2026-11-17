@@ -7,6 +7,7 @@ import { quranSurahs } from "../data/quranContent.js";
 import { getJuzRanges } from "../data/quranNavigation.js";
 import { getSurahDisplayMeta } from "../data/surahDisplayMeta.js";
 import { getQuranTracking } from "../utils/storage.js";
+import { countAyahs } from "../utils/plural.js";
 
 function ayahRef(surahId, ayahNumber) {
   return `${surahId}:${ayahNumber}`;
@@ -72,7 +73,7 @@ export default function JuzScreen() {
                 <div className="juz-card__body">
                   <h2>Джуз {range.juz}</h2>
                   <p>
-                    {range.startSurah.title} {range.start.ayah} - {range.endSurah.title} {range.end.ayah}
+                    {range.startSurah.title} {range.start.ayah} — {range.endSurah.title} {range.end.ayah}
                   </p>
                   <div className="progress-bar" aria-label={`Джуз ${range.juz}: ${progress}% прочитано`}>
                     <span style={{ width: `${progress}%` }} />
@@ -100,12 +101,12 @@ export default function JuzScreen() {
                   >
                     <span className="juz-surah-row__num">{surah.number}</span>
                     <span className="juz-surah-row__copy">
-                      <strong>{surah.latinTitle}</strong>
+                      <strong>{surah.title}</strong>
                       <small>{surah.displayTranslation}</small>
                     </span>
                     <span className="juz-surah-row__meta">
                       <strong>{padSurahNumber(surah.number)}</strong>
-                      <small>{surah.ayahs.length} аятов</small>
+                      <small>{countAyahs(surah.ayahs.length)}</small>
                     </span>
                   </button>
                 ))}

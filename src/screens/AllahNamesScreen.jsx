@@ -2,7 +2,8 @@
 import { useMemo, useState } from "react";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
-import { allahNames } from "../data/allahNames.js";
+import { allahNames, allahNamesSource } from "../data/allahNames.js";
+import { getStoredJson, setStoredJson } from "../utils/storage.js";
 
 function normalize(value) {
   return String(value || "").toLocaleLowerCase("ru").trim();
@@ -11,19 +12,11 @@ function normalize(value) {
 const LEARNED_NAMES_KEY = "allahNamesLearned";
 
 function getLearnedNames() {
-  try {
-    return JSON.parse(localStorage.getItem(LEARNED_NAMES_KEY) || "[]");
-  } catch {
-    return [];
-  }
+  return getStoredJson(LEARNED_NAMES_KEY, []);
 }
 
 function saveLearnedNames(value) {
-  try {
-    localStorage.setItem(LEARNED_NAMES_KEY, JSON.stringify(value));
-  } catch {
-    // Keep the screen usable if storage is blocked.
-  }
+  setStoredJson(LEARNED_NAMES_KEY, value);
 }
 
 export default function AllahNamesScreen() {
@@ -72,13 +65,18 @@ export default function AllahNamesScreen() {
           <Sparkles size={34} />
         </div>
         <div>
-          <p className="section-kicker">Асма уль-Хусна</p>
+          <p className="section-kicker">Асмауль-Хусна</p>
           <h2>Учись узнавать имена Аллаха постепенно</h2>
           <p>
             Каждая карточка показывает арабское написание, русскую передачу и короткое значение простыми словами.
           </p>
         </div>
         <strong className="allah-names-hero__count">{learnedCount}/99</strong>
+      </GlassCard>
+
+      <GlassCard className="islamic-note-card">
+        <p>Краткие значения помогают познакомиться с именами Аллаха. Они ещё проверяются — уточняй их с учителем.</p>
+        <a href={allahNamesSource.sourceUrl} target="_blank" rel="noopener noreferrer">Коран 7:180 — об именах Аллаха</a>
       </GlassCard>
 
       <GlassCard className="quran-search-panel allah-names-search">

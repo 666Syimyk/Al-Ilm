@@ -1,8 +1,8 @@
-﻿import { ArrowLeft, CalendarDays, Mail, Save, UserRound } from "lucide-react";
-import { useState } from "react";
+﻿import { ArrowLeft, CalendarDays, Download, Mail, Save, Upload, UserRound } from "lucide-react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
-import { getAge, getUser, setAge, setUser } from "../utils/storage.js";
+import { exportAccountBackup, getAge, getUser, importAccountBackup, setAge, setUser } from "../utils/storage.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,6 +34,40 @@ export default function ProfileDataScreen() {
   });
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
+  const [backupMessage, setBackupMessage] = useState("");
+  const backupInputRef = useRef(null);
+
+  function downloadBackup() {
+    const backup = exportAccountBackup();
+    if (!backup) {
+      setBackupMessage("Не удалось создать копию: профиль не найден.");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `al-ilm-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setBackupMessage("Файл с прогрессом сохранён. Храните его в надёжном месте.");
+  }
+
+  async function restoreBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const count = importAccountBackup(JSON.parse(await file.text()));
+      setBackupMessage(`Прогресс восстановлен (${count} записей).`);
+    } catch (error) {
+      setBackupMessage(error.message === "storage-unavailable"
+        ? "Не хватило памяти браузера, чтобы восстановить прогресс."
+        : "Это не файл резервной копии Al-Ilm.");
+    }
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const age = form.dateOfBirth ? getAgeFromBirthDate(form.dateOfBirth) : getAge();
@@ -54,7 +88,8 @@ export default function ProfileDataScreen() {
     if (!form.lastName.trim()) nextErrors.lastName = "Введите фамилию";
     if (!form.dateOfBirth) nextErrors.dateOfBirth = "Введите дату рождения";
     else if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) nextErrors.dateOfBirth = "Дата рождения указана неверно";
-    else if (nextAge < 1 || nextAge > 120) nextErrors.dateOfBirth = "Укажите реальную дату рождения";
+    else if (nextAge < 3) nextErrors.dateOfBirth = "Al-Ilm рассчитан на детей от 3 лет";
+    else if (nextAge > 120) nextErrors.dateOfBirth = "Укажите реальную дату рождения";
     if (!emailPattern.test(normalizeEmail(form.email))) nextErrors.email = "Введите корректный email";
 
     setErrors(nextErrors);
@@ -69,7 +104,7 @@ export default function ProfileDataScreen() {
     const lastName = form.lastName.trim();
     const nextAge = getAgeFromBirthDate(form.dateOfBirth);
 
-    setUser({
+    try { setUser({
       ...user,
       name: firstName,
       firstName,
@@ -78,7 +113,10 @@ export default function ProfileDataScreen() {
       dateOfBirth: form.dateOfBirth,
       email: normalizeEmail(form.email),
       updatedAt: new Date().toISOString()
-    });
+    }); } catch (error) {
+      setErrors({ email: error.message === "email-exists" ? "Этот email уже используется другим профилем" : "Не удалось сохранить данные" });
+      return;
+    }
     setAge(nextAge);
     setSaved(true);
   }
@@ -127,7 +165,7 @@ export default function ProfileDataScreen() {
           </div>
 
           <label>
-            <span>Дата рождения</span>
+            <span>Дата рождения ребёнка</span>
             <input name="dateOfBirth" type="date" max={today} value={form.dateOfBirth} onChange={updateField} autoComplete="bday" />
             {errors.dateOfBirth ? <small className="field-error">{errors.dateOfBirth}</small> : null}
           </label>
@@ -145,6 +183,23 @@ export default function ProfileDataScreen() {
             Сохранить
           </button>
         </form>
+      </GlassCard>
+
+      <GlassCard className="profile-data-card profile-backup-card">
+        <h2>Резервная копия прогресса</h2>
+        <p>Прогресс хранится только в этом браузере. Если очистить данные сайта или сменить телефон, он пропадёт. Сохраните файл и восстановите его на новом устройстве после входа.</p>
+        <div className="game-actions">
+          <button className="button button--primary" type="button" onClick={downloadBackup}>
+            <Download size={18} aria-hidden="true" />
+            Скачать копию
+          </button>
+          <button className="button button--soft" type="button" onClick={() => backupInputRef.current?.click()}>
+            <Upload size={18} aria-hidden="true" />
+            Восстановить из файла
+          </button>
+          <input ref={backupInputRef} type="file" accept="application/json,.json" hidden onChange={restoreBackup} />
+        </div>
+        {backupMessage ? <p className="success-note" role="status">{backupMessage}</p> : null}
       </GlassCard>
     </section>
   );

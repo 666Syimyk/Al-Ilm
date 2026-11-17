@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import GlassCard from "../components/GlassCard.jsx";
 import PracticeQuiz from "../components/PracticeQuiz.js";
-import { muslimKnowledgeSections } from "../data/islamicBasics.js";
+import { getKnowledgeQuiz, muslimKnowledgeSections } from "../data/islamicBasics.js";
 import { islamicRulings } from "../data/islamicRulings.js";
 
 const e = React.createElement;
@@ -15,7 +15,7 @@ function TopicCard({ topic, mode }) {
   const child = isString ? `${topic} можно учить постепенно.` : topic.child;
   const adult = isString ? `${topic} полезно разобрать со смыслом и примерами.` : topic.adult;
   const examples = isString ? ["слушай", "повторяй", "применяй"] : topic.examples;
-  const quiz = isString ? null : { question: topic.quiz, options: ["учить спокойно", "пропустить", "читать не глядя"], answer: "учить спокойно" };
+  const quiz = getKnowledgeQuiz(title);
 
   return e(
     "article",
@@ -23,7 +23,8 @@ function TopicCard({ topic, mode }) {
     e("h3", null, title),
     e("p", null, mode === "adult" ? adult : child),
     e("div", { className: "knowledge-topic-card__examples" }, (examples || []).map((item) => e("span", { key: item }, item))),
-    quiz ? e(PracticeQuiz, { quiz, compact: true }) : null
+    quiz ? e(PracticeQuiz, { quiz, compact: true }) : null,
+    quiz ? e("a", { href: quiz.sourceUrl, target: "_blank", rel: "noopener noreferrer", className: "content-source-note" }, "Источник: Dar al-Ifta — пять столпов Ислама") : null
   );
 }
 
@@ -34,7 +35,7 @@ function SectionPanel({ section, mode }) {
     e(
       "div",
       { className: "profile-section-head" },
-      e("div", null, e("p", { className: "section-kicker" }, "Что должен знать мусульманин"), e("h2", null, section.title), e("p", null, mode === "adult" ? section.adultIntro : section.childIntro)),
+      e("div", null, e("p", { className: "section-kicker" }, "Тема для изучения"), e("h2", null, section.title), e("p", null, mode === "adult" ? section.adultIntro : section.childIntro)),
       e(CheckCircle2, { size: 22, "aria-hidden": true })
     ),
     e("div", { className: "knowledge-topic-grid" }, section.topics.map((topic) => e(TopicCard, { key: typeof topic === "string" ? topic : topic.title, topic, mode })))
@@ -75,14 +76,14 @@ export default function IslamicBasicsScreen() {
         "div",
         { className: "islamic-hero-stats" },
         e("span", null, e(BookOpen, { size: 18, "aria-hidden": true }), muslimKnowledgeSections.length, " разделов"),
-        e("span", null, e(GraduationCap, { size: 18, "aria-hidden": true }), islamicRulings.length, " правил"),
-        e("span", null, e(Sparkles, { size: 18, "aria-hidden": true }), "мини-тесты")
+        e("span", null, e(GraduationCap, { size: 18, "aria-hidden": true }), islamicRulings.length, " понятий"),
+        e("span", null, e(Sparkles, { size: 18, "aria-hidden": true }), "6 вопросов с источником")
       )
     ),
     e(
       GlassCard,
       { className: "islamic-rulings-preview" },
-      e("div", { className: "profile-section-head" }, e("div", null, e("p", { className: "section-kicker" }, "Основы Ислама"), e("h2", null, "Фарз → Важиб → Сунна → Мустахаб → Мубах → Макрух → Харам")), e(Landmark, { size: 22, "aria-hidden": true })),
+      e("div", { className: "profile-section-head" }, e("div", null, e("p", { className: "section-kicker" }, "Основы Ислама"), e("h2", null, "Учебный словарь понятий")), e(Landmark, { size: 22, "aria-hidden": true })),
       e("div", { className: "islamic-ruling-chain" }, islamicRulings.map((rule) => e("button", { key: rule.id, type: "button", style: { "--rule-color": rule.color }, onClick: () => navigate("/islamic-basics/rulings") }, rule.title)))
     ),
     e(
@@ -94,6 +95,7 @@ export default function IslamicBasicsScreen() {
         section.title
       ))
     ),
+    e("p", { className: "content-source-note" }, "Это краткие учебные пояснения для занятий с учителем, не фетва. Источники проверенных вопросов указаны рядом; остальные заметки требуют редакционной проверки."),
     e(SectionPanel, { section: activeSection, mode })
   );
 }

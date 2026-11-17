@@ -40,7 +40,13 @@ export function scoreSpeech(transcript, targets) {
   if (!heard || !normalizedTargets.length) return 0;
 
   return normalizedTargets.reduce((best, target) => {
-    if (heard.includes(target) || target.includes(heard)) return Math.max(best, 1);
+    if (heard === target) return 1;
+    // A word or letter from a sentence is not a successful reading of it.
+    const lengthCoverage = Math.min(heard.length, target.length) / Math.max(heard.length, target.length);
+    const heardWords = heard.split(" ").length;
+    const targetWords = target.split(" ").length;
+    const wordCoverage = Math.min(heardWords, targetWords) / Math.max(heardWords, targetWords);
+    if (lengthCoverage < 0.9 || wordCoverage < 0.9) return best;
     const distance = levenshtein(heard, target);
     const score = 1 - distance / Math.max(heard.length, target.length, 1);
     return Math.max(best, Math.max(0, score));

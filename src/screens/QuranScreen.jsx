@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowRight,
   BookMarked,
   BookOpen,
@@ -9,7 +9,6 @@
   GraduationCap,
   Headphones,
   ListOrdered,
-  Lock,
   Repeat2,
   Search,
   Sparkles,
@@ -19,9 +18,9 @@
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
-import { quranRewards, quranSections, quranSurahs } from "../data/quranContent.js";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
+import { quranSections, quranSurahs } from "../data/quranContent.js";
 import { getQuranState, getQuranTracking, getSelectedCharacter, setDailyQuranGoal } from "../utils/storage.js";
 
 const characterImages = { ahmad, amina };
@@ -45,7 +44,7 @@ const LEARN_PATH = [
   { number: 1, title: "Аль-Фатиха", id: "al-fatihah", desc: "Первая и самая важная сура" },
   { number: 114, title: "Ан-Нас", id: "an-nas", desc: "Короткая сура для защиты" },
   { number: 113, title: "Аль-Фаляк", id: "al-falaq", desc: "Утреннее и вечернее чтение" },
-  { number: 112, title: "Аль-Ихляс", id: "al-ikhlas", desc: "Сура о единобожии" },
+  { number: 112, title: "Аль-Ихлас", id: "al-ikhlas", desc: "Сура о единобожии" },
   { number: 111, title: "Аль-Масад", id: "al-masad", desc: "Закрепление коротких сур" },
   { number: 110, title: "Ан-Наср", id: "an-nasr", desc: "Помощь и победа" },
   { number: 109, title: "Аль-Кафирун", id: "al-kafirun", desc: "Уверенность в вере" },
@@ -55,7 +54,7 @@ const LEARN_PATH = [
 
 function goalLabel(goal) {
   if (goal === 1) return "1 аят";
-  return `${goal} аята`;
+  return `${goal} ${goal < 5 ? "аята" : "аятов"}`;
 }
 
 export default function QuranScreen() {
@@ -70,6 +69,14 @@ export default function QuranScreen() {
   const favSurahs = quranSurahs.filter((surah) => tracking.favoriteSurahs.includes(surah.id) && surah.ayahs?.length > 0);
   const lastSurah = tracking.lastOpenedSurah ? quranSurahs.find((surah) => surah.id === tracking.lastOpenedSurah) : null;
   const startSurah = lastSurah || quranSurahs.find((surah) => surah.id === "al-fatihah") || quranSurahs[0];
+  const surahReadCount = startSurah.ayahs.filter((ayah) => tracking.readAyahs.includes(`${startSurah.id}:${ayah.number}`)).length;
+  const surahReadPct = Math.round(surahReadCount / startSurah.ayahs.length * 100);
+  const rewards = [
+    { title: "Первый аят", done: tracking.readAyahs.length > 0, note: "Прочитай 1 аят" },
+    { title: "Аль-Фатиха", done: quranState.memorizedSurahs.includes("al-fatihah"), note: "Отметь суру выученной" },
+    { title: "Первые 5 сур", done: quranState.memorizedSurahs.length >= 5, note: "Выучи 5 сур" },
+    { title: "100 аятов", done: tracking.readAyahs.length >= 100, note: "Прочитай 100 аятов" }
+  ];
   const completedPathCount = LEARN_PATH.filter((surah) => quranState.memorizedSurahs.includes(surah.id)).length;
   const currentPathIndex = LEARN_PATH.findIndex((surah) => !quranState.memorizedSurahs.includes(surah.id));
   const currentPathId = currentPathIndex >= 0 ? LEARN_PATH[currentPathIndex].id : LEARN_PATH[LEARN_PATH.length - 1]?.id;
@@ -111,7 +118,7 @@ export default function QuranScreen() {
               <p>Начни с коротких сур. Слушай, повторяй и читай внимательно.</p>
             </div>
             <div className="premium-quran-hero__character">
-              <img src={characterImage} alt="Ахмад" />
+              <img src={characterImage} alt={character === "amina" ? "Амина" : "Ахмад"} />
             </div>
             <button className="premium-quran-primary" type="button" onClick={() => navigate(`/quran/surah/${startSurah.id}`)}>
               Продолжить
@@ -154,6 +161,7 @@ export default function QuranScreen() {
                   key={goal}
                   className={activeGoal === goal ? "is-active" : ""}
                   type="button"
+                  aria-pressed={activeGoal === goal}
                   onClick={() => handleGoalChange(goal)}
                 >
                   {goalLabel(goal)}
@@ -172,8 +180,8 @@ export default function QuranScreen() {
               <span className="premium-quran-kicker">{lastSurah ? "Продолжить чтение" : "С чего начать"}</span>
               <h2>{lastSurah ? lastSurah.title : "Начни с Аль-Фатиха"}</h2>
               <p>{lastSurah ? lastSurah.arabicTitle : "Первая и самая важная сура"}</p>
-              <div className="premium-quran-progress__bar" aria-label="Прогресс чтения">
-                <span style={{ width: `${todayPct}%` }} />
+              <div className="premium-quran-progress__bar" aria-label={`Прочитано ${surahReadCount} из ${startSurah.ayahs.length} аятов суры`}>
+                <span style={{ width: `${surahReadPct}%` }} />
               </div>
             </div>
             <button className="premium-quran-primary" type="button" onClick={() => navigate(`/quran/surah/${startSurah.id}`)}>
@@ -191,19 +199,18 @@ export default function QuranScreen() {
               <span className="premium-quran-pill">{completedPathCount}/{LEARN_PATH.length}</span>
             </div>
             <div className="premium-quran-path__list">
-              {LEARN_PATH.map((surah, index) => {
+              {LEARN_PATH.map((surah) => {
                 const done = quranState.memorizedSurahs.includes(surah.id);
                 const isCurrent = surah.id === currentPathId && !done;
-                const isLocked = !done && !isCurrent && index > Math.max(0, currentPathIndex);
                 return (
                   <button
-                    className={`premium-quran-path-step ${done ? "is-done" : ""} ${isCurrent ? "is-current" : ""} ${isLocked ? "is-locked" : ""}`}
+                    className={`premium-quran-path-step ${done ? "is-done" : ""} ${isCurrent ? "is-current" : ""}`}
                     key={surah.id}
                     type="button"
                     onClick={() => navigate(`/quran/surah/${surah.id}`)}
                   >
                     <span className="premium-quran-path-step__num">
-                      {done ? <CheckCircle2 size={18} /> : isLocked ? <Lock size={17} /> : surah.number}
+                      {done ? <CheckCircle2 size={18} /> : surah.number}
                     </span>
                     <span className="premium-quran-path-step__body">
                       <strong>{surah.title}</strong>
@@ -292,11 +299,11 @@ export default function QuranScreen() {
               <BookMarked size={22} aria-hidden="true" />
             </div>
             <div className="premium-quran-reward-grid">
-              {quranRewards.slice(0, 4).map((reward, index) => (
-                <div className={`premium-quran-reward ${index === 0 ? "is-open" : "is-locked"}`} key={reward}>
-                  {index === 0 ? <BookMarked size={20} aria-hidden="true" /> : <Lock size={18} aria-hidden="true" />}
-                  <strong>{reward}</strong>
-                  <small>{index === 0 ? "можно получить" : "откроется позже"}</small>
+              {rewards.map((reward) => (
+                <div className={`premium-quran-reward ${reward.done ? "is-open" : ""}`} key={reward.title}>
+                  {reward.done ? <CheckCircle2 size={20} aria-hidden="true" /> : <Target size={20} aria-hidden="true" />}
+                  <strong>{reward.title}</strong>
+                  <small>{reward.done ? "Выполнено" : reward.note}</small>
                 </div>
               ))}
             </div>

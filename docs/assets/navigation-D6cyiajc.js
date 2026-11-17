@@ -1,0 +1,1 @@
+function e(e,t){(window.history.state?.idx??0)>0?e(-1):e(t,{replace:!0})}export{e as t};

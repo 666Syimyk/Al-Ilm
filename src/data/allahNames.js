@@ -1,4 +1,15 @@
-﻿export const allahNames = [
+﻿// Source metadata for the 99 Names of Allah
+export const allahNamesSource = {
+  source: "Учебная подборка Асмауль-Хусна; источник каждого имени и значения ещё не сопоставлен построчно.",
+  sourceUrl: "https://quran.com/7/180",
+  arabicSource: "Проверка арабского написания по установленному изданию не завершена.",
+  transliterationNote: "Транслитерация создана для русскоязычных детей. Не является академической. Требует проверки знающим учителем.",
+  meaningsNote: "Значения — упрощённые учебные формулировки для детей, не академические определения. Для точных определений обратитесь к авторитетным источникам (например, «Аль-Максад аль-асна» имама Аль-Газали).",
+  verified: false,
+  needsReview: true
+};
+
+export const allahNames = [
   { number: 1, arabic: "الرَّحْمَن", transliteration: "Ар-Рахман", meaning: "Милостивый ко всем творениям" },
   { number: 2, arabic: "الرَّحِيم", transliteration: "Ар-Рахим", meaning: "Особо Милующий верующих" },
   { number: 3, arabic: "المَلِك", transliteration: "Аль-Малик", meaning: "Царь и Владыка всего" },

@@ -1,13 +1,12 @@
 ﻿import React, { useState } from "react";
-import { ArrowLeft, CheckCircle2, Gamepad2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import GlassCard from "../components/GlassCard.jsx";
 import ArabicTextBlock from "../components/ArabicTextBlock.js";
-import AudioButton from "../components/AudioButton.js";
-import PracticeQuiz from "../components/PracticeQuiz.js";
 import { getTajweedLessonById } from "../data/tajweedRules.js";
 import { completeTajweedRule, getQuranState } from "../utils/storage.js";
+import { goBack } from "../utils/navigation.js";
 
 const e = React.createElement;
 
@@ -17,7 +16,6 @@ export default function TajweedRuleDetailScreen() {
   const lesson = getTajweedLessonById(ruleId);
   const [progress, setProgress] = useState(() => getQuranState().tajweedProgress);
   const learned = progress.includes(lesson.id);
-  const example = lesson.examples?.[0] || "";
 
   function markLearned() {
     setProgress(completeTajweedRule(lesson.id));
@@ -29,7 +27,7 @@ export default function TajweedRuleDetailScreen() {
     e(
       Header,
       { title: lesson.title, subtitle: lesson.category, compact: true },
-      e("button", { className: "button button--soft", type: "button", onClick: () => navigate(-1) }, e(ArrowLeft, { size: 17, "aria-hidden": true }), "Назад")
+      e("button", { className: "button button--soft", type: "button", onClick: () => goBack(navigate, "/quran/tajweed") }, e(ArrowLeft, { size: 17, "aria-hidden": true }), "Назад")
     ),
     e(
       GlassCard,
@@ -40,21 +38,17 @@ export default function TajweedRuleDetailScreen() {
     ),
     e(ArabicTextBlock, {
       title: "Примеры",
-      subtitle: "Слушай и повторяй без спешки",
+      subtitle: "Прочитай примеры вместе с учителем",
+      showAudio: false,
       lines: (lesson.examples || []).map((item) => ({ arabic: item, transliteration: "", translation: lesson.title }))
     }),
     e(
       GlassCard,
       { className: "tajweed-practice-card" },
-      e("div", { className: "profile-section-head" }, e("div", null, e("p", { className: "section-kicker" }, "Практика"), e("h2", null, "Слушать и повторить")), e(AudioButton, { text: example, label: "Слушать" })),
-      e("div", { className: "tajweed-detail-actions" }, e(AudioButton, { text: example, label: "Повторить" }), e("button", { className: "button button--primary", type: "button", onClick: markLearned, disabled: learned }, e(CheckCircle2, { size: 18, "aria-hidden": true }), learned ? "Урок выучен" : "Отметить как выученный"))
-    ),
-    e(PracticeQuiz, { quiz: lesson.miniTest }),
-    e(
-      GlassCard,
-      { className: "tajweed-games-card" },
-      e("div", { className: "profile-section-head" }, e("div", null, e("p", { className: "section-kicker" }, "Игровые задания"), e("h2", null, "Закрепление")), e(Gamepad2, { size: 22, "aria-hidden": true })),
-      e("div", { className: "tajweed-game-list" }, lesson.games.map((game) => e("span", { key: game }, game)))
+      e("h2", null, "Закрепи с учителем"),
+      e("p", { className: "content-source-note" }, lesson.practiceNote),
+      e("p", null, "Найди пример правила, прочитай его вслух и попроси учителя послушать. Отметка ниже сохраняет твоё занятие, а не оценку произношения."),
+      e("button", { className: "button button--primary", type: "button", onClick: markLearned, disabled: learned }, e(CheckCircle2, { size: 18, "aria-hidden": true }), learned ? "Изучено" : "Отметить изученное")
     )
   );
 }

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import { vocabularyThemes, getWordsByTheme, getThemeById } from "../data/vocabularyData.js";
-import { getProgress, setProgress } from "../utils/storage.js";
+import { getProgress, recordStudyDay, setProgress } from "../utils/storage.js";
 import { speakText } from "../utils/audioPlayback.js";
 
 function speak(text) {
@@ -34,6 +34,7 @@ function FlashcardMode({ themeId, onBack }) {
     setLearned(next);
     const allLearnedIds = Array.from(next);
     setProgress({ ...progress, learnedVocabulary: allLearnedIds });
+    recordStudyDay();
     goNext();
   }
 

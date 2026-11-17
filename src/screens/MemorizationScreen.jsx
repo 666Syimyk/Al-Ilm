@@ -2,10 +2,12 @@
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Headphones, Star, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
-import { getAyahWords, getSurahById, quranSurahs } from "../data/quranContent.js";
-import { markAyahDifficult, markAyahMemorized, memorizeSurah } from "../utils/storage.js";
-import { getAyahAudioUrl } from "../utils/quranAudio.js";
-import { playCachedAudio, speakText, stopAllAudio, stopAudioElement } from "../utils/audioPlayback.js";
+import { getAyahWords, getSurahById, quranSurahs, translationSource, quranTextSource } from "../data/quranContent.js";
+import { getQuranTracking, markAyahRead, markAyahDifficult, markAyahMemorized, memorizeSurah, unmarkAyahDifficult } from "../utils/storage.js";
+import { getAyahAudioSources } from "../utils/quranAudio.js";
+import { playAudioSources, stopAllAudio, stopAudioElement } from "../utils/audioPlayback.js";
+import { countAyahs } from "../utils/plural.js";
+import { goBack } from "../utils/navigation.js";
 
 function RepeatDots({ count, target = 3 }) {
   return (
@@ -18,6 +20,14 @@ function RepeatDots({ count, target = 3 }) {
 }
 
 export default function MemorizationScreen() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const requestedSurah = params.get("surah");
+  if (requestedSurah && !quranSurahs.some((surah) => surah.id === requestedSurah)) return <section className="content-stack"><p>Сура не найдена.</p><button className="button button--primary" type="button" onClick={() => navigate("/quran/surahs")}>К сурам</button></section>;
+  return <MemorizationSession key={params.get("surah") || "default"} />;
+}
+
+function MemorizationSession() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const surah = getSurahById(params.get("surah") || quranSurahs.find((s) => s.ayahs?.length > 0)?.id);
@@ -26,12 +36,13 @@ export default function MemorizationScreen() {
   const [ayahIdx, setAyahIdx] = useState(0);
   const [hidden, setHidden] = useState(false);
   const [repeats, setRepeats] = useState({});
-  const [memorizedSet, setMemorizedSet] = useState(new Set());
-  const [difficultSet, setDifficultSet] = useState(new Set());
+  const [memorizedSet, setMemorizedSet] = useState(() => new Set(ayahs.filter((ayah) => getQuranTracking().memorizedAyahs.includes(`${surah.id}:${ayah.number}`)).map((ayah) => ayah.number)));
+  const [difficultSet, setDifficultSet] = useState(() => new Set(ayahs.filter((ayah) => getQuranTracking().difficultAyahs.includes(`${surah.id}:${ayah.number}`)).map((ayah) => ayah.number)));
   const [done, setDone] = useState(false);
 
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
 
   const ayah = ayahs[ayahIdx];
   const words = getAyahWords(ayah);
@@ -43,16 +54,23 @@ export default function MemorizationScreen() {
 
   function playAudio() {
     if (!ayah) return;
-    const url = getAyahAudioUrl(surah.number, ayah.number);
+    stopAudio();
     setPlaying(true);
-    playCachedAudio(url, {
-      onPlaying: (audio) => { audioRef.current = audio; },
-      onEnded: () => setPlaying(false),
+    setAudioError(false);
+    playAudioSources(getAyahAudioSources(surah.number, ayah.number), {
+      onReady: (audio) => { audioRef.current = audio; },
+      onEnded: () => {
+        setPlaying(false);
+        markAyahRead(ayahKey);
+        setRepeats((r) => ({ ...r, [ayah.number]: Math.min(3, (r[ayah.number] || 0) + 1) }));
+      },
+      onStop: () => setPlaying(false),
       onError: () => {
         audioRef.current = null;
-        speakText(ayah.arabic, { lang: "ar-SA", rate: 0.78, onEnd: () => setPlaying(false) });
+        setPlaying(false);
+        setAudioError(true);
       }
-    }).catch(() => {});
+    });
   }
 
   function stopAudio() {
@@ -65,21 +83,22 @@ export default function MemorizationScreen() {
   useEffect(() => () => stopAudio(), []);
 
   function handleRepeat() {
-    const next = Math.min(5, currentRepeats + 1);
-    setRepeats((r) => ({ ...r, [ayah.number]: next }));
     playAudio();
   }
 
   function handleMemorized() {
     if (!ayahKey) return;
     markAyahMemorized(ayahKey);
-    setMemorizedSet((s) => new Set([...s, ayah.number]));
+    unmarkAyahDifficult(ayahKey);
+    setDifficultSet((current) => new Set([...current].filter((number) => number !== ayah.number)));
+    const nextMemorized = new Set([...memorizedSet, ayah.number]);
+    setMemorizedSet(nextMemorized);
     stopAudio();
     if (ayahIdx < total - 1) {
       setAyahIdx((i) => i + 1);
       setHidden(false);
     } else {
-      if (memorizedCount + 1 >= total) {
+      if (nextMemorized.size >= total) {
         memorizeSurah(surah.id);
       }
       setDone(true);
@@ -118,7 +137,7 @@ export default function MemorizationScreen() {
       <section className="content-stack quran-inner-screen quran-memorization-screen">
         <GlassCard className="memorization-card">
           <p>Для этой суры аяты будут добавлены позже.</p>
-          <button className="button button--soft" type="button" onClick={() => navigate(-1)}>
+          <button className="button button--soft" type="button" onClick={() => goBack(navigate, "/quran")}>
             <ArrowLeft size={18} /> Назад
           </button>
         </GlassCard>
@@ -130,18 +149,18 @@ export default function MemorizationScreen() {
     return (
       <section className="content-stack quran-inner-screen quran-memorization-screen">
         <div className="memorization-done">
-          <div className="memorization-done__star">в­ђ</div>
-          <h1>Сура завершена!</h1>
-          <p className="section-kicker">{surah.title} В· {total} аятов</p>
-          <p>Ты прошёл все аяты суры. Продолжай повторять каждый день.</p>
+          <div className="memorization-done__star">★</div>
+          <h1>{memorizedCount === total ? "Все аяты отмечены как выученные" : "Повторение завершено"}</h1>
+          <p className="section-kicker">{surah.title} · {countAyahs(total)}</p>
+          <p>Выучено по твоей отметке: {memorizedCount} из {total}. Продолжай повторять с учителем.</p>
           {difficultSet.size > 0 && (
-            <p className="success-note">{difficultSet.size} аятов помечено для повторения</p>
+            <p className="success-note">На повторении: {countAyahs(difficultSet.size)}</p>
           )}
           <div className="game-actions">
             <button className="button button--soft" type="button" onClick={() => { setAyahIdx(0); setDone(false); setHidden(false); }}>
               Начать заново
             </button>
-            <button className="button button--primary" type="button" onClick={() => navigate(-1)}>
+            <button className="button button--primary" type="button" onClick={() => goBack(navigate, "/quran")}>
               Готово
             </button>
           </div>
@@ -154,7 +173,7 @@ export default function MemorizationScreen() {
     <section className="content-stack quran-inner-screen quran-memorization-screen">
       {/* Шапка */}
       <div className="memorization-header">
-        <button className="guide-back-icon" type="button" onClick={() => navigate(-1)} aria-label="Назад">
+        <button className="guide-back-icon" type="button" onClick={() => goBack(navigate, "/quran")} aria-label="Назад">
           <ArrowLeft size={22} />
         </button>
         <div>
@@ -179,7 +198,7 @@ export default function MemorizationScreen() {
         {!hidden ? (
           <>
             <p className="arabic-line arabic-line--large">{ayah.arabic}</p>
-            <p className="ayah-translation-line">{ayah.translation}</p>
+            {ayah.translation && <p className="ayah-translation-line">{ayah.translation}</p>}
             {words.length ? (
               <p className="ayah-translit">{words.map((word) => word.reading || word.arabic).join(" / ")}</p>
             ) : null}
@@ -198,6 +217,12 @@ export default function MemorizationScreen() {
         )}
       </GlassCard>
 
+      {!translationSource.available && <p className="content-source-note">{translationSource.note} <a href={quranTextSource.url} target="_blank" rel="noreferrer">Арабский текст: Tanzil</a></p>}
+
+      {audioError ? (
+        <p className="audio-unavailable-note">Аудио временно недоступно. Проверьте интернет или попробуйте позже.</p>
+      ) : null}
+
       {/* Кнопки */}
       <div className="memorization-actions">
         <button className={`button button--soft${playing ? " is-active" : ""}`} type="button" onClick={playing ? stopAudio : playAudio}>
@@ -214,13 +239,13 @@ export default function MemorizationScreen() {
       </div>
 
       <div className="memorization-verdict">
-        <button className="button button--soft memorization-verdict__hard" type="button" onClick={handleDifficult} disabled={ayahIdx >= total - 1 && memorizedCount === 0}>
+        <button className="button button--soft memorization-verdict__hard" type="button" onClick={handleDifficult}>
           <ThumbsDown size={18} />
           Сложно
         </button>
         <button className={`button ${readyToAdvance ? "button--primary" : "button--soft"} memorization-verdict__good`} type="button" onClick={handleMemorized}>
           <ThumbsUp size={18} />
-          Я выучил
+          Знаю наизусть
         </button>
       </div>
 

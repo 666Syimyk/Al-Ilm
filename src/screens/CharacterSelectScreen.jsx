@@ -1,8 +1,8 @@
-﻿import { Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import { getSelectedCharacter, setSelectedCharacter } from "../utils/storage.js";

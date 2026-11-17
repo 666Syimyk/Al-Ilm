@@ -1,12 +1,11 @@
-﻿import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import AppBackground from "./components/AppBackground.jsx";
 import AppErrorBoundary from "./components/AppErrorBoundary.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import LoadingSpinner from "./components/LoadingSpinner.jsx";
 import { stopAllAudio } from "./utils/audioPlayback.js";
-import { getAge, getSelectedCharacter, getSessionActive, getUser } from "./utils/storage.js";
+import { getAge, getProfilePreferences, getSelectedCharacter, hasActiveProfile } from "./utils/storage.js";
 
 const AyahLessonScreen = lazy(() => import("./screens/AyahLessonScreen.jsx"));
 const AllahNamesScreen = lazy(() => import("./screens/AllahNamesScreen.jsx"));
@@ -51,35 +50,112 @@ const IslamicRulingsScreen = lazy(() => import("./screens/IslamicRulingsScreen.j
 const QuranReadingScreen = lazy(() => import("./screens/QuranReadingScreen.js"));
 const TajweedRuleDetailScreen = lazy(() => import("./screens/TajweedRuleDetailScreen.js"));
 const SurahMemorizationScreen = lazy(() => import("./screens/SurahMemorizationScreen.js"));
+const SourcesScreen = lazy(() => import("./screens/SourcesScreen.jsx"));
 
 const childPaths = ["/home", "/lessons", "/alphabet", "/namaz", "/quran", "/profile", "/progress", "/harakat", "/vocabulary", "/grammar", "/reading", "/islamic-basics", "/islam-basics", "/asmaul-husna"];
 
+// Screens reachable without a signed-in profile.
+const publicPaths = ["/welcome", "/register", "/login", "/password-reset", "/sources"];
+// Onboarding screens a signed-in profile may open before setup is complete.
+const setupPaths = ["/age", "/character", "/adult-soon"];
+
 function resolveStartPath() {
-  const user = getUser();
-  const sessionActive = getSessionActive();
   const age = getAge();
   const character = getSelectedCharacter();
 
-  if (!user || !sessionActive) return "/welcome";
+  if (!hasActiveProfile()) return "/welcome";
   if (!age) return "/age";
   if (Number(age) > 12) return "/adult-soon";
   if (!character) return "/character";
   return "/home";
 }
 
+// Without a guard, a bookmarked screen opened after sign-out would write progress
+// into whichever profile happened to be stored last.
+function resolveGuardRedirect(pathname) {
+  if (pathname === "/" || publicPaths.includes(pathname)) return null;
+  const start = resolveStartPath();
+  if (start === "/welcome") return "/welcome";
+  if (setupPaths.includes(pathname)) return null;
+  // Adults start on /adult-soon but may open every section, including the main home screen.
+  if (start === "/adult-soon") return null;
+  return start === "/home" ? null : start;
+}
+
+function StorageWarning() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const show = () => setVisible(true);
+    window.addEventListener("storageWriteFailed", show);
+    return () => window.removeEventListener("storageWriteFailed", show);
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <div className="storage-warning" role="alert">
+      <p>Не удалось сохранить прогресс: память браузера заполнена или запрещена. Удалите своё фоновое фото в профиле или разрешите хранение данных для сайта.</p>
+      <button type="button" onClick={() => setVisible(false)} aria-label="Закрыть предупреждение">×</button>
+    </div>
+  );
+}
+
+function AudioNotice() {
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let timer;
+    const show = (event) => {
+      setMessage(event.detail || "");
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setMessage(""), 6000);
+    };
+    window.addEventListener("audioNotice", show);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("audioNotice", show);
+    };
+  }, []);
+
+  if (!message) return null;
+  return (
+    <div className="audio-notice" role="status">
+      <p>{message}</p>
+      <button type="button" onClick={() => setMessage("")} aria-label="Закрыть сообщение">×</button>
+    </div>
+  );
+}
+
 function AppRoutes() {
   const location = useLocation();
-  const showBottomNav = childPaths.some((path) => location.pathname.startsWith(path));
+  const guardRedirect = resolveGuardRedirect(location.pathname);
+  const showBottomNav = !guardRedirect && childPaths.some((path) => location.pathname.startsWith(path));
 
   useEffect(() => {
     stopAllAudio();
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const applyPreferences = () => {
+      const preferences = getProfilePreferences();
+      document.documentElement.dataset.showHints = String(preferences.showHints);
+      document.documentElement.dataset.arabicSize = preferences.arabicTextSize;
+    };
+    applyPreferences();
+    window.addEventListener("profilePreferencesChange", applyPreferences);
+    return () => window.removeEventListener("profilePreferencesChange", applyPreferences);
+  }, []);
+
   return (
     <AppBackground>
-      <main className={`page-frame ${showBottomNav ? "page-frame--nav" : ""}`}>
+      <main id="main-content" className={`page-frame ${showBottomNav ? "page-frame--nav" : ""}`}>
         <AppErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<LoadingSpinner />}>
+            {guardRedirect ? <Navigate to={guardRedirect} replace /> : (
             <Routes>
             <Route path="/" element={<Navigate to={resolveStartPath()} replace />} />
             <Route path="/welcome" element={<WelcomeScreen />} />
@@ -133,20 +209,17 @@ function AppRoutes() {
             <Route path="/progress" element={<ProgressScreen />} />
             <Route path="/profile" element={<ProfileScreen />} />
             <Route path="/profile/data" element={<ProfileDataScreen />} />
+            <Route path="/sources" element={<SourcesScreen />} />
             <Route path="/backgrounds" element={<BackgroundSelectScreen />} />
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            )}
           </Suspense>
         </AppErrorBoundary>
       </main>
       {showBottomNav ? <BottomNav /> : null}
-      <div className="orientation-hint" role="status" aria-live="polite">
-        <div className="orientation-hint__icon" aria-hidden="true">
-          <span />
-        </div>
-        <h2>Поверните телефон горизонтально</h2>
-        <p>Так уроки будут удобнее проходить</p>
-      </div>
+      <StorageWarning />
+      <AudioNotice />
     </AppBackground>
   );
 }

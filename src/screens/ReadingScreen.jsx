@@ -4,13 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import VoiceCheckPanel from "../components/VoiceCheckPanel.jsx";
+import AudioButton from "../components/AudioButton.js";
 import { readingTexts, readingCategories, getTextById } from "../data/readingTexts.js";
-import { getProgress, setProgress } from "../utils/storage.js";
-import { speakText } from "../utils/audioPlayback.js";
-
-function speak(text) {
-  speakText(text, { lang: "ar-SA", rate: 0.65 });
-}
+import { completeLessonNode, getProgress, recordStudyDay, setProgress } from "../utils/storage.js";
 
 // ─── Экран чтения конкретного текста ─────────────────────────────────────────
 function ReadingLesson({ textId, onBack }) {
@@ -28,7 +24,9 @@ function ReadingLesson({ textId, onBack }) {
     if (!isDone) {
       const updated = [...completedIds, text.id];
       setProgress({ ...progress, completedReadingTexts: updated, points: (progress.points || 0) + 10 });
+      recordStudyDay();
     }
+    completeLessonNode("reading-start");
     setDone(true);
   }
 
@@ -44,7 +42,8 @@ function ReadingLesson({ textId, onBack }) {
           <BookOpen size={56} color="var(--green-dark)" aria-hidden="true" />
           <h2>Отличная работа!</h2>
           <p className="reading-done-text" dir="rtl">{text.arabic}</p>
-          <p className="reading-done-translation">{text.translation}</p>
+          <p className="reading-done-translation">{text.translation || text.sourceNote}</p>
+          {text.sourceUrl ? <a href={text.sourceUrl} target="_blank" rel="noreferrer">Источник текста</a> : null}
           <button className="button button--primary" type="button" onClick={onBack}>
             К текстам
           </button>
@@ -64,25 +63,19 @@ function ReadingLesson({ textId, onBack }) {
       {/* Арабский текст */}
       <GlassCard className="reading-arabic-card">
         <p className="reading-arabic-text" dir="rtl">{text.arabic}</p>
-        <button
-          className="button button--soft reading-listen-btn"
-          type="button"
-          onClick={() => speak(text.arabic)}
-        >
-          <Volume2 size={18} aria-hidden="true" />
-          Послушать
-        </button>
+        <AudioButton text={text.category === "quran" ? undefined : text.arabic} audioUrls={text.audioUrls || []} lang="ar-SA" rate={0.65} label={text.category === "quran" ? "Слушать запись аятов" : "Послушать"} className="button button--soft reading-listen-btn" />
+        {text.category === "quran" && !text.audioUrls?.length ? <p className="audio-unavailable-note">Запись этого отрывка пока недоступна.</p> : null}
       </GlassCard>
 
       {/* Транслитерация */}
       <VoiceCheckPanel
         targets={[text.arabic, text.reading]}
         prompt="Прочитай текст вслух после прослушивания."
-        successText="Отлично! Текст прочитан уверенно."
+        successText="Браузер распознал текст. Точность произношения проверяй с учителем."
         onPassed={() => setVoicePassed(true)}
       />
 
-      <GlassCard className="reading-toggle-card">
+      {text.reading ? <GlassCard className="reading-toggle-card">
         <button
           className="reading-toggle-header"
           type="button"
@@ -94,7 +87,7 @@ function ReadingLesson({ textId, onBack }) {
         {showReading && (
           <p className="reading-transliteration">{text.reading}</p>
         )}
-      </GlassCard>
+      </GlassCard> : null}
 
       {/* Перевод */}
       <GlassCard className="reading-toggle-card">
@@ -103,11 +96,11 @@ function ReadingLesson({ textId, onBack }) {
           type="button"
           onClick={() => setShowTranslation(!showTranslation)}
         >
-          <span>Перевод</span>
+          <span>{text.translation ? text.category === "quran" ? "Перевод смыслов" : "Перевод" : "Об источнике"}</span>
           {showTranslation ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
         {showTranslation && (
-          <p className="reading-translation-text">{text.translation}</p>
+          <div className="reading-translation-text"><p>{text.translation || text.sourceNote || "Перевод для этого текста пока не добавлен."}</p>{text.sourceUrl ? <a href={text.sourceUrl} target="_blank" rel="noreferrer">Открыть источник</a> : null}</div>
         )}
       </GlassCard>
 
@@ -125,7 +118,7 @@ function ReadingLesson({ textId, onBack }) {
             ✓ Прочитано
           </div>
         )}
-        {voicePassed ? <div className="grammar-done-badge">Голос проверен</div> : null}
+        {voicePassed ? <div className="grammar-done-badge">Текст распознан браузером</div> : null}
         <button className="button button--primary" type="button" onClick={markDone}>
           {isDone ? "Прочитать снова" : "Отметить как прочитанное"}
         </button>
@@ -201,7 +194,7 @@ function ReadingHub({ onSelect }) {
                 <p className="reading-text-preview" dir="rtl">{text.arabic.slice(0, 40)}…</p>
               </div>
               <div className="reading-text-card__actions">
-                {isDone && <span className="reading-done-mark">вњ“</span>}
+                {isDone && <span className="reading-done-mark">✓</span>}
                 <button
                   className="button button--primary"
                   type="button"
@@ -224,7 +217,7 @@ export default function ReadingScreen() {
   const navigate = useNavigate();
 
   if (textId) {
-    return <ReadingLesson textId={textId} onBack={() => navigate("/reading")} />;
+    return <ReadingLesson key={textId} textId={textId} onBack={() => navigate("/reading")} />;
   }
 
   return <ReadingHub onSelect={(id) => navigate(`/reading/${id}`)} />;

@@ -1,12 +1,15 @@
-const CACHE_NAME = "al-ilm-v8";
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+const CACHE_PREFIX = `al-ilm:${BASE_PATH}:`;
+// vite.config.js replaces "dev" with a build id, so every deploy gets a fresh cache.
+const CACHE_VERSION = "60102a921779";
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const withBase = (path) => `${BASE_PATH}${path}`;
 const STATIC_ASSETS = [withBase("/"), withBase("/index.html")];
 
-function cacheResponse(request, response) {
+async function cacheResponse(request, response) {
   if (response && response.status === 200) {
     const cloned = response.clone();
-    caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
+    await caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned)).catch(() => {});
   }
   return response;
 }
@@ -21,7 +24,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE_NAME && (k.startsWith(CACHE_PREFIX) || /^al-ilm-v\d+$/.test(k))).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -33,12 +36,12 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  if (url.origin !== location.origin) return;
+  if (url.origin !== location.origin || !url.pathname.startsWith(`${BASE_PATH}/`) || request.headers?.has("range")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
-        .then((response) => cacheResponse(request, response))
+        .then((response) => response.ok ? cacheResponse(request, response) : fetch(withBase("/index.html")).then((shell) => cacheResponse(withBase("/index.html"), shell)))
         .catch(() => caches.match(request).then((cached) => cached || caches.match(withBase("/index.html"))))
     );
     return;
@@ -46,7 +49,8 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
-      const fetchPromise = fetch(request).then((response) => cacheResponse(request, response));
+      const fetchPromise = fetch(request).then((response) => cacheResponse(request, response)).catch(() => cached || Response.error());
+      event.waitUntil(fetchPromise.then(() => {}));
       return cached || fetchPromise;
     })
   );
@@ -69,8 +73,8 @@ self.addEventListener("message", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: withBase("/al-ilm-logo.png"),
-      badge: withBase("/al-ilm-logo.png"),
+      icon: withBase("/icons/icon-192.png"),
+      badge: withBase("/icons/icon-192.png"),
       tag: "al-ilm"
     })
   );

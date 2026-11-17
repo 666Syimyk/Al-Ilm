@@ -1,29 +1,39 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Bell, BellOff, ChevronRight, Compass,
-  BookOpen, FileText, Headphones, Landmark,
+  ArrowLeft, Bell, BellOff, Check, ChevronRight, Clock3, Compass,
+  BookOpen, Droplets, FileText, Headphones, Landmark,
   MapPin, Minus, Navigation, Pause, Play, Plus, Radio, Save,
   Search, Settings, SkipBack, SkipForward
 } from "lucide-react";
 import GlassCard from "../components/GlassCard.jsx";
-import Header from "../components/Header.jsx";
-import ahmadPrayerSprite from "../assets/prayer/ahmad-prayer-sprite.png";
-import aminaPrayerSprite from "../assets/prayer/amina-prayer-sprite.png";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
+import ahmadPrayerSprite from "../assets/prayer/ahmad-prayer-sprite.webp";
+import aminaPrayerSprite from "../assets/prayer/amina-prayer-sprite.webp";
 import { buildPrayerGuide, PRAYERS } from "../data/namazGuide.js";
 import {
   buildPrayerDataFromCoords, calculateQiblaDirection, geocodeCity,
-  getPrayerSettings, prayerTimes as initialPrayerTimes,
+  getPrayerSettings, getCurrentPrayerTimes, getPrayerReminders, setPrayerSettings, PRAYER_METHODS, ASR_MADHABS,
+  PRAYER_ADJUSTMENT_KEYS, MAX_PRAYER_ADJUSTMENT,
   requestPrayerTimes, updateCountdown
 } from "../data/prayerTimes.js";
 import {
   getDonePrayersForDate,
+  getNamazDayKey,
+  recordNamazDayCompletion,
   getNamazProgress,
   getSelectedCharacter,
+  getStoredJson,
+  getStoredValue,
   setDonePrayersForDate,
-  setNamazProgress
+  setNamazProgress,
+  setStoredJson,
+  setStoredValue
 } from "../utils/storage.js";
-import { getCachedAudio, playCachedAudio, speakText, stopAudioElement, stopSpeech } from "../utils/audioPlayback.js";
+import { getCachedAudio, playCachedAudio, playAudioSources, speakText, stopAudioElement, stopSpeech } from "../utils/audioPlayback.js";
+import { getRecordingSources } from "../utils/quranAudio.js";
+import { getMagneticDeclination, readTrueHeading } from "../utils/compass.js";
 
 const prayerSprites = {
   ahmad: ahmadPrayerSprite,
@@ -172,8 +182,23 @@ const MOSQUE_PLACES = [
 ];
 
 const FEATURE_CARDS = [
+  { id: "wudu", title: "Омовение", desc: "перед намазом", icon: Droplets },
   { id: "radio", title: "Радио", desc: "онлайн эфир", icon: Radio },
-  { id: "mosques", title: "Мечети", desc: "рядом и карта", icon: Landmark }
+  { id: "mosques", title: "Мечети", desc: "справочник и карта", icon: Landmark },
+  { id: "kaza", title: "Каза", desc: "счётчик пропущенных", icon: BookOpen },
+  { id: "notes", title: "Заметки", desc: "мои записи", icon: FileText }
+];
+
+const WUDU_STEPS = [
+  { title: "Намерение", text: "В сердце реши: я делаю омовение ради Аллаха." },
+  { title: "Бисмиллях", text: "Скажи «Бисмиллях» и начни спокойно." },
+  { title: "Кисти рук", text: "Вымой кисти до запястий 3 раза." },
+  { title: "Рот", text: "Прополощи рот 3 раза." },
+  { title: "Нос", text: "Аккуратно промой нос 3 раза." },
+  { title: "Лицо", text: "Вымой всё лицо 3 раза." },
+  { title: "Руки до локтей", text: "Сначала правую руку, потом левую — по 3 раза." },
+  { title: "Голова и уши", text: "Влажными руками протри голову и уши 1 раз." },
+  { title: "Ноги", text: "Вымой ноги до щиколоток: правую, потом левую — по 3 раза." }
 ];
 
 function calcQibla(lat, lng) {
@@ -181,52 +206,41 @@ function calcQibla(lat, lng) {
 }
 
 function readLocalString(key, fallback = "") {
-  try {
-    return localStorage.getItem(key) || fallback;
-  } catch {
-    return fallback;
-  }
+  return getStoredValue(key, fallback) || fallback;
 }
 
 function writeLocalString(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Storage can be blocked or full; keep the screen usable.
-  }
+  setStoredValue(key, value);
 }
 
 function getNotifEnabled() { return readLocalString("notificationsEnabled") === "true"; }
 
 async function showPrayerNotification(title, body) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const appIcon = `${import.meta.env.BASE_URL}al-ilm-logo.png`;
+  const appIcon = `${import.meta.env.BASE_URL}icons/icon-192.png`;
   const options = { body, icon: appIcon, badge: appIcon, tag: "al-ilm-prayer" };
 
   if ("serviceWorker" in navigator) {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      await registration.showNotification(title, options);
-      return;
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        await registration.showNotification(title, options);
+        return;
+      }
     } catch {
       // fall back to a page notification
     }
   }
 
-  new Notification(title, options);
+  try { new Notification(title, options); } catch { /* Some mobile browsers require an installed PWA. */ }
 }
 
 function readLocalJson(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+  return getStoredJson(key, fallback);
 }
 
 function writeLocalJson(key, value) {
-  writeLocalString(key, JSON.stringify(value));
+  setStoredJson(key, value);
 }
 
 function toggleDone(name) {
@@ -234,21 +248,10 @@ function toggleDone(name) {
   const next = done.includes(name) ? done.filter((n) => n !== name) : [...done, name];
   setDonePrayersForDate(next);
 
-  const previousFardCount = done.filter((n) => PRAYERS.some((p) => p.name === n)).length;
-  const nextFardCount = next.filter((n) => PRAYERS.some((p) => p.name === n)).length;
-  const progress = getNamazProgress();
-  setNamazProgress({
-    completedPrayers: next,
-    practiceCount: nextFardCount === PRAYERS.length && previousFardCount < PRAYERS.length
-      ? (progress.practiceCount || 0) + 1
-      : progress.practiceCount || 0
-  });
+  setNamazProgress({ completedPrayers: next });
+  recordNamazDayCompletion(new Date(), PRAYERS.map((prayer) => prayer.name));
 
   return next;
-}
-
-function speak(text) {
-  speakText(text, { lang: "ar-SA", rate: 0.65 });
 }
 
 function distanceKm(fromLat, fromLng, toLat, toLng) {
@@ -262,7 +265,7 @@ function distanceKm(fromLat, fromLng, toLat, toLng) {
 }
 
 function getNearbyMosques(data) {
-  if (data?.lat && data?.lng) {
+  if (Number.isFinite(data?.lat) && Number.isFinite(data?.lng)) {
     return MOSQUE_PLACES
       .map((place) => ({ ...place, distance: distanceKm(data.lat, data.lng, place.lat, place.lng) }))
       .sort((a, b) => a.distance - b.distance)
@@ -285,19 +288,18 @@ function getPrayerNotes() {
   return readLocalJson("namazNotes", {});
 }
 
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-// ЭКРАН ГИДА — пошаговый намаз
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+// ── ЭКРАН ГИДА — пошаговый намаз ──────────────────────────────────────────────
 function PrayerGuideScreen({ prayer, onBack }) {
-  const steps = buildPrayerGuide(prayer);
   const character = getSelectedCharacter() || "ahmad";
+  const [gender, setGender] = useState(character === "amina" ? "female" : "male");
+  const steps = buildPrayerGuide(prayer, { gender });
 
   // Строим плейлист: {arabic, audioUrl, stepIdx, ayahIdx}
   const playlist = [];
   steps.forEach((item, stepIdx) => {
     if (item.type === "step") {
       item.items.forEach((ayah, ayahIdx) => {
-        if (ayah.arabic) playlist.push({ arabic: ayah.arabic, audioUrl: ayah.audioUrl || null, stepIdx, ayahIdx });
+        if (ayah.arabic) playlist.push({ arabic: ayah.arabic, audioUrl: ayah.audioUrl || null, repeats: ayah.repeat ? 3 : 1, stepIdx, ayahIdx });
       });
     }
   });
@@ -312,6 +314,8 @@ function PrayerGuideScreen({ prayer, onBack }) {
   const speedRef = useRef(SPEEDS[1]);
   const scrollRef = useRef(null);
   const audioElRef = useRef(null);
+  const runRef = useRef(0);
+  const [audioError, setAudioError] = useState("");
 
   useEffect(() => {
     const urls = [...new Set(playlist.map((item) => item.audioUrl).filter(Boolean))];
@@ -319,6 +323,7 @@ function PrayerGuideScreen({ prayer, onBack }) {
   }, [prayer.id]);
 
   function cancelAll() {
+    runRef.current += 1;
     stopSpeech();
     stopAudioElement(audioElRef.current);
     audioElRef.current = null;
@@ -330,12 +335,8 @@ function PrayerGuideScreen({ prayer, onBack }) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function playTTS(item, onDone) {
-    speakText(item.arabic, { lang: "ar-SA", rate: speedRef.current, onEnd: onDone });
-  }
-
   // Воспроизвести item[idx] и автоматически перейти к следующему
-  function playFrom(idx) {
+  function playFrom(idx, repeatsRemaining = playlist[idx]?.repeats || 1) {
     if (!isPlayingRef.current || idx >= playlist.length) {
       setPlaying(false);
       isPlayingRef.current = false;
@@ -344,20 +345,35 @@ function PrayerGuideScreen({ prayer, onBack }) {
     setAudioIdx(idx);
     setTimeout(() => scrollToItem(idx), 80);
     cancelAll();
+    const run = runRef.current;
+    setAudioError("");
 
     const item = playlist[idx];
-    const advance = () => playFrom(idx + 1);
+    const advance = () => {
+      if (run !== runRef.current || !isPlayingRef.current) return;
+      if (repeatsRemaining > 1) playFrom(idx, repeatsRemaining - 1);
+      else playFrom(idx + 1);
+    };
+    const fail = () => {
+      if (run !== runRef.current) return;
+      isPlayingRef.current = false;
+      setPlaying(false);
+      setAudioError("Не удалось воспроизвести. Проверь интернет и звук в профиле, затем повтори.");
+    };
 
     if (item.audioUrl) {
-      playCachedAudio(item.audioUrl, {
+      // Quran ayahs have audioUrl — use CDN only, no TTS fallback for sacred text
+      playAudioSources(getRecordingSources(item.audioUrl), {
         cancelCurrent: false,
         playbackRate: Math.min(speedRef.current, 2),
-        onPlaying: (audio) => { audioElRef.current = audio; },
+        onReady: (audio) => { audioElRef.current = audio; },
         onEnded: advance,
-        onError: () => { audioElRef.current = null; playTTS(item, advance); }
-      }).catch(() => {});
+        onError: fail,
+        onStop: () => { if (run === runRef.current) { isPlayingRef.current = false; setPlaying(false); } }
+      });
     } else {
-      playTTS(item, advance);
+      // Non-Quran dhikr/dua: TTS is acceptable as these are not Quran ayahs
+      speakText(item.arabic, { lang: "ar-SA", rate: speedRef.current, onEnd: advance, onError: fail });
     }
   }
 
@@ -377,14 +393,14 @@ function PrayerGuideScreen({ prayer, onBack }) {
     const i = Math.max(0, audioIdx - 1);
     setAudioIdx(i);
     scrollToItem(i);
-    if (playing) { cancelAll(); setTimeout(() => playFrom(i), 50); }
+    if (playing) playFrom(i);
   }
 
   function next() {
     const i = Math.min(playlist.length - 1, audioIdx + 1);
     setAudioIdx(i);
     scrollToItem(i);
-    if (playing) { cancelAll(); setTimeout(() => playFrom(i), 50); }
+    if (playing) playFrom(i);
   }
 
   function cycleSpeed() {
@@ -392,8 +408,7 @@ function PrayerGuideScreen({ prayer, onBack }) {
     speedRef.current = SPEEDS[next];
     setSpeedIdx(next);
     if (isPlayingRef.current) {
-      cancelAll();
-      setTimeout(() => playFrom(audioIdx), 50);
+      playFrom(audioIdx);
     }
   }
 
@@ -427,6 +442,11 @@ function PrayerGuideScreen({ prayer, onBack }) {
 
       {/* Контент */}
       <div className="guide-content-scroll" ref={scrollRef}>
+        <div className="guide-gender-switch" role="group" aria-label="Для кого показывать положения тела">
+          <button type="button" className={gender === "male" ? "is-active" : ""} aria-pressed={gender === "male"} onClick={() => setGender("male")}>Для мальчиков</button>
+          <button type="button" className={gender === "female" ? "is-active" : ""} aria-pressed={gender === "female"} onClick={() => setGender("female")}>Для девочек</button>
+        </div>
+        <p className="content-source-note">Порядок фард-намаза по ханафитскому мазхабу, упрощённо для детей. Если ваша семья следует другому мазхабу или имам учит иначе — следуйте ему. Транслитерация приблизительная; голос браузера не проверяет произношение. Аяты звучат в записи Аль-Афаси, арабский текст — <a href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil</a>.</p>
         {steps.map((item, idx) => {
           if (item.type === "section") {
             return (
@@ -437,7 +457,7 @@ function PrayerGuideScreen({ prayer, onBack }) {
           }
           return (
             <div key={idx} className="guide-step-block">
-              <PrayerFigure position={item.position} character={character} />
+              <PrayerFigure position={item.position} character={gender === "female" ? "amina" : "ahmad"} />
               {item.note && <p className="guide-step-note">{item.note}</p>}
               {item.items.map((ayah, ai) => {
                 if (!ayah.arabic) return null;
@@ -455,14 +475,14 @@ function PrayerGuideScreen({ prayer, onBack }) {
                       {ayah.translit}
                       {ayah.repeat && <span className="guide-ayah-repeat"> {ayah.repeat}</span>}
                     </p>
-                    <p className="guide-ayah-translation">{ayah.translation}</p>
+                    {ayah.translation ? <p className="guide-ayah-translation">{ayah.translation}</p> : null}
                     <button
                       className="guide-ayah-audio"
                       type="button"
                       onClick={() => playOne(gIdx)}
                       aria-label="Прослушать"
                     >
-                      в–¶
+                      ▶
                     </button>
                   </div>
                 );
@@ -476,6 +496,7 @@ function PrayerGuideScreen({ prayer, onBack }) {
       {/* Аудиоплеер */}
       {playlist.length > 0 && (
         <div className="guide-audio-player">
+          {audioError && <p role="status" className="audio-unavailable-note">{audioError}</p>}
           <div className="guide-audio-info">
             <span className="guide-audio-index">{audioIdx + 1}/{playlist.length}</span>
             <span className="guide-audio-text" dir="rtl">{playlist[audioIdx]?.arabic?.slice(0, 28)}…</span>
@@ -484,11 +505,11 @@ function PrayerGuideScreen({ prayer, onBack }) {
             <button className="guide-speed-btn" type="button" onClick={cycleSpeed} aria-label="Скорость">
               {SPEED_LABELS[speedIdx]}
             </button>
-            <button type="button" onClick={prev} disabled={audioIdx === 0}><SkipBack size={18} /></button>
-            <button className="guide-audio-play" type="button" onClick={togglePlay}>
+            <button type="button" onClick={prev} disabled={audioIdx === 0} aria-label="Предыдущая фраза"><SkipBack size={18} /></button>
+            <button className="guide-audio-play" type="button" onClick={togglePlay} aria-label={playing ? "Остановить чтение" : "Начать чтение"}>
               {playing ? <Pause size={20} /> : <Play size={20} />}
             </button>
-            <button type="button" onClick={next} disabled={audioIdx >= playlist.length - 1}><SkipForward size={18} /></button>
+            <button type="button" onClick={next} disabled={audioIdx >= playlist.length - 1} aria-label="Следующая фраза"><SkipForward size={18} /></button>
           </div>
         </div>
       )}
@@ -496,18 +517,27 @@ function PrayerGuideScreen({ prayer, onBack }) {
   );
 }
 
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-// КИБЛА-КОМПАС
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+// ── КИБЛА-КОМПАС ──────────────────────────────────────────────────────────────
 function QiblaScreen({ data, onBack }) {
   const [qibla, setQibla] = useState(null);
   const [heading, setHeading] = useState(null);
   const [orientStatus, setOrientStatus] = useState("idle");
   const [geoStatus, setGeoStatus] = useState(data._computed ? "ok" : "pending");
   const [localData, setLocalData] = useState(data);
+  const orientationHandlerRef = useRef(null);
+  const orientationTimeoutRef = useRef(null);
+  // The orientation handler outlives renders; it reads the declination for the latest location.
+  const declinationRef = useRef(0);
+  useEffect(() => () => {
+    clearTimeout(orientationTimeoutRef.current);
+    if (orientationHandlerRef.current) {
+      window.removeEventListener("deviceorientationabsolute", orientationHandlerRef.current, true);
+      window.removeEventListener("deviceorientation", orientationHandlerRef.current, true);
+    }
+  }, []);
 
   useEffect(() => {
-    if (localData._computed && localData.lat) {
+    if (localData._computed && Number.isFinite(localData.lat)) {
       setQibla(calcQibla(localData.lat, localData.lng));
       setGeoStatus("ok");
     }
@@ -526,14 +556,26 @@ function QiblaScreen({ data, onBack }) {
         if (p !== "granted") { setOrientStatus("denied"); return; }
       } catch { setOrientStatus("denied"); return; }
     }
-    setOrientStatus("active");
-    const handler = (e) => setHeading(e.webkitCompassHeading ?? (360 - (e.alpha || 0)));
+    setOrientStatus("waiting");
+    if (orientationHandlerRef.current) {
+      window.removeEventListener("deviceorientationabsolute", orientationHandlerRef.current, true);
+      window.removeEventListener("deviceorientation", orientationHandlerRef.current, true);
+    }
+    const handler = (e) => {
+      const trueHeading = readTrueHeading(e, declinationRef.current);
+      if (trueHeading !== null) { setHeading(trueHeading); setOrientStatus("active"); }
+    };
+    orientationHandlerRef.current = handler;
     window.addEventListener("deviceorientationabsolute", handler, true);
     window.addEventListener("deviceorientation", handler, true);
+    clearTimeout(orientationTimeoutRef.current);
+    orientationTimeoutRef.current = setTimeout(() => setOrientStatus((status) => status === "waiting" ? "unsupported" : status), 3000);
   }
 
+  const declination = getMagneticDeclination(localData.lat, localData.lng);
+  declinationRef.current = declination;
   const needleAngle = qibla != null && heading != null ? (qibla - heading + 360) % 360 : qibla;
-  const distance = localData.lat
+  const distance = Number.isFinite(localData.lat)
     ? Math.round(Math.acos(Math.sin(localData.lat * Math.PI / 180) * Math.sin(MECCA.lat * Math.PI / 180) + Math.cos(localData.lat * Math.PI / 180) * Math.cos(MECCA.lat * Math.PI / 180) * Math.cos((MECCA.lng - localData.lng) * Math.PI / 180)) * 6371)
     : null;
 
@@ -547,7 +589,7 @@ function QiblaScreen({ data, onBack }) {
         {geoStatus === "pending" && (
           <GlassCard className="geo-prompt-card"><MapPin size={22} color="var(--green-dark)" /><div><h3>Нужна геолокация</h3><p>Для расчёта направления Киблы</p></div><button className="button button--primary" onClick={requestGeo}>Определить</button></GlassCard>
         )}
-        {geoStatus === "loading" && <div className="toast-message">рџ“Ќ Определяем местоположение...</div>}
+        {geoStatus === "loading" && <div className="toast-message">Определяем местоположение...</div>}
         {geoStatus === "denied" && <GlassCard className="geo-prompt-card"><MapPin size={22} color="var(--green-dark)" /><div><h3>Геолокация недоступна</h3><p>Разрешите доступ в браузере</p></div><button className="button button--primary" onClick={requestGeo}>Повторить</button></GlassCard>}
 
         {qibla == null && geoStatus !== "loading" && (
@@ -596,22 +638,25 @@ function QiblaScreen({ data, onBack }) {
                 <div className="qibla-center"><Compass size={20} color="var(--green-dark)" /></div>
               </div>
               <div className="qibla-info-row">
-                <div className="qibla-info-item"><p className="section-kicker">Направление</p><strong>{Math.round(qibla)}В°</strong></div>
+                <div className="qibla-info-item"><p className="section-kicker">Направление</p><strong>{Math.round(qibla)}°</strong></div>
                 {distance && <div className="qibla-info-item"><p className="section-kicker">До Мекки</p><strong>{distance.toLocaleString()} км</strong></div>}
-                {heading != null && <div className="qibla-info-item"><p className="section-kicker">Компас</p><strong>{Math.round(heading)}В°</strong></div>}
+                {heading != null && <div className="qibla-info-item"><p className="section-kicker">Компас</p><strong>{Math.round(heading)}°</strong></div>}
               </div>
               {orientStatus !== "active"
-                ? <button className="button button--primary" onClick={startCompass}><Compass size={16} /> Включить компас</button>
+                ? <button className="button button--primary" type="button" onClick={startCompass} disabled={orientStatus === "waiting"}><Compass size={16} /> {orientStatus === "waiting" ? "Ожидаю датчик..." : "Включить компас"}</button>
                 : <p className="qibla-compass-hint">Поверни устройство — стрелка 🕋 укажет на Мекку</p>
               }
-              {orientStatus === "unsupported" && <p className="city-error">Компас не поддерживается на этом устройстве</p>}
+              {orientStatus === "unsupported" && <p className="city-error">Датчик не сообщил направление на север. Число выше — угол от географического севера; проверь направление внешним компасом.</p>}
+              {orientStatus === "denied" && <p className="city-error">Доступ к датчику не разрешён. Можно повторить запрос.</p>}
+              {orientStatus === "active" && Math.abs(declination) >= 0.5 && <p className="qibla-compass-hint">Учтено магнитное склонение {declination > 0 ? "+" : ""}{declination.toFixed(1)}° для вашего места.</p>}
             </GlassCard>
             <GlassCard className="qibla-tip-card">
               <p className="section-kicker">Как пользоваться</p>
               <ol className="qibla-tip-list">
                 <li>Нажми «Включить компас» и разреши доступ</li>
-                <li>Держи телефон горизонтально</li>
-                <li>Поворачивайся пока 🕋 не укажет вперёд</li>
+                <li>Положи телефон ровно, экраном вверх, подальше от металла, магнитов и колонок</li>
+                <li>Если стрелка прыгает, поводи телефоном «восьмёркой» для калибровки</li>
+                <li>Поворачивайся, пока 🕋 не укажет вперёд. Сверься с михрабом ближайшей мечети, если есть возможность</li>
               </ol>
             </GlassCard>
           </>
@@ -621,9 +666,39 @@ function QiblaScreen({ data, onBack }) {
   );
 }
 
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
-// ГЛАВНЫЙ СПИСОК НАМАЗОВ
-// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+// ── ГЛАВНЫЙ СПИСОК НАМАЗОВ ────────────────────────────────────────────────────
+function WuduPanel() {
+  return (
+    <GlassCard className="namaz-feature-panel namaz-wudu-panel">
+      <div className="namaz-feature-panel__head">
+        <div>
+          <p className="section-kicker">Перед намазом</p>
+          <h2>Как правильно делать омовение</h2>
+          <p>Иди по шагам сверху вниз. Делай спокойно и аккуратно.</p>
+        </div>
+        <Droplets size={26} aria-hidden="true" />
+      </div>
+
+      <div className="namaz-wudu-list">
+        {WUDU_STEPS.map((step, index) => (
+          <div className="namaz-wudu-step" key={step.title}>
+            <span className="namaz-wudu-step__num">{index + 1}</span>
+            <span className="namaz-wudu-step__body">
+              <strong>{step.title}</strong>
+              <small>{step.text}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="namaz-wudu-note">
+        <strong>Когда обновить омовение?</strong>
+        <span>После туалета, сна, выхода газов или если омовение нарушилось.</span>
+      </div>
+    </GlassCard>
+  );
+}
+
 function RadioPanel() {
   const audioRef = useRef(null);
   const [activeStation, setActiveStation] = useState(null);
@@ -633,7 +708,6 @@ function RadioPanel() {
   function stopRadio() {
     if (audioRef.current) {
       stopAudioElement(audioRef.current);
-      audioRef.current.src = "";
       audioRef.current = null;
     }
     setIsPlaying(false);
@@ -648,26 +722,14 @@ function RadioPanel() {
     }
 
     stopRadio();
-    const audio = new Audio(station.streamUrl);
-    audio.crossOrigin = "anonymous";
-    audioRef.current = audio;
-    audio.onplaying = () => {
-      setIsPlaying(true);
-      setRadioStatus(`Сейчас играет: ${station.name}`);
-    };
-    audio.onerror = () => {
-      setRadioStatus("Поток не открылся. Попробуй другой эфир.");
-      setIsPlaying(false);
-    };
     setActiveStation(station.id);
     setRadioStatus("Подключаемся к эфиру...");
-
-    try {
-      await audio.play();
-    } catch {
-      setRadioStatus("Браузер не разрешил запуск. Нажми ещё раз.");
-      setIsPlaying(false);
-    }
+    await playCachedAudio(station.streamUrl, {
+      onReady: (audio) => { audioRef.current = audio; },
+      onPlaying: () => { setIsPlaying(true); setRadioStatus(`Сейчас играет: ${station.name}`); },
+      onStop: () => { setIsPlaying(false); setRadioStatus("Эфир остановлен"); },
+      onError: () => { setRadioStatus("Поток недоступен. Проверь интернет и звук в профиле или выбери другой эфир."); setIsPlaying(false); }
+    });
   }
 
   useEffect(() => () => stopRadio(), []);
@@ -723,6 +785,7 @@ function MosquesPanel({ data }) {
           Карта
         </button>
       </div>
+      <p className="content-source-note">Встроенный справочник выбранных городов. Кнопка «Карта» открывает внешний поиск мечетей.</p>
       <div className="namaz-mosque-list">
         {places.map((place) => (
           <button className="namaz-mosque-card" key={`${place.city}-${place.name}`} type="button" onClick={() => openMaps(place)}>
@@ -802,7 +865,7 @@ function KazaPanel() {
 function NotesPanel({ data }) {
   const [notes, setNotes] = useState(getPrayerNotes);
   const [activePrayer, setActivePrayer] = useState(PRAYERS.find((p) => p.name === data.nextPrayer)?.id || PRAYERS[0].id);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getNamazDayKey();
   const noteKey = `${today}_${activePrayer}`;
   const [noteText, setNoteText] = useState(notes[noteKey] || "");
 
@@ -822,7 +885,7 @@ function NotesPanel({ data }) {
   const todayNotes = Object.entries(notes)
     .filter(([key, value]) => key.startsWith(today) && value)
     .map(([key, value]) => {
-      const prayerId = key.split("_")[1];
+      const prayerId = key.slice(today.length + 1);
       const prayer = PRAYERS.find((p) => p.id === prayerId);
       return { prayer, value };
     });
@@ -868,16 +931,17 @@ function NotesPanel({ data }) {
 }
 
 function NamazFeaturePanel({ activeFeature, data }) {
+  if (activeFeature === "wudu") return <WuduPanel />;
   if (activeFeature === "radio") return <RadioPanel />;
   if (activeFeature === "mosques") return <MosquesPanel data={data} />;
   if (activeFeature === "kaza") return <KazaPanel />;
-  if (activeFeature === "notes") return <NotesPanel data={data} />;
+  if (activeFeature === "notes") return <NotesPanel key={getNamazDayKey()} data={data} />;
   return null;
 }
 
 export default function NamazScreen() {
   const navigate = useNavigate();
-  const [data, setData] = useState(initialPrayerTimes);
+  const [data, setData] = useState(getCurrentPrayerTimes);
   const [notifEnabled, setNotifEnabled] = useState(getNotifEnabled);
   const [notifMsg, setNotifMsg] = useState("");
   const [geoStatus, setGeoStatus] = useState(data._computed ? "ok" : "pending");
@@ -887,33 +951,47 @@ export default function NamazScreen() {
   const [donePrayers, setDonePrayers] = useState(getDonePrayersForDate);
   const [view, setView] = useState("list"); // list | guide | qibla
   const [selectedPrayer, setSelectedPrayer] = useState(null);
-  const [activeFeature, setActiveFeature] = useState("radio");
-  const prayerSettings = getPrayerSettings();
+  const [activeFeature, setActiveFeature] = useState("wudu");
+
+  // The panel opens below the grid; bring it into view so the tap visibly does something.
+  function openFeature(id) {
+    setActiveFeature(id);
+    requestAnimationFrame(() => {
+      const panel = document.getElementById("namaz-active-feature");
+      if (panel && panel.getBoundingClientRect().top > window.innerHeight * 0.55) {
+        const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        panel.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+      }
+    });
+  }
+  const [prayerSettings, setPrayerSettingsState] = useState(getPrayerSettings);
+  const dayKeyRef = useRef(getNamazDayKey());
+  const locationRequestRef = useRef(0);
+
+  // Ask for device location only after the explicit “Моё место” action.
+  useEffect(() => () => { locationRequestRef.current += 1; }, []);
 
   useEffect(() => {
-    if (!data._computed) {
-      requestCurrentLocation();
-    }
+    const refreshLocation = () => setData(getCurrentPrayerTimes());
+    const t = setInterval(() => {
+      setData((p) => updateCountdown(p));
+      const dayKey = getNamazDayKey();
+      if (dayKey !== dayKeyRef.current) {
+        dayKeyRef.current = dayKey;
+        setDonePrayers(getDonePrayersForDate());
+      }
+    }, 1000);
+    window.addEventListener("prayerTimesChange", refreshLocation);
+    return () => { clearInterval(t); window.removeEventListener("prayerTimesChange", refreshLocation); };
   }, []);
 
   useEffect(() => {
-    if (!data._computed) return;
-    const t = setInterval(() => setData((p) => updateCountdown(p)), 1000);
-    return () => clearInterval(t);
-  }, [data._computed]);
-
-  useEffect(() => {
     if (!data._computed || !notifEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
-    const now = new Date();
-    const timers = data.times.map(({ name, time }) => {
-      const [h, m] = time.split(":").map(Number);
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-      const ms = d - now - 5 * 60 * 1000;
-      if (ms <= 0) return null;
-      return setTimeout(() => showPrayerNotification(`Намаз ${name}`, "Через 5 минут. Подготовьтесь к молитве."), ms);
-    }).filter(Boolean);
+    const timers = getPrayerReminders(data).map(({ name, at }) =>
+      setTimeout(() => showPrayerNotification(`Намаз ${name}`, "Через 5 минут. Подготовьтесь к молитве."), at - Date.now())
+    );
     return () => timers.forEach(clearTimeout);
-  }, [data._computed, data.times, notifEnabled]);
+  }, [data._computed, data.city, data.nextPrayerDate, notifEnabled]);
 
   async function toggleNotif() {
     if (!("Notification" in window)) { setNotifMsg("❌ Не поддерживается"); setTimeout(() => setNotifMsg(""), 3000); return; }
@@ -922,7 +1000,8 @@ export default function NamazScreen() {
       setNotifEnabled(false);
       setNotifMsg("🔕 Уведомления отключены");
     } else {
-      const perm = await Notification.requestPermission();
+      let perm;
+      try { perm = await Notification.requestPermission(); } catch { perm = "denied"; }
       if (perm === "granted") {
         writeLocalString("notificationsEnabled", "true");
         setNotifEnabled(true);
@@ -936,17 +1015,30 @@ export default function NamazScreen() {
   }
 
   function requestCurrentLocation() {
+    const request = ++locationRequestRef.current;
     setGeoStatus("loading");
     setCityError("");
     requestPrayerTimes(
       (d) => {
+        if (request !== locationRequestRef.current) return;
         setData(d);
         setGeoStatus("ok");
         setCityInput("");
         setIsCitySearchOpen(false);
       },
-      () => setGeoStatus("denied")
+      () => { if (request === locationRequestRef.current) setGeoStatus("denied"); },
+      { isCurrent: () => request === locationRequestRef.current }
     );
+  }
+
+  function updatePrayerSetting(key, value) {
+    // Without a saved city the schedule object does not change, so settings live in state.
+    setPrayerSettingsState(setPrayerSettings({ [key]: value }));
+    setData(getCurrentPrayerTimes());
+  }
+
+  function updatePrayerAdjustment(id, minutes) {
+    updatePrayerSetting("adjustments", { ...prayerSettings.adjustments, [id]: minutes });
   }
 
   async function handleCitySearch(e) {
@@ -958,8 +1050,10 @@ export default function NamazScreen() {
     }
 
     setCityError("Ищем город...");
+    const request = ++locationRequestRef.current;
     try {
       const place = await geocodeCity(query);
+      if (request !== locationRequestRef.current) return;
       setData(buildPrayerDataFromCoords(place.lat, place.lng, place.name, prayerSettings, {
         timeZone: place.timeZone,
         region: place.region,
@@ -973,12 +1067,19 @@ export default function NamazScreen() {
     } catch {
       // Fall back to the small built-in list when network geocoding is unavailable.
     }
+    if (request !== locationRequestRef.current) return;
 
     const key = query.toLowerCase();
     const found = CITY_COORDS[key];
     if (found) {
       const [lat, lng, name] = found;
-      setData(buildPrayerDataFromCoords(lat, lng, name, prayerSettings));
+      const timeZone = /бишкек|ош|джалал|каракол|токмок|кант|нарын|талас|баткен/.test(key) ? "Asia/Bishkek"
+        : /алматы|астана/.test(key) ? "Asia/Almaty"
+          : key === "ташкент" ? "Asia/Tashkent" : key === "душанбе" ? "Asia/Dushanbe"
+            : key === "дубай" ? "Asia/Dubai" : key === "баку" ? "Asia/Baku"
+              : key === "стамбул" ? "Europe/Istanbul" : key === "минск" ? "Europe/Minsk"
+                : key === "новосибирск" ? "Asia/Novosibirsk" : key === "уфа" ? "Asia/Yekaterinburg" : "Europe/Moscow";
+      setData(buildPrayerDataFromCoords(lat, lng, name, prayerSettings, { timeZone }));
       setGeoStatus("ok");
       setCityError("");
       setIsCitySearchOpen(false);
@@ -996,35 +1097,34 @@ export default function NamazScreen() {
   }
 
   // Вычисляем время окончания (= начало следующего намаза)
+  function normalizePrayerName(name) {
+    return String(name || "").trim().toLowerCase().replace(/\s+/g, "");
+  }
+
+  function getPrayerTimeEntry(name) {
+    const target = normalizePrayerName(name);
+    return data.times.find((time) => normalizePrayerName(time.name) === target);
+  }
+
+  function getPrayerStartTime(name) {
+    const entry = getPrayerTimeEntry(name);
+    if (entry?.time) return entry.time;
+    if (normalizePrayerName(name) === normalizePrayerName(data.nextPrayer) && data.nextPrayerTime) {
+      return data.nextPrayerTime;
+    }
+    return "—";
+  }
+
   function getEndTime(name) {
     const times = data.times;
-    const idx = times.findIndex((t) => t.name === name);
+    const target = normalizePrayerName(name);
+    const idx = times.findIndex((t) => normalizePrayerName(t.name) === target);
     if (idx < 0) return "—";
     return times[(idx + 1) % times.length]?.time || "—";
   }
 
   const fardPrayers = PRAYERS;
   const completedCount = donePrayers.filter((n) => fardPrayers.find((p) => p.name === n)).length;
-  const nextPrayerProgress = (() => {
-    if (!data._computed || !data.times?.length || !data.nextPrayer) return 0;
-    const toMinutes = (value) => {
-      const [hours, minutes] = String(value || "0:0").split(":").map(Number);
-      return (hours || 0) * 60 + (minutes || 0);
-    };
-    const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    const nextIndex = data.times.findIndex((time) => time.name === data.nextPrayer);
-    if (nextIndex < 0) return 0;
-    const previous = data.times[(nextIndex - 1 + data.times.length) % data.times.length];
-    const next = data.times[nextIndex];
-    let start = toMinutes(previous.time);
-    let end = toMinutes(next.time);
-    let current = nowMinutes;
-    if (end <= start) end += 24 * 60;
-    if (current < start) current += 24 * 60;
-    const pct = ((current - start) / Math.max(1, end - start)) * 100;
-    return Math.max(0, Math.min(100, Math.round(pct)));
-  })();
   const todayLabel = new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",
     month: "long",
@@ -1032,234 +1132,144 @@ export default function NamazScreen() {
   }).format(new Date());
 
   return (
-    <section className="content-stack premium-namaz">
-      <Header title="Намаз" subtitle="Пошаговые инструкции для обязательных намазов" compact />
-
+    <section className="namaz-dashboard">
+      <header className="premium-quran-appbar">
+        <div><span>Учись постепенно, шаг за шагом</span><h1>Намаз</h1></div>
+        <div className="premium-quran-appbar__actions">
+          <button type="button" onClick={() => navigate("/namaz/progress")} aria-label="Прогресс намаза"><Check size={20} aria-hidden="true" /></button>
+        </div>
+      </header>
       {notifMsg && <div className="toast-message" role="status">{notifMsg}</div>}
+      {data.error && <p role="status" className="audio-unavailable-note">{data.error}</p>}
 
-      <div className="namaz-feature-grid">
-        <button className="namaz-feature-card" type="button" onClick={() => setView("qibla")}>
-          <Compass size={21} aria-hidden="true" />
-          <span>
-            <strong>Кыбла</strong>
-            <small>компас</small>
-          </span>
-        </button>
-        {FEATURE_CARDS.map((feature) => {
-          const Icon = feature.icon;
-          return (
-            <button
-              className={`namaz-feature-card${activeFeature === feature.id ? " is-active" : ""}`}
-              key={feature.id}
-              type="button"
-              onClick={() => setActiveFeature(feature.id)}
-            >
-              <Icon size={21} aria-hidden="true" />
-              <span>
-                <strong>{feature.title}</strong>
-                <small>{feature.desc}</small>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <GlassCard className="namaz-feature-panel namaz-surah-dua-card">
-        <div className="namaz-feature-panel__head">
-          <div>
-            <p className="section-kicker">Суры и дуа для намаза</p>
-            <h2>Учить по строкам</h2>
-            <p>Арабский текст, транскрипция, перевод, аудио и проверка памяти.</p>
-          </div>
-          <BookOpen size={26} aria-hidden="true" />
-        </div>
-        <div className="namaz-surah-dua-list">
-          <span>Аль-Фатиха</span>
-          <span>Аль-Ихлас</span>
-          <span>Аль-Фаляк</span>
-          <span>Ан-Нас</span>
-          <span>ежедневные дуа</span>
-        </div>
-        <button className="button button--primary" type="button" onClick={() => navigate("/namaz/surahs")}>
-          Открыть заучивание
-          <ChevronRight size={17} aria-hidden="true" />
-        </button>
-      </GlassCard>
-
-      {activeFeature === "times" && (
-        <GlassCard className={`namaz-city-search-card ${isCitySearchOpen ? "is-search-open" : ""}`}>
-          <div className="namaz-city-map" aria-hidden="true">
-            <MapPin size={22} />
-          </div>
-          <div className="namaz-city-copy">
-            <p className="section-kicker">Город</p>
-            <h2>{data._computed ? data.city : "Выбери город"}</h2>
-          </div>
-          <button className="namaz-change-city-button" type="button" onClick={() => setIsCitySearchOpen((value) => !value)}>
-            <Settings size={13} aria-hidden="true" />
-            Изменить город
-          </button>
-          <div className="namaz-location-actions">
-            <form onSubmit={handleCitySearch} className="city-search-form">
-              <input
-                type="text"
-                value={cityInput}
-                onChange={(e) => setCityInput(e.target.value)}
-                placeholder="Бишкек, Москва, New York..."
-                autoComplete="off"
-              />
-              <button className="button button--primary" type="submit"><Search size={15} /></button>
-            </form>
-            <button className="button button--soft namaz-location-button" type="button" onClick={requestCurrentLocation}>
-              <MapPin size={16} aria-hidden="true" />
-              Моё место
-            </button>
-          </div>
-          {cityError && <p className="city-error">{cityError}</p>}
-        </GlassCard>
-      )}
-
-      {null}
-      {false && (
-        <GlassCard className="namaz-settings-card" hidden>
-          <div>
-            <p className="section-kicker">Расчет времени</p>
-            <h2>Метод и Аср</h2>
-          </div>
-          <label>
-            <span>Метод</span>
-            <select value={prayerSettings.method} onChange={(event) => updatePrayerSetting("method", event.target.value)}>
-              {PRAYER_METHODS.map((method) => (
-                <option key={method.id} value={method.id}>{method.label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Аср</span>
-            <select value={prayerSettings.madhab} onChange={(event) => updatePrayerSetting("madhab", event.target.value)}>
-              {ASR_MADHABS.map((madhab) => (
-                <option key={madhab.id} value={madhab.id}>{madhab.label}</option>
-              ))}
-            </select>
-          </label>
-        </GlassCard>
-      )}
-
-      <NamazFeaturePanel activeFeature={activeFeature} data={data} />
-
-      {/* Геолокация */}
-      {geoStatus === "pending" && (
-        <GlassCard className="geo-prompt-card">
-          <MapPin size={20} color="var(--green-dark)" />
-          <div><h3>Определить время намаза</h3><p>Разрешите геолокацию</p></div>
-          <button className="button button--primary" type="button" onClick={requestCurrentLocation}>Определить</button>
-        </GlassCard>
-      )}
-      {geoStatus === "denied" && (
-        <GlassCard className="geo-prompt-card">
-          <MapPin size={20} color="var(--green-dark)" />
-          <div><h3>Введите ваш город</h3></div>
-          <div className="namaz-location-actions">
-            <form onSubmit={handleCitySearch} className="city-search-form">
-              <input type="text" value={cityInput} onChange={(e) => setCityInput(e.target.value)} placeholder="Бишкек, Москва, New York..." autoComplete="off" />
-              <button className="button button--primary" type="submit"><Search size={15} /></button>
-            </form>
-            <button className="button button--soft namaz-location-button" type="button" onClick={requestCurrentLocation}>
-              <MapPin size={16} aria-hidden="true" />
-              Моё место
-            </button>
-          </div>
-          {cityError && <p className="city-error">{cityError}</p>}
-        </GlassCard>
-      )}
-      {geoStatus === "loading" && <div className="toast-message">рџ“Ќ Определяем местоположение...</div>}
-
-      {/* Следующий намаз */}
-      {data._computed && (
-        <GlassCard className="namaz-next-card" style={{ "--next-prayer-progress": `${nextPrayerProgress}%` }}>
-          <div className="namaz-next-left">
-            <p className="section-kicker">Следующий намаз</p>
-            <h2>{data.nextPrayer}</h2>
-            <span className="namaz-next-date">Сегодня, {todayLabel}</span>
-            <span className="namaz-countdown">
-              <span aria-hidden="true">вЊ›</span>
-              <strong>{data.countdown}</strong>
-              <small>до начала</small>
-            </span>
-          </div>
-          <div className="namaz-next-right">
-            <span className="namaz-next-time">{data.nextPrayerTime}</span>
-            <div className="namaz-next-ring" aria-label={`Прогресс до намаза ${nextPrayerProgress}%`}>
-              <span>До {data.nextPrayer}</span>
-              <strong>{nextPrayerProgress}%</strong>
+      <div className="namaz-dashboard__layout">
+        <aside className="namaz-dashboard__column namaz-dashboard__left">
+          <section className="namaz-dashboard__card namaz-dashboard__hero">
+            <div>
+              <span className="namaz-dashboard__kicker">Учимся вместе</span>
+              <h2>Намаз — шаг за шагом</h2>
+              <p>Открой подсказки, слушай и повторяй в своём темпе.</p>
             </div>
-          </div>
-        </GlassCard>
-      )}
+            <img src={getSelectedCharacter() === "amina" ? amina : ahmad} alt="" />
+            <button className="button button--primary" type="button" onClick={() => { setSelectedPrayer(PRAYERS[0]); setView("guide"); }}>
+              Начать обучение <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          </section>
 
-      {/* Прогресс дня */}
-      <div className="namaz-day-header">
-        <span>Намазы сегодня</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span className="namaz-day-count">{completedCount} / {fardPrayers.length}</span>
-          <button className="button button--soft" style={{ fontSize: "0.78rem", padding: "0.25rem 0.6rem" }} type="button" onClick={() => navigate("/namaz/progress")}>Прогресс</button>
-        </div>
-      </div>
-
-      {/* Список намазов */}
-      <div className="namaz-prayer-list">
-        {fardPrayers.map((prayer) => {
-          const timeEntry = data.times.find((t) => t.name === prayer.name);
-          const endTime = getEndTime(prayer.name);
-          const isNext = prayer.name === data.nextPrayer;
-          const isDone = donePrayers.includes(prayer.name);
-
-          return (
-            <div key={prayer.id} className={`namaz-prayer-card ${isNext ? "is-next" : ""} ${isDone ? "is-done" : ""}`}>
-              {/* Чекбокс */}
-              <button
-                className={`namaz-check-btn ${isDone ? "is-checked" : ""}`}
-                type="button"
-                onClick={() => setDonePrayers(toggleDone(prayer.name))}
-                aria-label={isDone ? "Отметить как не выполненный" : "Отметить как выполненный"}
-              >
-                {isDone ? "вњ“" : ""}
-              </button>
-
-              {/* Инфо */}
-              <div className="namaz-prayer-info">
-                <span className="namaz-prayer-name">{prayer.name} <span className="namaz-prayer-nameRu">— {prayer.nameRu}</span></span>
-                <span className="namaz-prayer-sub">До {endTime} В· {prayer.rakaats} ракаата</span>
+          <section className="namaz-dashboard__card namaz-dashboard__settings">
+            <div className="namaz-dashboard__head"><div><span className="namaz-dashboard__kicker">Расчёт времени</span><h2>Метод и Аср</h2></div><Settings size={22} aria-hidden="true" /></div>
+            <label><span>Метод</span>
+              <select value={prayerSettings.method} onChange={(event) => updatePrayerSetting("method", event.target.value)}>
+                {PRAYER_METHODS.map((method) => <option key={method.id} value={method.id}>{method.label}</option>)}
+              </select>
+            </label>
+            <label><span>Аср</span>
+              <select value={prayerSettings.madhab} onChange={(event) => updatePrayerSetting("madhab", event.target.value)}>
+                {ASR_MADHABS.map((madhab) => <option key={madhab.id} value={madhab.id}>{madhab.label}</option>)}
+              </select>
+            </label>
+            <p className="namaz-dashboard__note">Расчёт по формуле может отличаться от расписания вашего муфтията или мечети на 5–20 минут. Сверьте время и при необходимости подправьте его ниже.</p>
+            <details className="namaz-adjustments">
+              <summary>Подстроить под мою мечеть</summary>
+              <div className="namaz-adjustments__list">
+                {PRAYER_ADJUSTMENT_KEYS.map(({ id, label }) => {
+                  const minutes = prayerSettings.adjustments[id];
+                  return (
+                    <div className="namaz-adjustments__row" key={id}>
+                      <span>{label}</span>
+                      <button type="button" onClick={() => updatePrayerAdjustment(id, minutes - 1)} disabled={minutes <= -MAX_PRAYER_ADJUSTMENT} aria-label={`${label}: на минуту раньше`}><Minus size={16} aria-hidden="true" /></button>
+                      <output aria-live="polite">{minutes > 0 ? `+${minutes}` : minutes} мин</output>
+                      <button type="button" onClick={() => updatePrayerAdjustment(id, minutes + 1)} disabled={minutes >= MAX_PRAYER_ADJUSTMENT} aria-label={`${label}: на минуту позже`}><Plus size={16} aria-hidden="true" /></button>
+                    </div>
+                  );
+                })}
               </div>
+            </details>
+          </section>
 
-              {/* Время */}
-              <div className="namaz-prayer-time-block">
-                {isNext
-                  ? <span className="namaz-time-badge">{timeEntry?.time || "—"}</span>
-                  : <span className="namaz-time-plain">{timeEntry?.time || "—"}</span>
-                }
-              </div>
+          <section className="namaz-dashboard__card namaz-dashboard__reminders">
+            <div className="namaz-dashboard__head"><h2>Напоминания</h2><Bell size={22} aria-hidden="true" /></div>
+            <p className="namaz-dashboard__note">За 5 минут до намаза. Работают, пока открыт этот экран.</p>
+            <button className="button button--soft" type="button" onClick={toggleNotif} aria-pressed={notifEnabled}>
+              {notifEnabled ? <BellOff size={18} aria-hidden="true" /> : <Bell size={18} aria-hidden="true" />}
+              {notifEnabled ? "Выключить напоминания" : "Включить напоминания"}
+            </button>
+          </section>
+        </aside>
 
-              {/* Открыть гид */}
-              <button
-                className="namaz-arrow-btn"
-                type="button"
-                onClick={() => { setSelectedPrayer(prayer); setView("guide"); }}
-                aria-label={`Открыть гид ${prayer.name}`}
-              >
-                <ChevronRight size={20} />
-              </button>
+        <div className="namaz-dashboard__column namaz-dashboard__center">
+          {data._computed && <section className="namaz-dashboard__card namaz-dashboard__next">
+            <span className="namaz-dashboard__icon"><Clock3 size={28} aria-hidden="true" /></span>
+            <div><span className="namaz-dashboard__kicker">Следующий намаз</span><h2>{data.nextPrayer}</h2><p className="namaz-dashboard__note">Через <strong className="namaz-dashboard__countdown">{data.countdown}</strong></p></div>
+            <strong className="namaz-dashboard__time">{data.nextPrayerTime}</strong>
+          </section>}
+
+          <section className="namaz-dashboard__card namaz-dashboard__location">
+            <div className="namaz-dashboard__head">
+              <div><span className="namaz-dashboard__kicker"><MapPin size={14} aria-hidden="true" /> Город расписания</span><h2>{data._computed ? data.city : "Выбери город"}</h2></div>
+              {data._computed && <button className="button button--soft" type="button" onClick={() => setIsCitySearchOpen((value) => !value)} aria-expanded={isCitySearchOpen} aria-controls={isCitySearchOpen ? "namaz-location-form" : undefined}>{isCitySearchOpen ? "Закрыть" : "Изменить город"}</button>}
             </div>
-          );
-        })}
-      </div>
+            {(isCitySearchOpen || !data._computed) && <div id="namaz-location-form" className="namaz-dashboard__location-form">
+              <form onSubmit={handleCitySearch}>
+                <input type="text" value={cityInput} aria-label="Город или координаты для расчёта времени намаза" onChange={(event) => setCityInput(event.target.value)} placeholder="Например, Алматы" autoComplete="off" />
+                <button className="button button--primary" type="submit" aria-label="Найти город"><Search size={18} aria-hidden="true" /></button>
+              </form>
+              <button className="button button--soft" type="button" onClick={requestCurrentLocation} disabled={geoStatus === "loading"}><Navigation size={16} aria-hidden="true" />Моё место</button>
+            </div>}
+            {cityError && <p className="city-error" role="status">{cityError}</p>}
+            {geoStatus === "denied" && <p role="status" className="namaz-dashboard__note">Геолокация недоступна. Выбери город в форме или разреши доступ к местоположению.</p>}
+            {geoStatus === "loading" && <p role="status" className="namaz-dashboard__note">Определяем местоположение...</p>}
+          </section>
 
-      {/* Локация */}
-      {data._computed && (
-        <p className="namaz-city-label">
-          <MapPin size={13} /> {data.city}
-        </p>
-      )}
+          <section className="namaz-dashboard__card namaz-dashboard__schedule">
+            <div className="namaz-dashboard__head">
+              <div><span className="namaz-dashboard__kicker">{todayLabel}</span><h2>Намазы сегодня</h2></div>
+              <span className="namaz-dashboard__pill" aria-label={`Выполнено ${completedCount} из ${fardPrayers.length}`}>{completedCount} / {fardPrayers.length}</span>
+            </div>
+            <p className="namaz-dashboard__note">Нажми на намаз, чтобы открыть пошаговый урок.</p>
+            <div className="namaz-dashboard__prayers">
+              {fardPrayers.map((prayer) => {
+                const isNext = data._computed && prayer.name === data.nextPrayer;
+                const isDone = donePrayers.includes(prayer.name);
+                return <div key={prayer.id} className={`namaz-dashboard__prayer${isNext ? " is-next" : ""}${isDone ? " is-done" : ""}`}>
+                  <button className="namaz-dashboard__check" type="button" onClick={() => setDonePrayers(toggleDone(prayer.name))} aria-pressed={isDone} aria-label={`${prayer.name}: ${isDone ? "снять отметку о выполнении" : "отметить выполненным"}`}>
+                    {isDone && <Check size={20} aria-hidden="true" />}
+                  </button>
+                  <button className="namaz-dashboard__prayer-link" type="button" onClick={() => { setSelectedPrayer(prayer); setView("guide"); }} aria-label={`Открыть гид ${prayer.name}`}>
+                    <span className="namaz-dashboard__prayer-copy"><strong>{prayer.name}</strong><small>{prayer.nameRu} · {prayer.rakaats} ракаата</small>{data._computed && <small>До {getEndTime(prayer.name)}{isNext ? " · следующий" : ""}</small>}</span>
+                    <span className="namaz-dashboard__prayer-time">{getPrayerStartTime(prayer.name)}</span>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+                </div>;
+              })}
+            </div>
+            <button className="button button--soft" type="button" onClick={() => navigate("/namaz/progress")}>Мой прогресс <ChevronRight size={17} aria-hidden="true" /></button>
+          </section>
+
+          <section className="namaz-dashboard__card namaz-dashboard__learning">
+            <div className="namaz-dashboard__head"><div><span className="namaz-dashboard__kicker">Суры и дуа для намаза</span><h2>Учить по строкам</h2></div><BookOpen size={26} aria-hidden="true" /></div>
+            <p>Слушай, повторяй и проверяй себя.</p>
+            <div className="namaz-dashboard__tags"><span>Аль-Фатиха</span><span>Аль-Ихлас</span><span>Аль-Фаляк</span><span>Ан-Нас</span><span>Ежедневные дуа</span></div>
+            <button className="button button--primary" type="button" onClick={() => navigate("/namaz/surahs")}>Открыть заучивание <ChevronRight size={17} aria-hidden="true" /></button>
+          </section>
+        </div>
+
+        <aside className="namaz-dashboard__column namaz-dashboard__right">
+          <section className="namaz-dashboard__card namaz-dashboard__tools">
+            <div className="namaz-dashboard__head"><div><span className="namaz-dashboard__kicker">Всё под рукой</span><h2>Разделы</h2></div><Compass size={22} aria-hidden="true" /></div>
+            <div className="namaz-dashboard__tools-grid">
+              <button className="namaz-dashboard__tool" type="button" onClick={() => setView("qibla")}><Compass size={22} aria-hidden="true" /><strong>Кибла</strong><small>Компас</small></button>
+              {FEATURE_CARDS.map((feature) => {
+                const Icon = feature.icon;
+                return <button className={`namaz-dashboard__tool${activeFeature === feature.id ? " is-active" : ""}`} key={feature.id} type="button" onClick={() => openFeature(feature.id)} aria-pressed={activeFeature === feature.id} aria-controls="namaz-active-feature">
+                  <Icon size={22} aria-hidden="true" /><strong>{feature.title}</strong><small>{feature.desc}</small>
+                </button>;
+              })}
+            </div>
+          </section>
+          <div id="namaz-active-feature" className="namaz-dashboard__feature"><NamazFeaturePanel activeFeature={activeFeature} data={data} /></div>
+        </aside>
+      </div>
     </section>
   );
 }

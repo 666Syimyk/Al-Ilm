@@ -4,7 +4,7 @@
     id: "bismillah",
     level: 1,
     category: "islamic",
-    title: "Бисмилля",
+    title: "Бисмиллях",
     arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
     reading: "Бисмилляхи ар-рахмаани ар-рахиим",
     translation: "С именем Аллаха, Милостивого, Милующего",
@@ -28,7 +28,7 @@
     arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
     reading: "Аль-хамду лиллаахи рабби аль-аляямиин",
     translation: "Хвала Аллаху, Господу миров",
-    note: "Первый аят суры Аль-Фатиха"
+    note: "Второй аят суры Аль-Фатиха (1:2) — Бисмилля является первым аятом (1:1)"
   },
   {
     id: "tasbih",
@@ -170,12 +170,40 @@
   }
 ];
 
+import { getAyahByNumber, getSurahById } from "./quranContent.js";
+import { getAyahAudioUrl } from "../utils/quranAudio.js";
+
+// Use the same publisher corpus in reading practice as in the Quran reader.
+const readingQuranRefs = { bismillah: [1, 1], alhamdulillah: [1, 2], "dua-travel": [43, 13] };
+for (const text of readingTexts) {
+  const singleRef = readingQuranRefs[text.id];
+  const surahId = text.id === "al-nas" ? "an-nas" : text.id;
+  if (singleRef || text.category === "quran") {
+    const surah = getSurahById(singleRef ? String(singleRef[0]) : surahId);
+    const ayahs = singleRef ? [getAyahByNumber(String(singleRef[0]), singleRef[1])] : surah.ayahs;
+    text.arabic = ayahs.map(ayah => ayah.arabic).join("\n");
+    text.translation = "";
+    text.reading = "";
+    text.category = "quran";
+    text.surahId = surah.id;
+    text.firstAyah = ayahs[0].number;
+    text.audioUrls = ayahs.map(ayah => getAyahAudioUrl(surah.number, ayah.number));
+    text.sourceUrl = `https://tanzil.net/#${surah.number}:${ayahs[0].number}`;
+    text.note = `Коран ${surah.number}:${ayahs[0].number}${ayahs.length > 1 ? `–${ayahs.at(-1).number}` : ""}. Текст Tanzil Project, Uthmani 1.1. Русский перевод и транслитерация временно не показаны.`;
+    text.sourceNote = text.note;
+  }
+}
+// This formula has no checked reference in the project. Keep the original data
+// above for recovery, but do not present it as an established pre-meal dua.
+const unverifiedMealDua = readingTexts.findIndex(text => text.id === "dua-eating");
+if (unverifiedMealDua >= 0) readingTexts.splice(unverifiedMealDua, 1);
+
 export const readingCategories = [
-  { id: "islamic", title: "Исламские фразы", emoji: "вЄ" },
-  { id: "sentences", title: "Простые предложения", emoji: "рџ“ќ" },
-  { id: "quran", title: "Суры Корана", emoji: "рџ“–" },
-  { id: "dua", title: "Дуа", emoji: "рџ¤І" },
-  { id: "text", title: "Тексты", emoji: "рџ“„" }
+  { id: "islamic", title: "Исламские фразы", emoji: "☪" },
+  { id: "sentences", title: "Простые предложения", emoji: "📝" },
+  { id: "quran", title: "Суры Корана", emoji: "📖" },
+  { id: "dua", title: "Дуа", emoji: "🤲" },
+  { id: "text", title: "Тексты", emoji: "📄" }
 ];
 
 export function getTextById(id) {

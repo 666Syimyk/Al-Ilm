@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-2UHhqg_S.js";var t=e();function n({as:e=`section`,className:n=``,children:r,...i}){return(0,t.jsx)(e,{className:`glass-panel ${n}`,...i,children:r})}function r({className:e=``,children:r,...i}){return(0,t.jsx)(n,{className:`glass-card ${e}`,...i,children:r})}export{r as t};

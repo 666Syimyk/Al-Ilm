@@ -1,4 +1,4 @@
-import logo from "../assets/brand/al-ilm-logo.png";
+import logo from "../assets/brand/al-ilm-logo.webp";
 
 export default function BrandLogo({ className = "" }) {
   return (

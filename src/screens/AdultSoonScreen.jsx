@@ -28,7 +28,7 @@ const QUICK_ACCESS = [
 const STUDY_ACCESS = [
   { icon: Search, label: "Поиск", desc: "Найти суру, аят или слово", path: "/quran/search" },
   { icon: Bookmark, label: "Закладки", desc: "Сохранённые аяты и суры", path: "/quran/bookmarks" },
-  { icon: BookOpen, label: "Чтение с подсказками", desc: "Аяты, перевод и подсветка правил", path: "/quran/reading" },
+  { icon: BookOpen, label: "Чтение с подсказками", desc: "Аяты и подсветка правил таджвида", path: "/quran/reading" },
   { icon: Users, label: "Пророки", desc: "25 пророков: имена и истории", path: "/quran/prophets" },
   { icon: BookText, label: "Грамматика", desc: "Арабский язык по уровням", path: "/grammar" },
   { icon: Languages, label: "Словарь", desc: "Темы и карточки слов", path: "/vocabulary" },

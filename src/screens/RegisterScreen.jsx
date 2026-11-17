@@ -1,8 +1,8 @@
-﻿import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ArrowRight, CalendarDays, GraduationCap, LockKeyhole, Mail, ShieldCheck, Sparkles, UserRound } from "lucide-react";
-import logo from "../assets/brand/al-ilm-logo.png";
-import ahmad from "../assets/characters/ahmad.png";
+import logo from "../assets/brand/al-ilm-logo.webp";
+import ahmad from "../assets/characters/ahmad.webp";
 import { createLocalAccount, getSelectedCharacter, setAge, setSessionActive } from "../utils/storage.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,9 +78,10 @@ export default function RegisterScreen() {
     if (!form.lastName.trim()) nextErrors.lastName = "Введите фамилию";
     if (!form.dateOfBirth) nextErrors.dateOfBirth = "Введите дату рождения";
     else if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) nextErrors.dateOfBirth = "Дата рождения указана неверно";
-    else if (age < 1 || age > 120) nextErrors.dateOfBirth = "Укажите реальную дату рождения";
+    else if (age < 3) nextErrors.dateOfBirth = "Al-Ilm рассчитан на детей от 3 лет";
+    else if (age > 120) nextErrors.dateOfBirth = "Укажите реальную дату рождения";
     if (!emailPattern.test(normalizeEmail(form.email))) nextErrors.email = "Введите корректный email";
-    if (form.password.length < 4) nextErrors.password = "Пароль должен быть не короче 4 символов";
+    if (form.password.length < 6) nextErrors.password = "Пароль должен быть не короче 6 символов";
     if (form.password !== form.repeatPassword) nextErrors.repeatPassword = "Пароли должны совпадать";
 
     setErrors(nextErrors);
@@ -94,7 +95,6 @@ export default function RegisterScreen() {
     const firstName = form.firstName.trim();
     const lastName = form.lastName.trim();
     const age = getAgeFromBirthDate(form.dateOfBirth);
-    const character = getSelectedCharacter();
 
     try {
       await createLocalAccount({
@@ -113,6 +113,7 @@ export default function RegisterScreen() {
 
     setAge(age);
     setSessionActive(true);
+    const character = getSelectedCharacter();
 
     if (age <= 12 && !character) navigate("/character");
     else if (age <= 12) navigate("/home");
@@ -160,20 +161,20 @@ export default function RegisterScreen() {
           <div className="premium-register-card__copy">
             <span className="premium-register-step">Шаг 2 из 3</span>
             <h1>Начни свой путь знаний</h1>
-            <p>Создай аккаунт, чтобы сохранять прогресс, уроки и достижения.</p>
+            <p>Профиль заполняет родитель. Данные и прогресс хранятся только на этом устройстве — сохраняйте резервную копию в профиле.</p>
           </div>
 
           <form className="form-stack premium-register-form" onSubmit={handleSubmit}>
             <div className="form-grid form-grid--two">
-              <Field icon={UserRound} label="Имя" error={errors.firstName}>
-                <input name="firstName" value={form.firstName} onChange={updateField} autoComplete="given-name" placeholder="Введите имя" />
+              <Field icon={UserRound} label="Имя ребёнка" error={errors.firstName}>
+                <input name="firstName" value={form.firstName} onChange={updateField} autoComplete="given-name" placeholder="Имя" />
               </Field>
-              <Field icon={UserRound} label="Фамилия" error={errors.lastName}>
-                <input name="lastName" value={form.lastName} onChange={updateField} autoComplete="family-name" placeholder="Введите фамилию" />
+              <Field icon={UserRound} label="Фамилия ребёнка" error={errors.lastName}>
+                <input name="lastName" value={form.lastName} onChange={updateField} autoComplete="family-name" placeholder="Фамилия" />
               </Field>
             </div>
 
-            <Field icon={CalendarDays} label="Дата рождения" error={errors.dateOfBirth}>
+            <Field icon={CalendarDays} label="Дата рождения ребёнка" error={errors.dateOfBirth}>
               <input name="dateOfBirth" type="date" value={form.dateOfBirth} max={today} onChange={updateField} autoComplete="bday" />
             </Field>
 
@@ -183,10 +184,10 @@ export default function RegisterScreen() {
 
             <div className="form-grid form-grid--two">
               <Field icon={LockKeyhole} label="Пароль" error={errors.password}>
-                <input name="password" type="password" value={form.password} onChange={updateField} autoComplete="new-password" placeholder="Минимум 4 символа" />
+                <input name="password" type="password" value={form.password} onChange={updateField} autoComplete="new-password" placeholder="От 6 символов" />
               </Field>
               <Field icon={LockKeyhole} label="Повторите пароль" error={errors.repeatPassword}>
-                <input name="repeatPassword" type="password" value={form.repeatPassword} onChange={updateField} autoComplete="new-password" placeholder="Введите пароль ещё раз" />
+                <input name="repeatPassword" type="password" value={form.repeatPassword} onChange={updateField} autoComplete="new-password" placeholder="Ещё раз" />
               </Field>
             </div>
 

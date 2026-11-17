@@ -1,4 +1,12 @@
-﻿export const prophetStories = [
+﻿// Disclaimer for prophet stories
+export const prophetStoriesDisclaimer = {
+  note: "Это краткие учебные пересказы, а не текст Корана или тафсир. Ссылки ведут к указанным аятам; происхождение дополнительных деталей рассказов не проверено построчно.",
+  isSummary: true,
+  source: "Коранические ссылки указаны у каждой истории. Источник дополнительных деталей требует редакционной проверки.",
+  needsReview: true
+};
+
+export const prophetStories = [
   {
     id: "adam",
     number: 1,

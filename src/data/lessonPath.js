@@ -129,13 +129,13 @@ export const lessonPathNodes = [
   // Контрольная + Испытание главы 1
   { id: "chapter-1-checkpoint", chapter: "chapter-1", type: "checkpoint", title: "Контрольная точка", subtitle: "Проверь Алиф, Ба и Та", to: "/checkpoint/chapter-1" },
   { id: "chapter-1-boss", chapter: "chapter-1", type: "boss", title: "Испытание главы 1", subtitle: "Заверши главу и получи большую награду", to: "/boss/chapter-1" },
-  { id: "chapter-1-bonus", chapter: "chapter-1", type: "review", title: "Бонус: повторение", subtitle: "Повтори первые буквы", bonus: true, unlockAfter: "chapter-1-boss", gameType: "find-letter", letterId: "ba", to: "/game/find-letter/ba" },
+  { id: "chapter-1-bonus", chapter: "chapter-1", type: "review", title: "Бонус: повторение", subtitle: "Повтори первые буквы", bonus: true, unlockAfter: "chapter-1-boss", gameType: "find-letter", letterId: "ba", to: "/game/find-letter/ba?node=chapter-1-bonus" },
 
   // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
   // ГЛАВА 2: Продолжение алфавита — ح خ ن ي
   // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
-  { id: "dotted-review", chapter: "chapter-2", type: "review", title: "Повтори Ба и Та", subtitle: "Разогрев главы", letterId: "ba", gameType: "dots", to: "/game/dots/ba" },
+  { id: "dotted-review", chapter: "chapter-2", type: "review", title: "Повтори Ба и Та", subtitle: "Разогрев главы", letterId: "ba", gameType: "dots", to: "/game/dots/ba?node=dotted-review" },
 
   // ХА (горловое) — ح
   { id: "ha-letter", chapter: "chapter-2", type: "letter", title: "ح Ха", subtitle: "Горловой звук", letterId: "ha_guttural", letter: "ح", to: "/letter/ha_guttural" },
@@ -344,8 +344,12 @@ export function getLetterRewardNodeId(letterId) {
   return lessonPathNodes.find((node) => node.type === "reward" && node.letterId === letterId)?.id;
 }
 
-export function getLessonNodeForGame(letterId, gameType) {
-  return lessonPathNodes.find((node) => node.letterId === letterId && node.gameType === gameType)?.id;
+export function getLessonNodeForGame(letterId, gameType, lessonState, requestedNodeId) {
+  const matches = lessonPathNodes.filter((node) => node.letterId === letterId && node.gameType === gameType);
+  if (requestedNodeId) return matches.find((node) => node.id === requestedNodeId)?.id;
+  return matches.find((node) => lessonState && getLessonNodeStatus(node.id, lessonState) === "current")?.id
+    || matches.find((node) => lessonState && canOpenLessonNode(node.id, lessonState))?.id
+    || matches[0]?.id;
 }
 
 export function getLessonNodeByType(letterId, type) {

@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
+import MixedText from "../components/MixedText.jsx";
 import Header from "../components/Header.jsx";
 import { harakatList, getHarakatById } from "../data/harakatData.js";
-import { getProgress } from "../utils/storage.js";
+import { getProgress, recordStudyDay, setProgress } from "../utils/storage.js";
 import { speakText } from "../utils/audioPlayback.js";
 
 function speak(text, lang = "ar") {
@@ -13,6 +14,27 @@ function speak(text, lang = "ar") {
 
 function HarakatLesson({ harakat, onBack }) {
   const [playingIdx, setPlayingIdx] = useState(null);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState("");
+  const [finished, setFinished] = useState(false);
+  const examples = harakat.examples.slice(0, 3);
+  const question = examples[questionIndex];
+  const choices = [...new Set(examples.map((item) => item.reading))];
+
+  function checkNext() {
+    if (selected !== question.reading) return;
+    if (questionIndex + 1 < examples.length) {
+      setQuestionIndex((value) => value + 1);
+      setSelected("");
+      return;
+    }
+    const progress = getProgress();
+    if (!progress.completedHarakat.includes(harakat.id)) {
+      setProgress({ ...progress, completedHarakat: [...progress.completedHarakat, harakat.id], points: progress.points + 10 });
+      recordStudyDay();
+    }
+    setFinished(true);
+  }
 
   function playWord(word, idx) {
     setPlayingIdx(idx);
@@ -42,7 +64,7 @@ function HarakatLesson({ harakat, onBack }) {
           </div>
         </div>
         <div className="harakat-rule-box">
-          <strong>Правило:</strong> {harakat.rule}
+          <strong>Правило:</strong> <MixedText text={harakat.rule} />
         </div>
         <button
           className="button button--primary"
@@ -52,6 +74,15 @@ function HarakatLesson({ harakat, onBack }) {
           <Volume2 size={18} aria-hidden="true" />
           Послушать звук
         </button>
+      </GlassCard>
+      <GlassCard>
+        <h2>Проверь чтение</h2>
+        {finished ? <><p role="status">Урок завершён. Следующая огласовка доступна в списке.</p><button className="button button--primary" type="button" onClick={onBack}>К огласовкам</button></> : <>
+          <p>Как читается <span dir="rtl">{question.arabic}</span>? Вопрос {questionIndex + 1} из {examples.length}.</p>
+          <div className="game-actions">{choices.map((choice) => <button className={`button button--soft ${selected === choice ? choice === question.reading ? "is-correct" : "is-wrong" : ""}`} key={choice} type="button" onClick={() => setSelected(choice)}>{choice}</button>)}</div>
+          <p role="status">{selected ? selected === question.reading ? "Верно!" : "Попробуй ещё раз, сравни с примерами." : "Выбери чтение."}</p>
+          <button className="button button--primary" type="button" disabled={selected !== question.reading} onClick={checkNext}>{questionIndex + 1 === examples.length ? "Завершить урок" : "Следующий вопрос"}</button>
+        </>}
       </GlassCard>
 
       {/* Примеры букв */}
@@ -138,19 +169,18 @@ function HarakatHub() {
                 <p>Звук: «{harakat.sound}»</p>
                 <p className="harakat-card__desc">{harakat.description.substring(0, 60)}...</p>
               </div>
-              {isDone ? (
-                <CheckCircle2 size={28} color="var(--green-dark)" aria-hidden="true" />
-              ) : (
+              {isDone ? <CheckCircle2 size={28} color="var(--green-dark)" aria-hidden="true" /> : null}
+              {
                 <button
                   className="button button--primary"
                   type="button"
                   onClick={() => navigate(`/harakat/${harakat.id}`)}
                   disabled={isLocked}
                 >
-                  Изучить
+                  {isDone ? "Повторить" : "Изучить"}
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
-              )}
+              }
             </GlassCard>
           );
         })}
@@ -165,7 +195,7 @@ export default function HarakatScreen() {
 
   if (harakatId) {
     const harakat = getHarakatById(harakatId);
-    return <HarakatLesson harakat={harakat} onBack={() => navigate("/harakat")} />;
+    return <HarakatLesson key={harakatId} harakat={harakat} onBack={() => navigate("/harakat")} />;
   }
 
   return <HarakatHub />;

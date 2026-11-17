@@ -24,12 +24,12 @@ export default class AppErrorBoundary extends Component {
         <div className="app-error-card">
           <p className="section-kicker">Аль-Ильм</p>
           <h1>Страница не загрузилась</h1>
-          <p>Обнови страницу или вернись на главную. Мы уже защищаем приложение от пустого экрана.</p>
+          <p>Не удалось открыть этот экран. Попробуй обновить страницу или вернуться на главную. Сохранённый прогресс останется в браузере.</p>
           <div className="app-error-actions">
             <button className="button button--primary" type="button" onClick={() => window.location.reload()}>
               Обновить
             </button>
-            <button className="button button--soft" type="button" onClick={() => window.location.assign("/home")}>
+            <button className="button button--soft" type="button" onClick={() => window.location.assign(`${import.meta.env.BASE_URL}home`)}>
               На главную
             </button>
           </div>

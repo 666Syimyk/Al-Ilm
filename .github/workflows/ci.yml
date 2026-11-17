@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Islamic content validation
+        run: npm run validate:content
+
+      - name: Production build check
+        run: npm run build
+
+      # GitHub Pages serves docs/. If someone changed src/ without running
+      # `npm run build:pages`, users would keep getting the old site.
+      - name: docs/ matches the current source
+        run: |
+          npm run build:pages
+          if ! git diff --quiet -- docs; then
+            echo "::error::docs/ is out of date. Run 'npm run build:pages' and commit docs/."
+            git status --short -- docs
+            exit 1
+          fi

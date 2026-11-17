@@ -10,7 +10,7 @@
   { id: "adjectives", title: "Прилагательные", emoji: "✨", color: "#F57F17", count: 10 },
   { id: "questions", title: "Вопросы", emoji: "❓", color: "#37474F", count: 8 },
   { id: "places", title: "Места", emoji: "🗺", color: "#006F3D", count: 8 },
-  { id: "nature", title: "Природа", emoji: "рџЊї", color: "#006F3D", count: 10 }
+  { id: "nature", title: "Природа", emoji: "🌿", color: "#006F3D", count: 10 }
 ];
 
 export const vocabularyWords = [

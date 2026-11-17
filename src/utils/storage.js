@@ -1,6 +1,6 @@
 ﻿import { arabicLetters, getNextLetterId } from "../data/arabicLetters.js";
 import { isBackgroundTheme } from "../data/backgroundThemes.js";
-import { canOpenLessonNode, getChapterById, getLessonNodeById, getLetterRewardNodeId, getNextLessonNodeId, getNodeReward, getNodesByChapter } from "../data/lessonPath.js";
+import { canOpenLessonNode, getLessonNodeById, getLessonNodesForLetter, getLetterRewardNodeId, getNodeReward, getNodesByChapter, lessonPathNodes } from "../data/lessonPath.js";
 
 export const storageKeys = {
   user: "user",
@@ -78,7 +78,8 @@ const defaultProfilePreferences = {
   parentDigest: true
 };
 
-export const DEFAULT_ACCESS_PASSWORD = "0000";
+// Only profiles created before passwords existed may use this code, once, to set a real password.
+const LEGACY_ACCESS_CODE = "0000";
 
 const defaultLessonPathState = {
   currentLessonNode: "alif-letter",
@@ -113,10 +114,83 @@ function canUseStorage() {
   }
 }
 
+const ACCOUNT_PREFIX = "al-ilm:account:";
+const LEGACY_OWNER_KEY = "al-ilm:legacy-owner:v1";
+const sharedKeys = new Set([storageKeys.user, storageKeys.authUsers, storageKeys.sessionActive]);
+const extraAccountKeys = new Set([
+  "darkMode", "dailyGoalMinutes", "dailyMission", "quranStreak", "learningStudyDate",
+  "letterLessonProgress:v1", "lastLessonsVisit", "allahNamesLearned",
+  "islamicRulingsProgress", "namazSurahMemorization", "notificationsEnabled"
+]);
+
+function isLegacyAccountKey(key) {
+  return !sharedKeys.has(key) && (Object.values(storageKeys).includes(key)
+    || extraAccountKeys.has(key) || /^(readToday_|prayers_|prayer|namaz)/.test(key));
+}
+
+function accountPrefix(email) {
+  return `${ACCOUNT_PREFIX}${encodeURIComponent(normalizeAuthEmail(email))}:`;
+}
+
+function currentAccountEmail() {
+  try {
+    return normalizeAuthEmail(JSON.parse(window.localStorage.getItem(storageKeys.user) || "null")?.email);
+  } catch {
+    return "";
+  }
+}
+
+// Keep the original keys as a recovery copy. Only the original account inherits them.
+function migrateLegacyProgress(email) {
+  if (!email || !canUseStorage()) return;
+  try {
+    const store = window.localStorage;
+    if (store.getItem(LEGACY_OWNER_KEY)) return;
+    const prefix = accountPrefix(email);
+    Object.keys(store).filter(isLegacyAccountKey).forEach((key) => {
+      if (store.getItem(prefix + key) === null) store.setItem(prefix + key, store.getItem(key));
+    });
+    store.setItem(LEGACY_OWNER_KEY, normalizeAuthEmail(email));
+  } catch {
+    // Originals remain intact if quota prevents migration; a later access retries.
+  }
+}
+
+function scopedKey(key) {
+  if (sharedKeys.has(key)) return key;
+  const email = currentAccountEmail();
+  if (!email) return key;
+  migrateLegacyProgress(email);
+  return accountPrefix(email) + key;
+}
+
+function activateUser(user) {
+  migrateLegacyProgress(currentAccountEmail() || user.email);
+  if (!writeJson(storageKeys.user, user)) throw new Error("storage-unavailable");
+  if (typeof CustomEvent !== "undefined") {
+    window.dispatchEvent(new CustomEvent("backgroundThemeChange"));
+    window.dispatchEvent(new CustomEvent("profilePreferencesChange", { detail: getProfilePreferences() }));
+  }
+}
+
+let lastWriteFailureAt = 0;
+
+// A full or blocked storage must never lose progress silently: the app shows a warning.
+function reportWriteFailure(key) {
+  const now = Date.now();
+  if (now - lastWriteFailureAt < 5000) return;
+  lastWriteFailureAt = now;
+  try {
+    if (typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("storageWriteFailed", { detail: { key } }));
+  } catch {
+    // Nothing else can be done without storage.
+  }
+}
+
 function readValue(key) {
   if (!canUseStorage()) return null;
   try {
-    return window.localStorage.getItem(key);
+    return window.localStorage.getItem(scopedKey(key));
   } catch {
     return null;
   }
@@ -126,42 +200,58 @@ function readJson(key, fallback = null) {
   const raw = readValue(key);
   if (!raw) return fallback;
   try {
-    return JSON.parse(raw);
+    const value = JSON.parse(raw);
+    if (Array.isArray(fallback)) return Array.isArray(value) ? value : fallback;
+    if (fallback && typeof fallback === "object") return value && typeof value === "object" && !Array.isArray(value) ? value : fallback;
+    return value;
   } catch {
     return fallback;
   }
 }
 
 function writeJson(key, value) {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) return false;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    window.localStorage.setItem(scopedKey(key), JSON.stringify(value));
+    return true;
   } catch {
     // Storage can be unavailable or full; keep the app usable.
+    reportWriteFailure(key);
+    return false;
   }
 }
 
 function readNumber(key, fallback) {
   const value = readValue(key);
-  return value === null || value === "" ? fallback : Number(value);
+  return value === null || value === "" || !Number.isFinite(Number(value)) ? fallback : Number(value);
 }
 
 function writeValue(key, value) {
-  if (!canUseStorage()) return;
+  if (!canUseStorage()) return false;
   try {
-    window.localStorage.setItem(key, String(value));
+    window.localStorage.setItem(scopedKey(key), String(value));
+    return true;
   } catch {
     // Storage can be unavailable or full; keep the app usable.
+    reportWriteFailure(key);
+    return false;
   }
 }
 
-export function getDarkMode() {
-  return readValue("darkMode") === "true";
+export function getStoredValue(key, fallback = null) {
+  return readValue(key) ?? fallback;
 }
 
-export function setDarkMode(enabled) {
-  writeValue("darkMode", enabled);
-  document.body.classList.toggle("dark-mode", enabled);
+export function setStoredValue(key, value) {
+  writeValue(key, value);
+}
+
+export function getStoredJson(key, fallback = null) {
+  return readJson(key, fallback);
+}
+
+export function setStoredJson(key, value) {
+  writeJson(key, value);
 }
 
 export function getDailyMissionState() {
@@ -224,30 +314,6 @@ async function verifyPassword(password, passwordHash, legacyPassword) {
   return Boolean(legacyPassword) && legacyPassword === password;
 }
 
-function getDefaultChildBirthDate() {
-  const today = new Date();
-  const year = today.getFullYear() - 8;
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function createDefaultAccessProfile(email) {
-  const normalized = normalizeAuthEmail(email);
-
-  return {
-    name: "Ученик",
-    firstName: "Ученик",
-    lastName: "Al-Ilm",
-    fullName: "Ученик Al-Ilm",
-    dateOfBirth: getDefaultChildBirthDate(),
-    email: normalized,
-    preferredCharacter: "ahmad",
-    createdAt: new Date().toISOString(),
-    authProvider: "local-access-code"
-  };
-}
-
 export function getAuthUsers() {
   const users = readJson(storageKeys.authUsers, []);
   const legacyUser = getUser();
@@ -266,22 +332,30 @@ export function getLocalAccountByEmail(email) {
 }
 
 function writeAuthUsers(users) {
-  writeJson(storageKeys.authUsers, users.map(safeUser));
+  // Unmigrated legacy passwords must remain usable until that account signs in.
+  if (!writeJson(storageKeys.authUsers, users.map((user) => user.passwordHash ? safeUser(user) : user))) throw new Error("storage-unavailable");
 }
 
 export function setUser(user) {
-  const currentUser = safeUser(user);
-  writeJson(storageKeys.user, currentUser);
-
-  if (currentUser?.email) {
-    const normalized = normalizeAuthEmail(currentUser.email);
-    const users = getAuthUsers();
-    const exists = users.some((item) => normalizeAuthEmail(item.email) === normalized);
-    const next = exists
-      ? users.map((item) => normalizeAuthEmail(item.email) === normalized ? { ...item, ...currentUser } : item)
-      : [...users, currentUser];
-    writeAuthUsers(next);
+  const previous = getUser();
+  const oldEmail = normalizeAuthEmail(previous?.email);
+  const normalized = normalizeAuthEmail(user?.email);
+  const currentUser = safeUser({ ...user, email: normalized });
+  if (!currentUser.passwordHash && previous?.password) currentUser.password = previous.password;
+  const users = getAuthUsers();
+  if (oldEmail !== normalized && users.some((item) => normalizeAuthEmail(item.email) === normalized)) {
+    throw new Error("email-exists");
   }
+  if (oldEmail && normalized !== oldEmail && canUseStorage()) {
+    migrateLegacyProgress(oldEmail);
+    // Copy rather than remove: the old namespace remains a recovery copy.
+    const prefix = accountPrefix(oldEmail);
+    Object.keys(window.localStorage).filter((key) => key.startsWith(prefix)).forEach((key) => {
+      window.localStorage.setItem(accountPrefix(normalized) + key.slice(prefix.length), window.localStorage.getItem(key));
+    });
+  }
+  writeAuthUsers([...users.filter((item) => ![oldEmail, normalized].includes(normalizeAuthEmail(item.email))), currentUser]);
+  activateUser(currentUser);
 }
 
 export async function createLocalAccount(profile, password) {
@@ -300,7 +374,7 @@ export async function createLocalAccount(profile, password) {
   });
 
   writeAuthUsers([...users, user]);
-  writeJson(storageKeys.user, user);
+  activateUser(user);
   return user;
 }
 
@@ -308,24 +382,17 @@ export async function loginLocalAccount(email, password) {
   const normalized = normalizeAuthEmail(email);
   const users = getAuthUsers();
   const user = users.find((item) => normalizeAuthEmail(item.email) === normalized);
-  const isDefaultAccess = password === DEFAULT_ACCESS_PASSWORD;
 
-  if (!user) {
-    if (isDefaultAccess) {
-      return createLocalAccount(createDefaultAccessProfile(normalized), DEFAULT_ACCESS_PASSWORD);
-    }
+  if (!user) throw new Error("not-found");
 
-    throw new Error("not-found");
-  }
-
-  const valid = isDefaultAccess || await verifyPassword(password, user.passwordHash, user.password);
+  const legacyWithoutPassword = !user.passwordHash && !user.password;
+  const valid = (legacyWithoutPassword && password === LEGACY_ACCESS_CODE) || await verifyPassword(password, user.passwordHash, user.password);
   if (!valid) throw new Error("wrong-password");
 
   const passwordHash = user.passwordHash?.includes(":") ? user.passwordHash : await hashPassword(password);
   const migrated = safeUser({
     ...user,
     email: normalized,
-    dateOfBirth: isDefaultAccess && !user.dateOfBirth ? getDefaultChildBirthDate() : user.dateOfBirth,
     preferredCharacter: user.preferredCharacter || "ahmad",
     passwordHash,
     lastLoginAt: new Date().toISOString()
@@ -333,16 +400,17 @@ export async function loginLocalAccount(email, password) {
   const next = users.map((item) => normalizeAuthEmail(item.email) === normalized ? migrated : item);
 
   writeAuthUsers(next);
-  writeJson(storageKeys.user, migrated);
+  activateUser(migrated);
   return migrated;
 }
 
-export async function resetLocalPassword(email, password) {
+export async function resetLocalPassword(email, password, currentPassword) {
   const normalized = normalizeAuthEmail(email);
   const users = getAuthUsers();
   const user = users.find((item) => normalizeAuthEmail(item.email) === normalized);
 
   if (!user) throw new Error("not-found");
+  if (!await verifyPassword(currentPassword || "", user.passwordHash, user.password)) throw new Error("wrong-password");
 
   const updated = safeUser({
     ...user,
@@ -352,8 +420,74 @@ export async function resetLocalPassword(email, password) {
   const next = users.map((item) => normalizeAuthEmail(item.email) === normalized ? updated : item);
 
   writeAuthUsers(next);
-  writeJson(storageKeys.user, updated);
+  if (normalizeAuthEmail(getUser()?.email) === normalized) activateUser(updated);
   return updated;
+}
+
+function sameText(a, b) {
+  return String(a || "").trim().toLocaleLowerCase() === String(b || "").trim().toLocaleLowerCase();
+}
+
+// Local profiles have no email delivery. A forgotten password is recovered on this device
+// with the details a parent entered at registration (first name and date of birth).
+export async function recoverLocalPassword(email, firstName, dateOfBirth, password) {
+  const normalized = normalizeAuthEmail(email);
+  const users = getAuthUsers();
+  const user = users.find((item) => normalizeAuthEmail(item.email) === normalized);
+
+  if (!user) throw new Error("not-found");
+  const knownName = user.firstName || user.name;
+  if (!knownName || !user.dateOfBirth || !sameText(knownName, firstName) || user.dateOfBirth !== dateOfBirth) {
+    throw new Error("details-mismatch");
+  }
+
+  const updated = safeUser({
+    ...user,
+    passwordHash: await hashPassword(password),
+    updatedAt: new Date().toISOString()
+  });
+  writeAuthUsers(users.map((item) => normalizeAuthEmail(item.email) === normalized ? updated : item));
+  if (normalizeAuthEmail(getUser()?.email) === normalized) activateUser(updated);
+  return updated;
+}
+
+const BACKUP_FORMAT = "al-ilm-backup";
+
+// Progress lives only in this browser; a file backup is the only protection against
+// cleared site data or a lost device.
+export function exportAccountBackup() {
+  const user = getUser();
+  const email = normalizeAuthEmail(user?.email);
+  if (!email || !canUseStorage()) return null;
+  migrateLegacyProgress(email);
+  const prefix = accountPrefix(email);
+  const data = {};
+  Object.keys(window.localStorage)
+    .filter((key) => key.startsWith(prefix) && key.slice(prefix.length) !== storageKeys.backgroundCustomImage)
+    .forEach((key) => { data[key.slice(prefix.length)] = window.localStorage.getItem(key); });
+  const { passwordHash, ...profile } = safeUser(user);
+  return { format: BACKUP_FORMAT, version: 1, exportedAt: new Date().toISOString(), profile, data };
+}
+
+export function importAccountBackup(backup) {
+  if (!backup || backup.format !== BACKUP_FORMAT || backup.version !== 1 || !backup.data || typeof backup.data !== "object") {
+    throw new Error("invalid-backup");
+  }
+  const email = normalizeAuthEmail(getUser()?.email);
+  if (!email || !canUseStorage()) throw new Error("no-account");
+  const prefix = accountPrefix(email);
+  const entries = Object.entries(backup.data).filter(([key, value]) => typeof value === "string"
+    && !sharedKeys.has(key) && key !== storageKeys.backgroundCustomImage && key.length < 200);
+  try {
+    entries.forEach(([key, value]) => window.localStorage.setItem(prefix + key, value));
+  } catch {
+    throw new Error("storage-unavailable");
+  }
+  if (typeof CustomEvent !== "undefined") {
+    window.dispatchEvent(new CustomEvent("backgroundThemeChange"));
+    window.dispatchEvent(new CustomEvent("profilePreferencesChange", { detail: getProfilePreferences() }));
+  }
+  return entries.length;
 }
 
 export function getAge() {
@@ -399,11 +533,11 @@ export function getBackgroundTheme() {
 }
 
 export function setBackgroundTheme(theme) {
-  if (!isBackgroundTheme(theme)) return;
-  writeValue(storageKeys.backgroundTheme, theme);
+  if (!isBackgroundTheme(theme) || !writeValue(storageKeys.backgroundTheme, theme)) return false;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("backgroundThemeChange", { detail: theme }));
   }
+  return true;
 }
 
 export function getBackgroundCustomImage() {
@@ -411,8 +545,8 @@ export function getBackgroundCustomImage() {
 }
 
 export function setBackgroundCustomImage(imageData) {
-  writeValue(storageKeys.backgroundCustomImage, imageData);
-  setBackgroundTheme("custom");
+  if (!writeValue(storageKeys.backgroundCustomImage, imageData)) return false;
+  return setBackgroundTheme("custom");
 }
 
 export function getProfilePreferences() {
@@ -425,6 +559,7 @@ export function getProfilePreferences() {
 export function setProfilePreference(key, value) {
   const next = { ...getProfilePreferences(), [key]: value };
   writeJson(storageKeys.profilePreferences, next);
+  if (typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("profilePreferencesChange", { detail: next }));
   return next;
 }
 
@@ -464,12 +599,22 @@ export function resetLearningProgress() {
     storageKeys.quranStudyDate,
     storageKeys.namazProgress,
     storageKeys.gardenProgress,
-    "quranStreak"
-  ].forEach((key) => window.localStorage.removeItem(key));
+    "letterLessonProgress:v1",
+    "lastLessonsVisit",
+    "dailyMission",
+    "quranStreak",
+    "learningStudyDate",
+    "allahNamesLearned",
+    "islamicRulingsProgress",
+    "namazSurahMemorization"
+  ].forEach((key) => {
+    try { window.localStorage.removeItem(scopedKey(key)); } catch { /* unavailable */ }
+  });
 
+  const prefix = currentAccountEmail() ? accountPrefix(currentAccountEmail()) : "";
   Object.keys(window.localStorage)
-    .filter((key) => key.startsWith("readToday_"))
-    .forEach((key) => window.localStorage.removeItem(key));
+    .filter((key) => key.startsWith(prefix) && /^(readToday_|prayers_)/.test(key.slice(prefix.length)))
+    .forEach((key) => { try { window.localStorage.removeItem(key); } catch { /* unavailable */ } });
 }
 
 export function getQuranState() {
@@ -527,7 +672,7 @@ export function getQuranTracking() {
     dailyGoal: readNumber(storageKeys.dailyQuranGoal, 5),
     lastOpenedSurah: readValue(storageKeys.lastOpenedSurah),
     todayReadCount: todayRead.length,
-    streakDays: studyDate === today ? readNumber("quranStreak", 0) : 0
+    streakDays: studyDate === today || studyDate === new Date(new Date().setDate(new Date().getDate() - 1)).toDateString() ? readNumber("quranStreak", 0) : 0
   };
 }
 
@@ -541,12 +686,15 @@ export function markAyahRead(ayahRef) {
   // update streak
   const lastDate = readValue(storageKeys.quranStudyDate);
   const streak = readNumber("quranStreak", 0);
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toDateString();
   const newStreak = lastDate === yesterday || lastDate === today ? (lastDate === today ? streak : streak + 1) : 1;
   if (canUseStorage()) {
     writeValue(storageKeys.quranStudyDate, today);
     writeValue("quranStreak", newStreak);
   }
+  recordStudyDay();
 }
 
 export function markAyahMemorized(ayahRef) {
@@ -586,17 +734,23 @@ export function setLastOpenedSurah(surahId) {
 
 export function completeTajweedRule(ruleId) {
   const state = getQuranState();
-  const tajweedProgress = state.tajweedProgress.includes(ruleId) ? state.tajweedProgress : [...state.tajweedProgress, ruleId];
+  const isNew = !state.tajweedProgress.includes(ruleId);
+  const tajweedProgress = isNew ? [...state.tajweedProgress, ruleId] : state.tajweedProgress;
   writeJson(storageKeys.tajweedProgress, tajweedProgress);
+  if (isNew) recordStudyDay();
   return tajweedProgress;
 }
 
 export function getProgress() {
+  const lastStudy = readValue("learningStudyDate");
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const streakIsCurrent = !lastStudy || [new Date().toDateString(), yesterday.toDateString()].includes(lastStudy);
   return {
     completedLetters: readJson(storageKeys.completedLetters, defaultState.completedLetters),
     points: readNumber(storageKeys.points, defaultState.points),
-    streak: readNumber(storageKeys.streak, defaultState.streak),
-    level: readNumber(storageKeys.level, defaultState.level),
+    streak: streakIsCurrent ? readNumber(storageKeys.streak, defaultState.streak) : 0,
+    level: Math.max(1, Math.floor(readNumber(storageKeys.points, 0) / 150) + 1),
     coins: readNumber(storageKeys.coins, defaultState.coins),
     stars: readNumber(storageKeys.stars, defaultState.stars),
     achievements: readJson(storageKeys.achievements, defaultState.achievements),
@@ -628,6 +782,48 @@ export function setDonePrayersForDate(donePrayers, date = new Date()) {
   writeJson(getNamazDayKey(date), donePrayers);
 }
 
+export function recordNamazDayCompletion(date = new Date(), requiredPrayers = ["Фаджр", "Зухр", "Аср", "Магриб", "Иша"]) {
+  const progress = getNamazProgress();
+  const done = getDonePrayersForDate(date);
+  const day = getNamazDayKey(date);
+  const dates = Array.isArray(progress.completedPracticeDates) ? progress.completedPracticeDates : [];
+  if (!requiredPrayers.every((name) => done.includes(name)) || dates.includes(day)) return progress;
+  const next = { ...progress, completedPracticeDates: [...dates, day], practiceCount: (Number(progress.practiceCount) || 0) + 1 };
+  setNamazProgress(next);
+  recordStudyDay(date);
+  return next;
+}
+
+export function recordStudyDay(date = new Date()) {
+  const today = date.toDateString();
+  const yesterday = new Date(date);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const last = readValue("learningStudyDate");
+  const saved = readNumber(storageKeys.streak, 0);
+  const streak = last === today ? saved : last === yesterday.toDateString() ? saved + 1 : 1;
+  writeValue("learningStudyDate", today);
+  writeValue(storageKeys.streak, streak);
+  if (streak >= 7) {
+    const achievements = readJson(storageKeys.achievements, []);
+    if (!achievements.includes("strong_streak")) writeJson(storageKeys.achievements, [...achievements, "strong_streak"]);
+  }
+  return streak;
+}
+
+export function hasStudiedToday() {
+  return readValue("learningStudyDate") === new Date().toDateString();
+}
+
+// The reward needs real work today: a lesson, an ayah, a module lesson or a prayer step.
+export function claimDailyMission(reward) {
+  if (getDailyMissionState().done || !hasStudiedToday()) return false;
+  const amount = Math.max(0, Math.min(50, Number(reward) || 0));
+  const progress = getProgress();
+  setProgress({ ...progress, points: progress.points + amount, coins: progress.coins + amount });
+  setDailyMissionDone();
+  return true;
+}
+
 export function getGardenProgress() {
   return readJson(storageKeys.gardenProgress, defaultGardenProgress);
 }
@@ -647,10 +843,18 @@ function readString(key, fallback) {
 }
 
 export function getLessonPathState() {
+  // Earlier letter flows stored completed letters without their corresponding path nodes.
+  // Preserve that earned progress, but never infer reviews or chapter examinations.
+  const completed = new Set(readJson(storageKeys.completedLessonNodes, []));
+  for (const letterId of readJson(storageKeys.completedLetters, [])) {
+    getLessonNodesForLetter(letterId).forEach((node) => completed.add(node.id));
+  }
+  const completedLessonNodes = [...completed];
+  const current = lessonPathNodes.find((node) => !node.bonus && !completed.has(node.id)) || lessonPathNodes.at(-1);
   return {
-    currentLessonNode: readString(storageKeys.currentLessonNode, defaultLessonPathState.currentLessonNode),
-    completedLessonNodes: readJson(storageKeys.completedLessonNodes, defaultLessonPathState.completedLessonNodes),
-    currentChapter: readString(storageKeys.currentChapter, defaultLessonPathState.currentChapter),
+    currentLessonNode: current.id,
+    completedLessonNodes,
+    currentChapter: current.chapter,
     completedChapters: readJson(storageKeys.completedChapters, defaultLessonPathState.completedChapters),
     currentMission: readJson(storageKeys.currentMission, null)
   };
@@ -678,15 +882,14 @@ export function completeLessonNode(nodeId, options = {}) {
     };
   }
 
-  const nextNodeId = getNextLessonNodeId(nodeId);
-  const nextNode = getLessonNodeById(nextNodeId);
   const reward = getNodeReward(node);
   const alreadyCompleted = lessonState.completedLessonNodes.includes(nodeId);
   const completedLessonNodes = lessonState.completedLessonNodes.includes(nodeId)
     ? lessonState.completedLessonNodes
     : [...lessonState.completedLessonNodes, nodeId];
-  const currentLessonNode = nextNodeId;
-  const completedLetterId = options.completedLetterId || (node.type === "reward" ? node.letterId : null);
+  const nextNode = lessonPathNodes.find((item) => !item.bonus && !completedLessonNodes.includes(item.id)) || lessonPathNodes.at(-1);
+  const currentLessonNode = nextNode.id;
+  const completedLetterId = node.type === "reward" ? node.letterId : null;
   const completedLetters = completedLetterId && !progress.completedLetters.includes(completedLetterId)
     ? [...progress.completedLetters, completedLetterId]
     : progress.completedLetters;
@@ -705,7 +908,7 @@ export function completeLessonNode(nodeId, options = {}) {
   if (progress.streak >= 7) achievements.add("strong_streak");
   if (completedLetters.length >= arabicLetters.length) achievements.add("alphabet_master");
   if (completedGamesCount >= 10) achievements.add("game_student");
-  if (node.type === "quiz") achievements.add("no_errors");
+  if (["quiz", "reward", "boss", "checkpoint"].includes(node.type) && options.perfect === true) achievements.add("no_errors");
 
   writeJson(storageKeys.completedLessonNodes, completedLessonNodes);
   writeValue(storageKeys.currentLessonNode, currentLessonNode);
@@ -731,10 +934,13 @@ export function completeLessonNode(nodeId, options = {}) {
 }
 
 export function setProgress(progress) {
+  const previous = getProgress();
+  const hasNewWork = Number(progress.points) > previous.points || ["completedLetters", "completedHarakat", "learnedVocabulary", "completedGrammar", "completedReadingTexts"]
+    .some((key) => Array.isArray(progress[key]) && progress[key].some((id) => !previous[key].includes(id)));
   writeJson(storageKeys.completedLetters, progress.completedLetters);
   writeValue(storageKeys.points, progress.points);
   writeValue(storageKeys.streak, progress.streak);
-  writeValue(storageKeys.level, progress.level);
+  writeValue(storageKeys.level, Math.max(1, Math.floor((Number(progress.points) || 0) / 150) + 1));
   writeValue(storageKeys.coins, progress.coins);
   writeValue(storageKeys.stars, progress.stars ?? defaultState.stars);
   writeJson(storageKeys.achievements, progress.achievements);
@@ -743,6 +949,7 @@ export function setProgress(progress) {
   if (progress.learnedVocabulary !== undefined) writeJson(storageKeys.learnedVocabulary, progress.learnedVocabulary);
   if (progress.completedGrammar !== undefined) writeJson(storageKeys.completedGrammar, progress.completedGrammar);
   if (progress.completedReadingTexts !== undefined) writeJson(storageKeys.completedReadingTexts, progress.completedReadingTexts);
+  if (hasNewWork) recordStudyDay();
 }
 
 export function getLettersWithStatus() {
@@ -752,7 +959,7 @@ export function getLettersWithStatus() {
     if (progress.completedLetters.includes(letter.id)) {
       return { ...letter, status: "completed" };
     }
-    if (letter.id === progress.currentLesson) {
+    if (letter.id === (getLessonNodeById(getLessonPathState().currentLessonNode).letterId || progress.currentLesson)) {
       return { ...letter, status: "current" };
     }
     return { ...letter, status: "locked" };
@@ -760,42 +967,31 @@ export function getLettersWithStatus() {
 }
 
 export function completeLetter(letterId) {
-  const progress = getProgress();
   const rewardNodeId = getLetterRewardNodeId(letterId);
-  if (rewardNodeId && !canOpenLessonNode(rewardNodeId, getLessonPathState())) {
-    return progress;
-  }
-
-  const alreadyCompleted = progress.completedLetters.includes(letterId);
-  const completedLetters = alreadyCompleted ? progress.completedLetters : [...progress.completedLetters, letterId];
-  const achievements = new Set(progress.achievements);
-  const currentIndex = arabicLetters.findIndex((letter) => letter.id === letterId);
-  const nextLetter =
-    arabicLetters.find((letter, index) => index > currentIndex && !completedLetters.includes(letter.id)) ||
-    arabicLetters.find((letter) => !completedLetters.includes(letter.id));
-
-  achievements.add("young_student");
-  if (completedLetters.length >= 3) achievements.add("letter_expert");
-  if (progress.streak >= 5) achievements.add("strong_streak");
-  if (completedLetters.length >= arabicLetters.length) achievements.add("alphabet_master");
-
-  const nextState = {
-    ...progress,
-    completedLetters,
-    points: progress.points,
-    coins: progress.coins,
-    level: Math.max(1, Math.floor(progress.points / 150) + 1),
-    achievements: Array.from(achievements),
-    currentLesson: nextLetter?.id || getNextLetterId(letterId)
-  };
-
-  setProgress(nextState);
   if (rewardNodeId) completeLessonNode(rewardNodeId, { completedLetterId: letterId });
   return getProgress();
 }
 
+// Signing out must also forget the active profile; otherwise the next child on this device
+// would keep writing into the previous child's progress.
 export function clearSession() {
+  const user = getUser();
+  if (user?.email) {
+    try { writeAuthUsers(getAuthUsers()); } catch { /* The account list stays as it was. */ }
+  }
   writeValue(storageKeys.sessionActive, "false");
+  if (canUseStorage()) {
+    try { window.localStorage.removeItem(storageKeys.user); } catch { /* unavailable */ }
+  }
+  if (typeof document !== "undefined") document.body.classList.remove("dark-mode");
+  if (typeof CustomEvent !== "undefined") {
+    window.dispatchEvent(new CustomEvent("backgroundThemeChange"));
+    window.dispatchEvent(new CustomEvent("profilePreferencesChange", { detail: getProfilePreferences() }));
+  }
+}
+
+export function hasActiveProfile() {
+  return Boolean(getUser()?.email) && getSessionActive();
 }
 
 export function setCurrentQuranLevel(level) {

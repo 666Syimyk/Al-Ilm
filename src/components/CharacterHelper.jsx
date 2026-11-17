@@ -1,5 +1,5 @@
-﻿import ahmad from "../assets/characters/ahmad.png";
-import amina from "../assets/characters/amina.png";
+import ahmad from "../assets/characters/ahmad.webp";
+import amina from "../assets/characters/amina.webp";
 
 const characterImages = {
   ahmad,

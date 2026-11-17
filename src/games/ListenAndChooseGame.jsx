@@ -7,7 +7,14 @@ export default function ListenAndChooseGame({ letter, onComplete }) {
   const [message, setMessage] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [isSolved, setIsSolved] = useState(false);
-  const options = useMemo(() => [letter, ...arabicLetters.filter((item) => item.id !== letter.id).slice(8, 12)], [letter]);
+  const options = useMemo(() => {
+    const items = [letter, ...arabicLetters.filter((item) => item.id !== letter.id).slice(8, 12)];
+    for (let index = items.length - 1; index > 0; index -= 1) {
+      const other = Math.floor(Math.random() * (index + 1));
+      [items[index], items[other]] = [items[other], items[index]];
+    }
+    return items;
+  }, [letter]);
 
   function playSound(rate = 0.72) {
     setMessage(`Слушай: ${letter.soundText}`);
@@ -28,7 +35,7 @@ export default function ListenAndChooseGame({ letter, onComplete }) {
 
   return (
     <div className="game-content">
-      <h3>Что вы услышали?</h3>
+      <h3>Какую букву ты слышишь?</h3>
       <div className="duo-sound-cluster">
         <button className="duo-listen-button" type="button" onClick={() => playSound()} aria-label="Прослушать звук">
           <Volume2 size={48} aria-hidden="true" />

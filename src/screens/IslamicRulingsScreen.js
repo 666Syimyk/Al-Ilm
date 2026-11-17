@@ -4,25 +4,18 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import GlassCard from "../components/GlassCard.jsx";
 import IslamicRuleCard from "../components/IslamicRuleCard.js";
-import { islamicRulings } from "../data/islamicRulings.js";
+import { islamicRulings, islamicRulingsSource } from "../data/islamicRulings.js";
+import { getStoredJson, setStoredJson } from "../utils/storage.js";
 
 const e = React.createElement;
 const progressKey = "islamicRulingsProgress";
 
 function readProgress() {
-  try {
-    return JSON.parse(window.localStorage.getItem(progressKey) || "[]");
-  } catch {
-    return [];
-  }
+  return getStoredJson(progressKey, []);
 }
 
 function writeProgress(list) {
-  try {
-    window.localStorage.setItem(progressKey, JSON.stringify(list));
-  } catch {
-    // Keep the lesson usable when storage is blocked.
-  }
+  setStoredJson(progressKey, list);
 }
 
 export default function IslamicRulingsScreen() {
@@ -59,7 +52,8 @@ export default function IslamicRulingsScreen() {
     e(
       GlassCard,
       { className: "islamic-overview-card" },
-      e("div", null, e("p", { className: "section-kicker" }, "Правильный порядок"), e("h2", null, "От обязательного к запретному")),
+      e("div", null, e("p", { className: "section-kicker" }, "Учебный словарь"), e("h2", null, "Познакомимся с понятиями")),
+      e("p", { className: "content-source-note" }, islamicRulingsSource.note),
       e("div", { className: "islamic-ruling-chain" }, islamicRulings.map((rule) => e("span", { key: rule.id, style: { "--rule-color": rule.color } }, rule.title))),
       e("div", { className: "islamic-progress-line" }, e("span", null, `${doneCount}/${islamicRulings.length} тем`), e("div", null, e("i", { style: { width: `${Math.round((doneCount / islamicRulings.length) * 100)}%` } })))
     ),

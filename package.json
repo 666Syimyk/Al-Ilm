@@ -4,15 +4,24 @@
   "version": "0.1.0",
   "type": "module",
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=22.15.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "vite build && node scripts/checkBuild.mjs dist",
+    "build:pages": "node scripts/buildPages.mjs",
+    "check:build": "node scripts/checkBuild.mjs",
+    "optimize:images": "node scripts/optimizeImages.mjs",
+    "preview": "vite preview",
+    "validate:content": "node scripts/validateIslamicContent.mjs",
+    "test": "node --test scripts/test-learning.mjs scripts/test-audio.mjs scripts/test-prayer-times.mjs scripts/test-service-worker.mjs scripts/contentVerification.test.mjs",
+    "verify": "npm test && npm run validate:content && npm run build",
+    "verify:quran": "node scripts/compareQuranText.mjs",
+    "download:content": "node scripts/downloadVerifiedContent.mjs"
   },
   "dependencies": {
     "adhan": "^4.4.3",
+    "geomagnetism": "^0.2.0",
     "lucide-react": "1.14.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",
@@ -20,6 +29,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.0.1",
+    "sharp": "^0.34.3",
     "vite": "8.0.10"
   }
 }

@@ -59,7 +59,7 @@ function SyllablesHub({ onSelect, onBack }) {
                 {isDone ? <CheckCircle2 size={18} aria-hidden="true" /> : isLocked ? <Lock size={18} aria-hidden="true" /> : lesson.order}
               </div>
               <div className="reading-path-card__body">
-                <span className="section-kicker">{lesson.focus}</span>
+                <span className="reading-path-card__sample" lang="ar" dir="rtl">{lesson.focus}</span>
                 <h3>{lesson.title}</h3>
                 <p>{lesson.subtitle}</p>
               </div>
@@ -122,7 +122,7 @@ function SyllableLesson({ lessonId, onBack }) {
         <GlassCard className="reading-path-done-card">
           <CheckCircle2 size={64} color="var(--green-dark)" aria-hidden="true" />
           <h2>Отлично, можно идти дальше</h2>
-          <p>Ты прошел: {lesson.focus}</p>
+          <p>Пройдено: <bdi lang="ar" dir="rtl">{lesson.focus}</bdi></p>
           <button className="button button--primary" type="button" onClick={openNext}>
             {getNextSyllableLessonId(lesson.id) ? "Следующий урок" : "Перейти к словам"}
             <ArrowRight size={18} aria-hidden="true" />
@@ -153,7 +153,7 @@ function SyllableLesson({ lessonId, onBack }) {
       <VoiceCheckPanel
         targets={[item.arabic, item.reading]}
         prompt={`Прочитай слог: ${item.arabic}`}
-        successText="Хорошо! Слог звучит правильно."
+        successText="Браузер распознал слог. Точность произношения проверяй с учителем."
         onPassed={() => setSelected(item.reading)}
       />
 
@@ -196,7 +196,7 @@ export default function SyllablesScreen() {
   const navigate = useNavigate();
 
   if (lessonId) {
-    return <SyllableLesson lessonId={lessonId} onBack={() => navigate("/lessons/syllables")} />;
+    return <SyllableLesson key={lessonId} lessonId={lessonId} onBack={() => navigate("/lessons/syllables")} />;
   }
 
   return <SyllablesHub onSelect={(id) => navigate(`/lessons/syllables/${id}`)} onBack={() => navigate("/lessons")} />;

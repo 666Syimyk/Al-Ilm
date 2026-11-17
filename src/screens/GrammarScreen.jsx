@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
+import MixedText from "../components/MixedText.jsx";
 import Header from "../components/Header.jsx";
 import { grammarLessons, grammarLevels, getGrammarLessonById } from "../data/grammarData.js";
-import { getProgress, setProgress } from "../utils/storage.js";
+import { getProgress, recordStudyDay, setProgress } from "../utils/storage.js";
 import { speakText } from "../utils/audioPlayback.js";
 
 function speak(text) {
@@ -26,6 +27,7 @@ function GrammarLesson({ lessonId, onBack }) {
     if (!isDone) {
       const updated = [...completedIds, lesson.id];
       setProgress({ ...progress, completedGrammar: updated, points: (progress.points || 0) + 15 });
+      recordStudyDay();
     }
     setShowPractice(false);
     setFinished(true);
@@ -52,7 +54,7 @@ function GrammarLesson({ lessonId, onBack }) {
           <CheckCircle2 size={64} color="var(--green-dark)" aria-hidden="true" />
           <h2>Урок завершён!</h2>
           <p>{lesson.title}</p>
-          <p className="grammar-done-rule">«{lesson.rule}»</p>
+          <p className="grammar-done-rule">«<MixedText text={lesson.rule} />»</p>
           <button className="button button--primary" type="button" onClick={onBack}>
             К урокам
             <ArrowRight size={18} aria-hidden="true" />
@@ -114,7 +116,7 @@ function GrammarLesson({ lessonId, onBack }) {
         <p className="section-kicker">{lesson.subtitle}</p>
         <p>{lesson.description}</p>
         <div className="grammar-rule-box">
-          <strong>Правило:</strong> {lesson.rule}
+          <strong>Правило:</strong> <MixedText text={lesson.rule} />
         </div>
       </GlassCard>
 

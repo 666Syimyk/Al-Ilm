@@ -2,18 +2,20 @@
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, CheckCircle2, Heart, HeartOff, Headphones, Pause, Play, Repeat2, Star } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
-import { getAyahWords, getSurahById, quranSurahs } from "../data/quranContent.js";
+import { getAyahWords, getSurahById, quranSurahs, quranTextSource, translationSource } from "../data/quranContent.js";
 import { getJuzForAyah, getSurahReveal } from "../data/quranNavigation.js";
 import {
   getProfilePreferences, getQuranState, getQuranTracking, markAyahRead, markAyahMemorized,
   memorizeSurah, setLastOpenedSurah, toggleBookmarkedAyah, toggleFavoriteSurah
 } from "../utils/storage.js";
-import { getAyahAudioUrl } from "../utils/quranAudio.js";
-import { playCachedAudio, speakText, stopAudioElement, stopSpeech } from "../utils/audioPlayback.js";
+import { getAyahAudioSources } from "../utils/quranAudio.js";
+import { playAudioSources, stopAudioElement, stopSpeech } from "../utils/audioPlayback.js";
+import { countAyahs } from "../utils/plural.js";
+import { goBack } from "../utils/navigation.js";
 
 const DISPLAY_MODES = [
   { key: "arabic", label: "Арабский" },
-  { key: "translation", label: "Перевод" },
+  { key: "translation", label: "Перевод смыслов" },
   { key: "transliteration", label: "Чтение" },
   { key: "full", label: "Полный" },
   { key: "tajweed", label: "Таджвид" }
@@ -97,6 +99,8 @@ function AyahCard({
   const [localBookmark, setLocalBookmark] = useState(isBookmarked);
   const [localMem, setLocalMem] = useState(isMemorized);
   const [localRead, setLocalRead] = useState(isRead);
+  useEffect(() => setLocalRead(isRead), [isRead]);
+  useEffect(() => setLocalMem(isMemorized), [isMemorized]);
   const [ruleHint, setRuleHint] = useState(null);
   const words = getAyahWords(ayah);
   const tajweedMode = mode === "tajweed";
@@ -133,7 +137,7 @@ function AyahCard({
           <button className={`ayah-icon-btn${localRead ? " is-active" : ""}`} type="button" onClick={handleRead} aria-label="Прочитано">
             <CheckCircle2 size={16} />
           </button>
-          <button className={`ayah-icon-btn${localMem ? " is-active" : ""}`} type="button" onClick={handleMem} aria-label="Выучил">
+          <button className={`ayah-icon-btn${localMem ? " is-active" : ""}`} type="button" onClick={handleMem} aria-label="Знаю наизусть">
             <Star size={16} />
           </button>
         </div>
@@ -177,7 +181,7 @@ function AyahCard({
         </button>
         <button className="button button--soft" type="button" onClick={handleMem} disabled={localMem}>
           <Star size={16} aria-hidden="true" />
-          {localMem ? "Выучено" : "Выучил"}
+          {localMem ? "Выучено" : "Знаю наизусть"}
         </button>
       </div>
     </div>
@@ -185,6 +189,14 @@ function AyahCard({
 }
 
 export default function SurahDetailScreen() {
+  const { surahId } = useParams();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  if (!quranSurahs.some((surah) => surah.id === surahId)) return <section className="content-stack"><p>Сура не найдена.</p><button className="button button--primary" type="button" onClick={() => navigate("/quran/surahs")}>К сурам</button></section>;
+  return <SurahDetailSession key={`${surahId}:${params.get("ayah") || ""}`} />;
+}
+
+function SurahDetailSession() {
   const navigate = useNavigate();
   const { surahId: routeSurahId } = useParams();
   const [searchParams] = useSearchParams();
@@ -211,9 +223,12 @@ export default function SurahDetailScreen() {
   const [repeatCount, setRepeatCount] = useState(1);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [audioError, setAudioError] = useState("");
+  const [, refreshProgress] = useState(0);
   const [surahMemorized, setSurahMemorized] = useState(quranState.memorizedSurahs.includes(surahId));
 
   const audioElRef = useRef(null);
+  const runRef = useRef(0);
   const isPlayingRef = useRef(false);
   const playModeRef = useRef("sequence");
   const repeatLeftRef = useRef(1);
@@ -243,6 +258,7 @@ export default function SurahDetailScreen() {
   }
 
   function cancelAudio({ keepPlaying = false } = {}) {
+    runRef.current += 1;
     stopSpeech();
     stopAudioElement(audioElRef.current);
     audioElRef.current = null;
@@ -256,6 +272,7 @@ export default function SurahDetailScreen() {
     if (!profilePreferences.soundEnabled) {
       setPlaying(false);
       isPlayingRef.current = false;
+      setAudioError("Звук выключен. Включи его: Профиль → Настройки → Звук.");
       return;
     }
     if (!isPlayingRef.current || idx >= ayahs.length) {
@@ -267,10 +284,14 @@ export default function SurahDetailScreen() {
     setTimeout(() => scrollToCard(idx), 80);
 
     const ayah = ayahs[idx];
-    markAyahRead(ayahRef(surahId, ayah.number));
     cancelAudio({ keepPlaying: true });
+    const run = runRef.current;
+    setAudioError("");
 
     const finishAyah = () => {
+      if (run !== runRef.current || !isPlayingRef.current) return;
+      markAyahRead(ayahRef(surahId, ayah.number));
+      refreshProgress((n) => n + 1);
       if (repeatLeftRef.current > 1) {
         repeatLeftRef.current -= 1;
         playFrom(idx);
@@ -285,17 +306,17 @@ export default function SurahDetailScreen() {
       setPlaying(false);
     };
 
-    const playFallbackVoice = () => {
-      audioElRef.current = null;
-      speakText(ayah.arabic, { lang: "ar-SA", rate: 0.78, onEnd: finishAyah });
-    };
-
-    playCachedAudio(getAyahAudioUrl(surah.number, ayah.number), {
+    playAudioSources(getAyahAudioSources(surah.number, ayah.number), {
       cancelCurrent: false,
-      onPlaying: (audio) => { audioElRef.current = audio; },
+      onReady: (audio) => { audioElRef.current = audio; },
       onEnded: finishAyah,
-      onError: playFallbackVoice
-    }).catch(() => {});
+      onError: () => {
+        if (run !== runRef.current) return;
+        cancelAudio();
+        setAudioError("Запись не загрузилась. Проверь интернет и звук в профиле, затем повтори. Аят не отмечен как прослушанный.");
+      },
+      onStop: () => { if (run === runRef.current) { isPlayingRef.current = false; setPlaying(false); } }
+    });
   }
 
   function togglePlay() {
@@ -321,6 +342,7 @@ export default function SurahDetailScreen() {
 
   function handleRead(ref) {
     markAyahRead(ref);
+    refreshProgress((n) => n + 1);
   }
 
   function handleJump(event) {
@@ -328,6 +350,7 @@ export default function SurahDetailScreen() {
     const number = Number(jumpAyah);
     const idx = ayahs.findIndex((ayah) => ayah.number === number);
     if (idx >= 0) {
+      cancelAudio();
       setCurrentIdx(idx);
       scrollToCard(idx);
     }
@@ -339,6 +362,7 @@ export default function SurahDetailScreen() {
   }
 
   function handleMemorizeSurah() {
+    ayahs.forEach((ayah) => markAyahMemorized(ayahRef(surahId, ayah.number)));
     memorizeSurah(surahId);
     setSurahMemorized(true);
   }
@@ -355,7 +379,7 @@ export default function SurahDetailScreen() {
     return (
       <section className="content-stack quran-inner-screen surah-detail-screen">
         <div className="surah-detail-topbar">
-          <button className="guide-back-icon" type="button" onClick={() => navigate(-1)} aria-label="Назад">
+          <button className="guide-back-icon" type="button" onClick={() => goBack(navigate, "/quran/surahs")} aria-label="Назад">
             <ArrowLeft size={22} />
           </button>
           <div className="surah-detail-topbar__title">
@@ -379,12 +403,13 @@ export default function SurahDetailScreen() {
     <section className="content-stack quran-inner-screen surah-detail-screen" ref={scrollRef}>
       {/* Шапка */}
       <div className="surah-detail-topbar">
-        <button className="guide-back-icon" type="button" onClick={() => navigate(-1)} aria-label="Назад">
+        <button className="guide-back-icon" type="button" onClick={() => goBack(navigate, "/quran/surahs")} aria-label="Назад">
           <ArrowLeft size={22} />
         </button>
         <div className="surah-detail-topbar__title">
           <span className="arabic-line">{surah.arabicTitle}</span>
-          <span>{surah.title} В· {surah.translation}</span>
+          <h1 className="surah-detail-topbar__heading">{surah.title}</h1>
+          <span>{surah.translation}</span>
         </div>
         {previousSurah && (
           <button className="ayah-icon-btn" type="button" onClick={() => navigate(`/quran/surah/${previousSurah.id}`)} aria-label="Предыдущая сура">
@@ -403,11 +428,14 @@ export default function SurahDetailScreen() {
 
       {/* Инфо-карточка */}
       <GlassCard className="surah-info-card">
+        {audioError && <p role="status" className="audio-unavailable-note">{audioError}</p>}
+        {!translationSource.available && <p className="content-source-note">{translationSource.note}</p>}
+        <p className="content-source-note"><a href={quranTextSource.url} target="_blank" rel="noreferrer">Арабский текст: Tanzil</a> · <a href={quranTextSource.licenseUrl} target="_blank" rel="noreferrer">Условия использования</a></p>
         <div className="surah-info-meta">
           <span className="surah-meta-pill">{surah.number} сура</span>
           <span className="surah-meta-pill">{currentJuz} джуз</span>
           <span className="surah-meta-pill">{reveal}</span>
-          <span className="surah-meta-pill">{ayahs.length} аятов</span>
+          <span className="surah-meta-pill">{countAyahs(ayahs.length)}</span>
           {surahMemorized && <span className="surah-meta-pill surah-meta-pill--green">Выучено ✓</span>}
         </div>
 
@@ -474,11 +502,14 @@ export default function SurahDetailScreen() {
         </div>
 
         {effectiveTajweed && (
-          <div className="tajweed-legend" aria-label="Легенда подсветки таджвида">
-            <span><i className="tajweed-dot tajweed-dot--madd" /> мадд</span>
-            <span><i className="tajweed-dot tajweed-dot--ghunnah" /> гунна</span>
-            <span><i className="tajweed-dot tajweed-dot--qalqalah" /> калькаля</span>
-          </div>
+          <>
+            <div className="tajweed-legend" aria-label="Легенда подсветки таджвида">
+              <span><i className="tajweed-dot tajweed-dot--madd" /> мадд</span>
+              <span><i className="tajweed-dot tajweed-dot--ghunnah" /> гунна</span>
+              <span><i className="tajweed-dot tajweed-dot--qalqalah" /> калькаля</span>
+            </div>
+            <p className="tajweed-disclaimer">Подсветка — вспомогательные подсказки для начинающих. Правила таджвида требуют проверки у кари или знающего учителя.</p>
+          </>
         )}
 
         <div className="surah-detail-actions">
@@ -513,7 +544,7 @@ export default function SurahDetailScreen() {
 
       {/* Режим отображения */}
       <div className="display-mode-tabs">
-        {DISPLAY_MODES.map((m) => (
+        {DISPLAY_MODES.filter((mode) => mode.key !== "translation" || translationSource.available).map((m) => (
           <button
             key={m.key}
             className={`display-mode-tab${displayMode === m.key ? " is-active" : ""}`}

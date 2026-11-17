@@ -12,8 +12,8 @@ export const shortSurahIds = [
 ];
 
 function transliterationFromWords(ayah) {
-  if (!ayah?.words?.length) return "";
-  return ayah.words.map((word) => word.reading || word.arabic).join(" - ");
+  // No verified transliteration source has been supplied for these lines.
+  return "";
 }
 
 export const shortSurahs = shortSurahIds
@@ -32,11 +32,7 @@ export const shortSurahs = shortSurahIds
       translation: ayah.translation,
       audioUrl: getAyahAudioUrl(surah.number, ayah.number)
     })),
-    miniTest: {
-      question: `Как лучше учить суру ${surah.title}?`,
-      options: ["по строкам и с повторением", "один раз быстро", "без прослушивания"],
-      answer: "по строкам и с повторением"
-    }
+    miniTest: null
   }));
 
 export function getShortSurahById(id) {

@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/ahmad-BErq12oq.webp`;export{e as t};

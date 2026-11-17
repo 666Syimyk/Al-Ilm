@@ -8,7 +8,7 @@
   { id: "kha", letter: "خ", nameRu: "Хо", soundText: "Хо", dotPlacement: "Одна точка сверху", dotGroup: "ج ح خ", status: "locked" },
   { id: "dal", letter: "د", nameRu: "Даль", soundText: "Даль", dotPlacement: "Без точек", dotGroup: "د ذ", status: "locked" },
   { id: "dhal", letter: "ذ", nameRu: "Заль", soundText: "Заль", dotPlacement: "Одна точка сверху", dotGroup: "د ذ", status: "locked" },
-  { id: "ra", letter: "ر", nameRu: "Р Р°", soundText: "Р Р°", dotPlacement: "Без точек", dotGroup: "ر ز", status: "locked" },
+  { id: "ra", letter: "ر", nameRu: "Ра", soundText: "Ра", dotPlacement: "Без точек", dotGroup: "ر ز", status: "locked" },
   { id: "zay", letter: "ز", nameRu: "Зай", soundText: "Зай", dotPlacement: "Одна точка сверху", dotGroup: "ر ز", status: "locked" },
   { id: "sin", letter: "س", nameRu: "Син", soundText: "Син", dotPlacement: "Без точек", dotGroup: "س ش", status: "locked" },
   { id: "shin", letter: "ش", nameRu: "Шин", soundText: "Шин", dotPlacement: "Три точки сверху", dotGroup: "س ش", status: "locked" },

@@ -1,14 +1,14 @@
-﻿import mosqueClassic from "../assets/backgrounds/mosque-bg.png";
-import bgBlueArches from "../assets/backgrounds/bg-blue-arches.png";
-import bgCreamPattern from "../assets/backgrounds/bg-cream-pattern.png";
-import bgDayTerrace from "../assets/backgrounds/bg-day-terrace.png";
-import bgDesertSunset from "../assets/backgrounds/bg-desert-sunset.png";
-import bgEmeraldArches from "../assets/backgrounds/bg-emerald-arches.png";
-import bgMarbleHall from "../assets/backgrounds/bg-marble-hall.png";
-import bgMoonGarden from "../assets/backgrounds/bg-moon-garden.png";
-import bgNightLagoon from "../assets/backgrounds/bg-night-lagoon.png";
-import bgPastelValley from "../assets/backgrounds/bg-pastel-valley.png";
-import bgSunriseCourtyard from "../assets/backgrounds/bg-sunrise-courtyard.png";
+import mosqueClassic from "../assets/backgrounds/mosque-bg.webp";
+import bgBlueArches from "../assets/backgrounds/bg-blue-arches.webp";
+import bgCreamPattern from "../assets/backgrounds/bg-cream-pattern.webp";
+import bgDayTerrace from "../assets/backgrounds/bg-day-terrace.webp";
+import bgDesertSunset from "../assets/backgrounds/bg-desert-sunset.webp";
+import bgEmeraldArches from "../assets/backgrounds/bg-emerald-arches.webp";
+import bgMarbleHall from "../assets/backgrounds/bg-marble-hall.webp";
+import bgMoonGarden from "../assets/backgrounds/bg-moon-garden.webp";
+import bgNightLagoon from "../assets/backgrounds/bg-night-lagoon.webp";
+import bgPastelValley from "../assets/backgrounds/bg-pastel-valley.webp";
+import bgSunriseCourtyard from "../assets/backgrounds/bg-sunrise-courtyard.webp";
 
 const themeImages = {
   classic: bgSunriseCourtyard,

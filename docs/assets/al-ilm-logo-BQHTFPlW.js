@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/al-ilm-logo-DstjfIg4.webp`;export{e as t};

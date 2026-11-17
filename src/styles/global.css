@@ -19753,6 +19753,76 @@ textarea {
   border-color: rgba(255, 147, 116, 0.26);
 }
 
+.profile-setting-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(245, 207, 120, 0.18);
+  border-radius: 18px;
+  background: rgba(3, 27, 23, 0.42);
+}
+
+.profile-setting-panel h3,
+.profile-setting-panel p {
+  margin: 0;
+}
+
+.profile-setting-panel h3 {
+  color: #F5EAD4;
+}
+
+.profile-setting-panel p,
+.profile-setting-panel small {
+  color: rgba(255, 241, 189, 0.74);
+}
+
+.profile-setting-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 207, 120, 0.18);
+  border-radius: 16px;
+  color: #F5EAD4;
+  background: rgba(1, 13, 10, 0.46);
+  text-align: left;
+}
+
+.profile-setting-option span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-setting-option small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-setting-option.is-active {
+  border-color: rgba(77, 214, 87, 0.52);
+  background: rgba(35, 186, 50, 0.18);
+}
+
+.profile-setting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-setting-status {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(77, 214, 87, 0.28);
+  border-radius: 14px;
+  color: #DDF7C8;
+  background: rgba(35, 186, 50, 0.16);
+  font-weight: 850;
+}
+
 .premium-profile-drawer {
   position: fixed;
   inset: 0;
@@ -20537,4 +20607,240 @@ textarea {
   .page-frame:has(.namaz-feature-grid) .namaz-city-label {
     display: none !important;
   }
+}
+
+
+/* ── Аудио и контент-заметки (безопасность данных) ─────────────────────────── */
+.audio-unavailable-note {
+  font-size: 0.8rem;
+  color: var(--danger);
+  background: rgba(255, 75, 75, 0.08);
+  border: 1px solid rgba(255, 75, 75, 0.18);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.content-source-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+}
+
+.tajweed-disclaimer {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+/* ── SourcesScreen ── */
+.sources-disclaimer-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: rgba(255, 150, 0, 0.06);
+  border: 1px solid rgba(255, 150, 0, 0.2);
+}
+.sources-disclaimer-text {
+  font-size: 0.82rem;
+  color: var(--text-deep);
+  line-height: 1.5;
+  margin: 0;
+}
+.sources-item-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sources-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sources-item-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-deep);
+  margin: 0;
+  flex: 1;
+}
+.sources-item-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sources-item-source {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-deep);
+  margin: 0;
+}
+.sources-item-detail {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+.sources-item-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--green-dark);
+  text-decoration: none;
+  word-break: break-all;
+}
+.sources-item-link:hover { text-decoration: underline; }
+.sources-footer-card { text-align: center; }
+
+/* Namaz dashboard: the same warm cards and compact appbar as Home / Quran.
+   Intentionally independent of legacy .premium-namaz/:has(.namaz-feature-grid). */
+#root .app-shell .namaz-dashboard {
+  --namaz-surface: var(--color-cream);
+  --namaz-ink: var(--color-ink);
+  --namaz-muted: var(--color-muted);
+  --namaz-accent: var(--color-green);
+  --namaz-border: color-mix(in srgb, var(--namaz-ink) 14%, transparent);
+  width: 100%;
+  min-width: 0;
+  color: var(--namaz-ink);
+}
+#root .app-shell .namaz-dashboard__layout {
+  display: grid;
+  grid-template-columns: minmax(220px, .85fr) minmax(0, 1.6fr) minmax(270px, .9fr);
+  align-items: start;
+  gap: var(--app-gap);
+}
+#root .app-shell .namaz-dashboard__column { display: grid; align-content: start; gap: var(--app-gap); min-width: 0; }
+#root .app-shell .namaz-dashboard .premium-quran-appbar {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-green) 78%, var(--color-ink)), color-mix(in srgb, var(--color-green) 55%, var(--color-ink))) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--namaz-border) !important;
+  box-shadow: var(--shadow-soft-product) !important;
+}
+#root .app-shell .namaz-dashboard .premium-quran-appbar :is(h1, span) { color: inherit !important; }
+#root .app-shell .namaz-dashboard .premium-quran-appbar__actions button { background: var(--color-cream) !important; color: var(--color-green) !important; }
+#root .app-shell .namaz-dashboard :is(.namaz-dashboard__card, .namaz-feature-panel) {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  padding: 22px;
+  border: 1px solid var(--namaz-border);
+  border-radius: var(--app-radius);
+  background: var(--namaz-surface);
+  color: var(--namaz-ink);
+  box-shadow: var(--shadow-soft-product);
+  overflow: visible;
+}
+#root .app-shell .namaz-dashboard :is(h2, h3, p) { margin: 0; }
+#root .app-shell .namaz-dashboard :is(h2, h3, p, strong, small, label) {
+  min-width: 0;
+  max-height: none;
+  color: inherit;
+  white-space: normal;
+  overflow-wrap: break-word;
+  font-family: "Nunito", sans-serif;
+}
+#root .app-shell .namaz-dashboard h2 { font-size: 1.35rem !important; line-height: 1.25 !important; font-weight: 900; }
+#root .app-shell .namaz-dashboard h3 { font-size: 1.1rem; line-height: 1.35; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__head,
+#root .app-shell .namaz-dashboard .namaz-feature-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#root .app-shell .namaz-dashboard :is(.namaz-dashboard__head, .namaz-feature-panel__head) > div { min-width: 0; }
+#root .app-shell .namaz-dashboard :is(.namaz-dashboard__head, .namaz-feature-panel__head) > svg { color: var(--namaz-accent); flex-shrink: 0; }
+#root .app-shell .namaz-dashboard :is(.namaz-dashboard__kicker, .section-kicker) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  color: var(--namaz-muted);
+  font-size: .72rem;
+  line-height: 1.4;
+  font-weight: 900;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+#root .app-shell .namaz-dashboard .namaz-dashboard__note { color: var(--namaz-muted); font-size: .9rem; }
+#root .app-shell .namaz-dashboard .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px !important; font-size: .9rem; border-radius: 16px; }
+#root .app-shell .namaz-dashboard .button--primary { background: var(--color-green) !important; color: var(--color-text-light) !important; border-color: var(--color-green) !important; }
+#root .app-shell .namaz-dashboard .button--soft { background: color-mix(in srgb, var(--namaz-accent) 9%, var(--namaz-surface)) !important; color: var(--namaz-accent) !important; border: 1px solid var(--namaz-border) !important; box-shadow: none !important; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__hero {
+  background: radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--color-cream) 20%, transparent), transparent 45%), var(--color-green);
+  color: var(--color-text-light);
+}
+#root .app-shell .namaz-dashboard__hero .namaz-dashboard__kicker { color: inherit; }
+#root .app-shell .namaz-dashboard__hero h2 { margin-bottom: 10px; }
+#root .app-shell .namaz-dashboard__hero img { display: block; height: 175px; width: 100%; object-fit: contain; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__hero .button { background: var(--color-cream) !important; color: var(--color-green) !important; box-shadow: var(--soft-shadow) !important; border-color: var(--color-cream) !important; }
+#root .app-shell .namaz-dashboard__settings label { display: grid; gap: 7px; font-size: .9rem; font-weight: 800; }
+#root .app-shell .namaz-dashboard :is(select, input, textarea) { width: 100%; min-width: 0; border: 1px solid var(--namaz-border); border-radius: 14px; padding: 12px; background: var(--namaz-surface); color: var(--namaz-ink); font: inherit; }
+#root .app-shell .namaz-dashboard select { text-overflow: ellipsis; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__next { grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; }
+#root .app-shell .namaz-dashboard__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; background: color-mix(in srgb, var(--namaz-accent) 12%, var(--namaz-surface)); color: var(--namaz-accent); }
+#root .app-shell .namaz-dashboard .namaz-dashboard__time { font-size: 2rem; line-height: 1; color: var(--namaz-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#root .app-shell .namaz-dashboard__countdown { font-variant-numeric: tabular-nums; white-space: nowrap; }
+#root .app-shell .namaz-dashboard__location .namaz-dashboard__head { flex-wrap: wrap; }
+#root .app-shell .namaz-dashboard__location-form { display: grid; gap: 10px; }
+#root .app-shell .namaz-dashboard__location-form form { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 8px; }
+#root .app-shell .namaz-dashboard__location-form form > button { width: 48px; min-width: 48px; padding: 0 !important; }
+#root .app-shell .namaz-dashboard__location-form form > button svg { width: 18px; min-width: 18px; height: 18px; }
+#root .app-shell .namaz-dashboard__location-form > button { justify-self: start; }
+#root .app-shell .namaz-dashboard__pill { padding: 8px 12px; border-radius: 14px; color: var(--namaz-accent); background: color-mix(in srgb, var(--namaz-accent) 10%, var(--namaz-surface)); font-weight: 900; white-space: nowrap; }
+#root .app-shell .namaz-dashboard__prayers { display: grid; gap: 10px; }
+#root .app-shell .namaz-dashboard__prayer { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--namaz-border); border-radius: 18px; background: color-mix(in srgb, var(--namaz-surface) 92%, var(--color-text-light)); }
+#root .app-shell .namaz-dashboard__prayer.is-next { border-color: var(--namaz-accent); background: color-mix(in srgb, var(--namaz-accent) 8%, var(--namaz-surface)); }
+#root .app-shell .namaz-dashboard__check { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border: 2px solid var(--namaz-border); border-radius: 14px; background: var(--namaz-surface); color: var(--namaz-accent); cursor: pointer; }
+#root .app-shell .namaz-dashboard__check[aria-pressed="true"] { background: var(--color-green); color: var(--color-text-light); border-color: var(--color-green); }
+#root .app-shell .namaz-dashboard__prayer-link { display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 4px 0; border: 0; background: transparent; color: var(--namaz-ink); text-align: left; cursor: pointer; }
+#root .app-shell .namaz-dashboard__prayer-copy { display: grid; gap: 3px; }
+#root .app-shell .namaz-dashboard__prayer-copy strong { font-size: 1rem; font-weight: 900; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__prayer-copy small { color: var(--namaz-muted); font-size: .78rem; }
+#root .app-shell .namaz-dashboard__prayer-time { font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#root .app-shell .namaz-dashboard__prayer-link > svg { color: var(--namaz-accent); }
+#root .app-shell .namaz-dashboard__tags { display: flex; flex-wrap: wrap; gap: 8px; }
+#root .app-shell .namaz-dashboard__tags span { padding: 6px 10px; border: 1px solid var(--namaz-border); border-radius: 12px; font-size: .8rem; }
+#root .app-shell .namaz-dashboard__tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+#root .app-shell .namaz-dashboard__tool { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; padding: 14px 8px; border: 1px solid var(--namaz-border); border-radius: 18px; background: var(--namaz-surface); color: var(--namaz-ink); text-align: center; cursor: pointer; }
+#root .app-shell .namaz-dashboard__tool > svg { color: var(--namaz-accent); margin-bottom: 3px; }
+#root .app-shell .namaz-dashboard__tool strong { font-size: .9rem; }
+#root .app-shell .namaz-dashboard .namaz-dashboard__tool small { color: var(--namaz-muted); font-size: .74rem; }
+#root .app-shell .namaz-dashboard__tool.is-active { border-color: var(--namaz-accent); background: color-mix(in srgb, var(--namaz-accent) 10%, var(--namaz-surface)); }
+#root .app-shell .namaz-dashboard__feature { min-width: 0; }
+#root .app-shell .namaz-dashboard .namaz-wudu-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+#root .app-shell .namaz-dashboard .namaz-wudu-step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 12px; background: color-mix(in srgb, var(--namaz-accent) 5%, var(--namaz-surface)); border: 1px solid var(--namaz-border); border-radius: 16px; }
+#root .app-shell .namaz-dashboard .namaz-wudu-step__num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--color-green); color: var(--color-text-light); font-size: .8rem; font-weight: 900; }
+#root .app-shell .namaz-dashboard .namaz-wudu-step__body { display: grid; gap: 4px; }
+#root .app-shell .namaz-dashboard .namaz-wudu-step__body strong { font-size: .9rem; }
+#root .app-shell .namaz-dashboard .namaz-wudu-step__body small { color: var(--namaz-muted); font-size: .8rem; }
+#root .app-shell .namaz-dashboard .namaz-wudu-note { display: grid; gap: 6px; font-size: .85rem; }
+#root .app-shell .namaz-dashboard :is(.namaz-radio-card, .namaz-mosque-card, .namaz-kaza-row, .namaz-note-item) { min-width: 0; padding: 12px; background: var(--namaz-surface); color: var(--namaz-ink); border: 1px solid var(--namaz-border); border-radius: 16px; }
+#root .app-shell .namaz-dashboard :is(.namaz-radio-card, .namaz-mosque-card) { display: flex; flex-wrap: wrap; gap: 10px; }
+#root .app-shell .namaz-dashboard :is(.namaz-radio-card__copy, .namaz-mosque-card__body) { flex: 1 1 110px; min-width: 0; }
+#root .app-shell .namaz-dashboard .namaz-kaza-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+#root .app-shell .namaz-dashboard .namaz-kaza-controls { flex-wrap: wrap; }
+#root .app-shell .namaz-dashboard .namaz-kaza-controls button { min-width: 44px; }
+#root .app-shell .namaz-dashboard .namaz-kaza-summary { display: flex; flex-wrap: wrap; gap: 10px; }
+#root .app-shell .namaz-dashboard :is(.namaz-panel-note, .namaz-radio-card small, .namaz-mosque-card small) { color: var(--namaz-muted); }
+body.dark-mode #root .app-shell .namaz-dashboard { --namaz-surface: var(--milk); --namaz-ink: var(--text-deep); --namaz-muted: var(--text-muted); --namaz-accent: var(--green); }
+
+/* ProfileScreen sources note */
+.profile-sources-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+  line-height: 1.4;
 }

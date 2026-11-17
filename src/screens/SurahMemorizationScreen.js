@@ -8,24 +8,19 @@ import AudioButton from "../components/AudioButton.js";
 import PracticeQuiz from "../components/PracticeQuiz.js";
 import { dailyDuas } from "../data/dailyDuas.js";
 import { shortSurahs } from "../data/shortSurahs.js";
+import { getQuranTracking, getStoredJson, setStoredJson, markAyahMemorized, memorizeSurah } from "../utils/storage.js";
+import { quranTextSource, translationSource } from "../data/quranContent.js";
+import { goBack } from "../utils/navigation.js";
 
 const e = React.createElement;
 const progressKey = "namazSurahMemorization";
 
 function readProgress() {
-  try {
-    return JSON.parse(window.localStorage.getItem(progressKey) || "[]");
-  } catch {
-    return [];
-  }
+  return [...new Set([...getStoredJson(progressKey, []), ...getQuranTracking().memorizedAyahs])];
 }
 
 function writeProgress(list) {
-  try {
-    window.localStorage.setItem(progressKey, JSON.stringify(list));
-  } catch {
-    // Keep screen usable when localStorage is unavailable.
-  }
+  setStoredJson(progressKey, list);
 }
 
 export default function SurahMemorizationScreen() {
@@ -45,9 +40,11 @@ export default function SurahMemorizationScreen() {
   }
 
   function markLine() {
+    markAyahMemorized(lineKey);
     setLearned((current) => {
       const next = current.includes(lineKey) ? current : [...current, lineKey];
       writeProgress(next);
+      if (activeSurah.lines.every((line) => next.includes(`${activeSurah.id}:${line.number}`))) memorizeSurah(activeSurah.id);
       return next;
     });
   }
@@ -57,8 +54,8 @@ export default function SurahMemorizationScreen() {
     { className: "content-stack surah-memorization-screen" },
     e(
       Header,
-      { title: "Суры и дуа для намаза", subtitle: "Арабский текст, транскрипция, перевод и заучивание по строкам", compact: true },
-      e("button", { className: "button button--soft", type: "button", onClick: () => navigate(-1) }, e(ArrowLeft, { size: 17, "aria-hidden": true }), "Назад")
+      { title: "Суры и дуа для намаза", subtitle: "Арабский текст, транскрипция и заучивание по строкам", compact: true },
+      e("button", { className: "button button--soft", type: "button", onClick: () => goBack(navigate, "/namaz") }, e(ArrowLeft, { size: 17, "aria-hidden": true }), "Назад")
     ),
     e(
       GlassCard,
@@ -78,11 +75,12 @@ export default function SurahMemorizationScreen() {
     ) : null,
     activeLine ? e(ArabicTextBlock, {
       title: `Строка ${activeLine.number}`,
-      subtitle: "Слушай, повторяй и закрывай перевод рукой для проверки памяти",
+      subtitle: "Слушай, повторяй, а потом прочитай строку по памяти",
       arabic: activeLine.arabic,
       transliteration: activeLine.transliteration,
       translation: activeLine.translation,
-      audioUrl: activeLine.audioUrl
+      audioUrl: activeLine.audioUrl,
+      isQuran: true
     }) : null,
     e(
       GlassCard,
@@ -92,18 +90,19 @@ export default function SurahMemorizationScreen() {
         "div",
         { className: "tajweed-detail-actions" },
         e("button", { className: "button button--soft", type: "button", onClick: () => setLineIndex(Math.max(0, lineIndex - 1)), disabled: lineIndex <= 0 }, "Назад"),
-        activeLine ? e(AudioButton, { text: activeLine.arabic, audioUrl: activeLine.audioUrl, label: "Слушать" }) : null,
-        activeLine ? e(AudioButton, { text: activeLine.arabic, audioUrl: activeLine.audioUrl, label: "Повторить" }) : null,
-        e("button", { className: "button button--primary", type: "button", onClick: markLine, disabled: learned.includes(lineKey) }, e(CheckCircle2, { size: 18, "aria-hidden": true }), learned.includes(lineKey) ? "Выучено" : "Выучил"),
+        activeLine ? e(AudioButton, { audioUrl: activeLine.audioUrl, label: "Слушать" }) : null,
+        activeLine ? e(AudioButton, { audioUrl: activeLine.audioUrl, label: "Повторить" }) : null,
+        e("button", { className: "button button--primary", type: "button", onClick: markLine, disabled: learned.includes(lineKey) }, e(CheckCircle2, { size: 18, "aria-hidden": true }), learned.includes(lineKey) ? "Выучено" : "Знаю наизусть"),
         e("button", { className: "button button--soft", type: "button", onClick: () => setLineIndex(Math.min((activeSurah?.lines.length || 1) - 1, lineIndex + 1)), disabled: lineIndex >= (activeSurah?.lines.length || 1) - 1 }, "Дальше")
       ),
-      activeSurah ? e(PracticeQuiz, { quiz: activeSurah.miniTest, compact: true }) : null
+      activeSurah?.miniTest ? e(PracticeQuiz, { key: activeSurah.id, quiz: activeSurah.miniTest, compact: true }) : null
     ),
     e(
       "section",
       { className: "daily-dua-card" },
       e("div", { className: "profile-section-head" }, e("div", null, e("p", { className: "section-kicker" }, "Дуа на каждый день"), e("h2", null, "Короткие дуа для повторения"))),
-      e("div", { className: "daily-dua-grid" }, dailyDuas.map((dua) => e(ArabicTextBlock, { key: dua.id, title: dua.title, subtitle: dua.hint, arabic: dua.arabic, transliteration: dua.transliteration, translation: dua.translation })))
-    )
+      e("div", { className: "daily-dua-grid" }, dailyDuas.map((dua) => e(ArabicTextBlock, { ...dua, key: dua.id, subtitle: dua.hint })))
+    ),
+    e("p", { className: "content-source-note" }, translationSource.note, " ", e("a", { href: quranTextSource.url, target: "_blank", rel: "noreferrer" }, "Арабский текст: Tanzil"))
   );
 }

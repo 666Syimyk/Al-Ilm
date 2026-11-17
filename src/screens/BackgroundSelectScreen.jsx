@@ -10,11 +10,31 @@ import {
   setBackgroundTheme
 } from "../utils/storage.js";
 
+const MAX_BACKGROUND_SIDE = 1600;
+
+// The photo is stored in localStorage (about 5 MB shared with all progress), so it is
+// downscaled and re-encoded to a few hundred kilobytes before saving.
+async function compressBackground(file) {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, MAX_BACKGROUND_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const webp = canvas.toDataURL("image/webp", 0.72);
+    return webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.72);
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 export default function BackgroundSelectScreen() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [selectedBackground, setSelectedBackground] = useState(getBackgroundTheme);
   const [customImage, setCustomImage] = useState(getBackgroundCustomImage);
+  const [uploadError, setUploadError] = useState("");
 
   function chooseBackground(themeId) {
     setSelectedBackground(themeId);
@@ -25,18 +45,29 @@ export default function BackgroundSelectScreen() {
     fileInputRef.current?.click();
   }
 
-  function uploadFromGallery(event) {
+  async function uploadFromGallery(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = "";
+    setUploadError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 15 * 1024 * 1024) {
+      setUploadError("Выбери изображение JPG, PNG или WebP размером до 15 МБ.");
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const imageData = String(reader.result);
-      setCustomImage(imageData);
-      setSelectedBackground("custom");
-      setBackgroundCustomImage(imageData);
-    };
-    reader.readAsDataURL(file);
+    let imageData;
+    try {
+      imageData = await compressBackground(file);
+    } catch {
+      setUploadError("Не удалось прочитать изображение. Выбери другой файл.");
+      return;
+    }
+    if (setBackgroundCustomImage(imageData) === false) {
+      setUploadError("Не удалось сохранить фон: память браузера заполнена. Попробуй другое изображение.");
+      return;
+    }
+    setCustomImage(imageData);
+    setSelectedBackground("custom");
   }
 
   function renderUploadTile(key) {
@@ -58,6 +89,9 @@ export default function BackgroundSelectScreen() {
         </button>
         <h1>Фон приложения</h1>
       </GlassCard>
+
+      <p className="background-upload-note">Фото сохраняется только в этом браузере. JPG, PNG или WebP; фото автоматически уменьшается.</p>
+      {uploadError && <p className="form-error" role="alert">{uploadError}</p>}
 
       {customImage ? (
         <GlassCard className="background-picker-section">
@@ -124,7 +158,7 @@ export default function BackgroundSelectScreen() {
         </GlassCard>
       ))}
 
-      <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/*" onChange={uploadFromGallery} />
+      <input ref={fileInputRef} className="visually-hidden" aria-label="Выбрать свой фон" tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadFromGallery} />
     </section>
   );
 }

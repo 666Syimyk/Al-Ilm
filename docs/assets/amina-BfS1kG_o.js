@@ -1,0 +1,1 @@
+var e=`/Al-Ilm/assets/amina-CcyP-o96.webp`;export{e as t};

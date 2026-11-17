@@ -5,6 +5,7 @@ import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import { arabicLetters, getLetterById } from "../data/arabicLetters.js";
 import { getLessonPathState, getProgress, getQuranState, getSelectedCharacter } from "../utils/storage.js";
+import { countLetters } from "../utils/plural.js";
 
 const ACHIEVEMENTS_META = [
   { id: "young_student", title: "Юный ученик", desc: "Выучи первую букву", icon: Star },
@@ -16,11 +17,11 @@ const ACHIEVEMENTS_META = [
 ];
 
 const GARDEN_PLANTS = [
-  { id: "seedling", label: "Росток", emoji: "рџЊ±", threshold: 0 },
-  { id: "sprout", label: "Побег", emoji: "рџЊї", threshold: 3 },
-  { id: "flower", label: "Цветок", emoji: "рџЊё", threshold: 7 },
-  { id: "tree", label: "Дерево", emoji: "рџЊі", threshold: 15 },
-  { id: "garden", label: "Сад знаний", emoji: "рџЏЎ", threshold: 28 }
+  { id: "seedling", label: "Росток", emoji: "🌱", threshold: 0 },
+  { id: "sprout", label: "Побег", emoji: "🌿", threshold: 3 },
+  { id: "flower", label: "Цветок", emoji: "🌸", threshold: 7 },
+  { id: "tree", label: "Дерево", emoji: "🌳", threshold: 15 },
+  { id: "garden", label: "Сад знаний", emoji: "🏡", threshold: 28 }
 ];
 
 function GardenStage({ completedCount }) {
@@ -34,7 +35,7 @@ function GardenStage({ completedCount }) {
       <div className="garden-stage__info">
         <strong>{stage.label}</strong>
         {next ? (
-          <p>До «{next.label}»: ещё {next.threshold - completedCount} букв</p>
+          <p>До «{next.label}»: ещё {countLetters(next.threshold - completedCount)}</p>
         ) : (
           <p>Сад знаний полностью расцвёл!</p>
         )}

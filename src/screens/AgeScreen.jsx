@@ -11,8 +11,8 @@ export default function AgeScreen() {
   function handleSubmit(event) {
     event.preventDefault();
     const numericAge = Number(ageValue);
-    if (!numericAge || numericAge < 1 || numericAge > 120) {
-      setError("Введите возраст от 1 до 120");
+    if (!numericAge || numericAge < 3 || numericAge > 120) {
+      setError("Введите возраст от 3 до 120");
       return;
     }
 
@@ -24,7 +24,7 @@ export default function AgeScreen() {
     <section className="center-screen">
       <GlassCard className="simple-card">
         <p className="brand-mark">Аль-Ильм</p>
-        <h1>Сколько вам лет?</h1>
+        <h1>Сколько лет ученику?</h1>
         <p>Это поможет подобрать подходящий режим обучения.</p>
         <form className="form-stack" onSubmit={handleSubmit}>
           <label>

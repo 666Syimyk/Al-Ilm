@@ -6,6 +6,7 @@ import Header from "../components/Header.jsx";
 import { quranSurahs } from "../data/quranContent.js";
 import { beginnerSurahNumbers, getSurahReveal } from "../data/quranNavigation.js";
 import { getQuranState, getQuranTracking } from "../utils/storage.js";
+import { countAyahs } from "../utils/plural.js";
 
 const FILTERS = [
   { key: "all", label: "По порядку 1–114" },
@@ -67,7 +68,7 @@ export default function SurahListScreen() {
           <p className="surah-list-card__arabic">{surah.arabicTitle}</p>
           <div className="surah-list-card__meta">
             {reveal && <span className="surah-meta-mini">{reveal}</span>}
-            {surah.ayahs?.length > 0 && <span className="surah-meta-mini">{surah.ayahs.length} аятов</span>}
+            {surah.ayahs?.length > 0 && <span className="surah-meta-mini">{countAyahs(surah.ayahs.length)}</span>}
             {isBeginner && <span className="surah-meta-mini surah-meta-mini--green">начинающим</span>}
             {isFavorite && <span className="surah-meta-mini">в™Ґ</span>}
           </div>

@@ -4,6 +4,8 @@ import { arabicLetters } from "../data/arabicLetters.js";
 export default function CatchLetterGame({ letter, onComplete }) {
   const [score, setScore] = useState(0);
   const [message, setMessage] = useState("");
+  const [caughtKeys, setCaughtKeys] = useState([]);
+  const [isSolved, setIsSolved] = useState(false);
   const letters = useMemo(() => {
     const distractors = arabicLetters
       .filter((item) => item.id !== letter.id)
@@ -14,16 +16,19 @@ export default function CatchLetterGame({ letter, onComplete }) {
   }, [letter]);
 
   function catchLetter(item) {
+    if (isSolved || caughtKeys.includes(item.key)) return;
     if (item.id === letter.id) {
-      const nextScore = score + 1;
+      const nextCaught = [...caughtKeys, item.key];
+      setCaughtKeys(nextCaught);
+      const nextScore = nextCaught.length;
       setScore(nextScore);
       setMessage("Правильно! Это нужная буква.");
       if (nextScore >= 3) {
-        setMessage("Молодец! Ты поймал все нужные буквы.");
+        setIsSolved(true);
+        setMessage("Молодец! Все нужные буквы пойманы.");
         onComplete();
       }
     } else {
-      setScore(Math.max(0, score - 1));
       setMessage("Попробуй ещё раз.");
     }
   }
@@ -34,7 +39,7 @@ export default function CatchLetterGame({ letter, onComplete }) {
       <div className="duo-score-pill">Поймано: {score} / 3</div>
       <div className="catch-field">
         {letters.map((item) => (
-          <button className="catch-letter" key={item.key} type="button" onClick={() => catchLetter(item)}>
+          <button className={`catch-letter ${caughtKeys.includes(item.key) ? "is-correct" : ""}`} key={item.key} type="button" onClick={() => catchLetter(item)} disabled={isSolved || caughtKeys.includes(item.key)}>
             {item.letter}
           </button>
         ))}

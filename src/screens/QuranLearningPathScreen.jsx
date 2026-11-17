@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
 import { getSurahById } from "../data/quranContent.js";
-import { getQuranState } from "../utils/storage.js";
+import { completeLessonNode, getLessonPathState, getQuranState, getQuranTracking } from "../utils/storage.js";
+import { canOpenLessonNode } from "../data/lessonPath.js";
+import { countAyahs } from "../utils/plural.js";
 
 const PATH_GROUPS = [
   {
@@ -37,6 +39,13 @@ export default function QuranLearningPathScreen() {
   return (
     <section className="content-stack quran-inner-screen quran-path-screen">
       <Header title="Путь чтения" subtitle="Начни с коротких сур и двигайся вперёд" compact />
+      {canOpenLessonNode("quran-start", getLessonPathState()) ? (
+        <GlassCard>
+          <h2>Первый шаг к чтению Корана</h2>
+          <p>Открой суру, прочитай аят и отметь его как прочитанный. Затем заверши учебный путь здесь.</p>
+          <button className="button button--primary" type="button" disabled={getQuranTracking().readAyahs.length === 0} onClick={() => { completeLessonNode("quran-start"); navigate("/lessons"); }}>Завершить путь</button>
+        </GlassCard>
+      ) : null}
 
       {PATH_GROUPS.map((group) => {
         const surahs = group.surahs.map((id) => getSurahById(id)).filter(Boolean);
@@ -62,12 +71,13 @@ export default function QuranLearningPathScreen() {
                     className={`quran-path-surah-row${isDone ? " is-done" : ""}${!hasContent ? " is-locked" : ""}`}
                     key={surah.id}
                     type="button"
+                    disabled={!hasContent}
                     onClick={() => navigate(`/quran/surah/${surah.id}`)}
                   >
                     <span className="quran-path-surah-row__arabic">{surah.arabicTitle}</span>
                     <span className="quran-path-surah-row__info">
                       <strong>{surah.title}</strong>
-                      <small>{hasContent ? `${surah.ayahs.length} аятов` : "Скоро"}</small>
+                      <small>{hasContent ? countAyahs(surah.ayahs.length) : "Скоро"}</small>
                     </span>
                     {isDone
                       ? <CheckCircle2 size={18} className="quran-path-surah-row__check" aria-hidden="true" />

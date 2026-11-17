@@ -24,7 +24,7 @@ export default function FindLetterGame({ letter, onComplete }) {
 
   return (
     <div className="game-content">
-      <h3>Выберите букву «{letter.nameRu}»</h3>
+      <h3>Выбери букву «{letter.nameRu}»</h3>
       <div className="game-options">
         {options.map((option, index) => (
           <button

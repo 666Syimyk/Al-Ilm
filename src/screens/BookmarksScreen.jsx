@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import Header from "../components/Header.jsx";
-import { getAyahByNumber, getSurahById } from "../data/quranContent.js";
+import { getAyahByNumber, getSurahById, quranTextSource, translationSource } from "../data/quranContent.js";
 import { getQuranState, toggleBookmarkedAyah } from "../utils/storage.js";
 
 export default function BookmarksScreen() {
@@ -26,6 +26,7 @@ export default function BookmarksScreen() {
   return (
     <section className="content-stack quran-inner-screen quran-bookmarks-screen">
       <Header title="Закладки" subtitle="Сохранённые суры и аяты" compact />
+      <p className="content-source-note">{translationSource.note} <a href={quranTextSource.url} target="_blank" rel="noreferrer">Источник арабского текста</a></p>
 
       {bookmarks.length ? (
         <div className="bookmark-list">
@@ -34,7 +35,7 @@ export default function BookmarksScreen() {
               <button className="bookmark-card__body" type="button" onClick={() => navigate(`/quran/surah/${surah.id}?ayah=${ayah.number}`)}>
                 <strong>{surah.title}, аят {ayah.number}</strong>
                 <p className="arabic-line">{ayah.arabic}</p>
-                <small>{ayah.translation}</small>
+                {ayah.translation && <small>{ayah.translation}</small>}
               </button>
               <button className="icon-button" type="button" onClick={() => removeBookmark(id)} aria-label="Убрать закладку">
                 <Bookmark size={18} aria-hidden="true" />
